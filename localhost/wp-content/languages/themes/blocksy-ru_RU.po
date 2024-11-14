@@ -119,7 +119,7 @@ msgstr "Правая колонка"
 msgid "Left Column"
 msgstr "Левая колонка"
 
-#: inc/options/woocommerce/related-upsells.php:134
+#: inc/options/woocommerce/related-upsells.php:159
 msgid "Module Title Color"
 msgstr "Цвет заголовка модуля"
 
@@ -152,6 +152,7 @@ msgid "Auto Hide"
 msgstr "Автоскрытие"
 
 #: inc/options/general/posts-listing.php:225
+#: inc/options/single-elements/related-posts.php:406
 #: inc/options/woocommerce/card-product-elements.php:391
 msgid "Heading Tag"
 msgstr "Тег заголовка"
@@ -162,8 +163,8 @@ msgstr " и "
 
 #: inc/options/general/posts-listing.php:246
 #: inc/options/general/posts-listing.php:419
-#: inc/options/single-elements/related-posts.php:267
-#: inc/options/single-elements/related-posts.php:314
+#: inc/options/single-elements/related-posts.php:379
+#: inc/options/single-elements/related-posts.php:429
 msgid "Link To Post"
 msgstr "Ссылка на запись"
 
@@ -384,18 +385,18 @@ msgstr "Сортировка товаров"
 msgid "Results Count"
 msgstr "Подсчёт результатов"
 
-#: inc/options/single-elements/related-posts.php:614
+#: inc/options/single-elements/related-posts.php:763
 msgid "Posts Meta Font"
 msgstr "Шрифт метаданных записей"
 
-#: inc/options/single-elements/related-posts.php:546
+#: inc/options/single-elements/related-posts.php:684
 msgid "Posts Title Font"
 msgstr "Шрифт заголовков записей"
 
 #: inc/options/single-elements/post-share-box.php:440
 #: inc/options/single-elements/post-tags.php:167
-#: inc/options/single-elements/related-posts.php:492
-#: inc/options/woocommerce/related-upsells.php:126
+#: inc/options/single-elements/related-posts.php:623
+#: inc/options/woocommerce/related-upsells.php:151
 msgid "Module Title Font"
 msgstr "Шрифт заголовка модуля"
 
@@ -497,6 +498,9 @@ msgstr "Защищённая оплата"
 #: inc/options/general/posts-listing.php:525
 #: inc/options/general/posts-listing.php:572
 #: inc/options/general/posts-listing.php:593
+#: inc/options/single-elements/related-posts.php:388
+#: inc/options/single-elements/related-posts.php:438
+#: inc/options/single-elements/related-posts.php:479
 #: inc/options/woocommerce/card-product-elements.php:372
 #: inc/options/woocommerce/card-product-elements.php:411
 #: inc/options/woocommerce/card-product-elements.php:431
@@ -896,10 +900,6 @@ msgstr "Главная"
 msgid "Render Empty Row"
 msgstr "Отображение пустого ряда"
 
-#: inc/options/single-elements/related-posts.php:287
-msgid "Posts Title Tag"
-msgstr "Тег заголовка"
-
 #: inc/options/general/page-title.php:797
 msgid "Image Parallax Effect"
 msgstr "Эффект параллакса изображения"
@@ -1051,6 +1051,7 @@ msgstr "Зарегистрированные"
 
 #: inc/options/general/posts-listing.php:369
 #: inc/options/single-elements/featured-image.php:56
+#: inc/options/single-elements/related-posts.php:367
 #: inc/options/woocommerce/card-product-elements.php:361
 msgid "Video Thumbnail"
 msgstr "Миниатюра видео"
@@ -1446,11 +1447,13 @@ msgid "View Pro Features"
 msgstr "Посмотреть функционал Pro-версии"
 
 #: inc/options/general/posts-listing.php:351
+#: inc/options/single-elements/related-posts.php:349
 #: inc/options/woocommerce/card-product-elements.php:344
 msgid "Zoom Out"
 msgstr "Отдаление"
 
 #: inc/options/general/posts-listing.php:350
+#: inc/options/single-elements/related-posts.php:348
 #: inc/options/woocommerce/card-product-elements.php:343
 msgid "Zoom In"
 msgstr "Приближение"
@@ -1505,7 +1508,7 @@ msgstr "Колонки"
 msgid "Configure the social links in General ➝ %sSocial Network Accounts%s."
 msgstr "Настройте ссылки на соцсети в разделе Общее ➝ %sПрофили в соцсетях%s."
 
-#: inc/options/single-elements/related-posts.php:623
+#: inc/options/single-elements/related-posts.php:772
 msgid "Posts Meta Font Color"
 msgstr "Метаданные записей"
 
@@ -1518,11 +1521,11 @@ msgstr "Интервал меж контейнерами"
 msgid "Active Tab Colors"
 msgstr "Цвет активной вкладки"
 
-#: inc/options/woocommerce/related-upsells.php:98
+#: inc/options/woocommerce/related-upsells.php:123
 msgid "Upsell Products Visibility"
 msgstr "Отображение апсэл-товаров"
 
-#: inc/options/woocommerce/related-upsells.php:76
+#: inc/options/woocommerce/related-upsells.php:101
 msgid "Related Products Visibility"
 msgstr "Отображение сопутствующих товаров"
 
@@ -2368,17 +2371,18 @@ msgstr "Больше среднего"
 
 #: inc/options/single-elements/post-share-box.php:449
 #: inc/options/single-elements/post-tags.php:176
-#: inc/options/single-elements/related-posts.php:498
+#: inc/options/single-elements/related-posts.php:629
 msgid "Module Title Font Color"
 msgstr "Цвет текста заголовка"
 
-#: inc/options/single-elements/related-posts.php:404
+#: inc/options/single-elements/related-posts.php:535
 msgid "Location"
 msgstr "Позиция относительно комментариев"
 
 #: inc/options/single-elements/post-share-box.php:241
 #: inc/options/single-elements/post-tags.php:99
 #: inc/options/single-elements/related-posts.php:173
+#: inc/options/woocommerce/related-upsells.php:76
 msgid "Module Title Tag"
 msgstr "Тег заголовка"
 
@@ -2531,7 +2535,7 @@ msgstr "Биография"
 #: inc/options/general/posts-listing.php:327
 #: inc/options/single-elements/featured-image.php:36
 #: inc/options/single-elements/post-nav.php:89
-#: inc/options/single-elements/related-posts.php:248
+#: inc/options/single-elements/related-posts.php:325
 #: inc/options/woocommerce/card-product-elements.php:314
 #: inc/options/woocommerce/general/cart-page.php:40
 #: inc/options/woocommerce/single-product-gallery.php:113
@@ -2594,7 +2598,7 @@ msgstr "Цвет текста кнопки"
 msgid "Number of columns"
 msgstr "Число колонок"
 
-#: inc/options/single-elements/related-posts.php:374
+#: inc/options/single-elements/related-posts.php:505
 msgid "Separate or unify the related posts module from or with the entry content area."
 msgstr "Разделите или объедините модуль похожих записей с областью содержимого записи."
 
@@ -2615,12 +2619,12 @@ msgid "Content Spacing"
 msgstr "Интервалы содержимого"
 
 #: inc/options/general/comments-single.php:85
-#: inc/options/single-elements/related-posts.php:377
+#: inc/options/single-elements/related-posts.php:508
 msgid "Contained"
 msgstr "Внутри"
 
 #: inc/options/general/comments-single.php:84
-#: inc/options/single-elements/related-posts.php:376
+#: inc/options/single-elements/related-posts.php:507
 msgid "Separated"
 msgstr "Отдельно"
 
@@ -2629,7 +2633,7 @@ msgid "Separate or unify the comments module from or with the entry content area
 msgstr "Разделите или объедините модуль комментариев с областью содержимого."
 
 #: inc/options/general/comments-single.php:77
-#: inc/options/single-elements/related-posts.php:369
+#: inc/options/single-elements/related-posts.php:500
 #: inc/options/woocommerce/single-product-tabs.php:85
 msgid "Module Placement"
 msgstr "Размещение модуля"
@@ -2692,23 +2696,23 @@ msgid "By default these options are inherited from Customizer options."
 msgstr "По умолчанию эти параметры наследуются от настройщика темы."
 
 #: inc/options/general/comments-single.php:126
-#: inc/options/single-elements/related-posts.php:454
+#: inc/options/single-elements/related-posts.php:585
 msgid "Container Max Width"
 msgstr "Максимальная ширина контейнера"
 
 #: inc/options/general/comments-single.php:110
-#: inc/options/single-elements/related-posts.php:437
+#: inc/options/single-elements/related-posts.php:568
 msgid "Normal"
 msgstr "Обычный"
 
 #: inc/options/general/comments-single.php:109
 #: inc/options/general/page-title.php:729
-#: inc/options/single-elements/related-posts.php:438
+#: inc/options/single-elements/related-posts.php:569
 msgid "Narrow"
 msgstr "Узкий"
 
 #: inc/options/general/comments-single.php:103
-#: inc/options/single-elements/related-posts.php:430
+#: inc/options/single-elements/related-posts.php:561
 #: inc/panel-builder/footer/options.php:6
 #: inc/panel-builder/header/middle-row/options.php:32
 msgid "Container Structure"
@@ -2758,7 +2762,7 @@ msgstr "Вертикал. выравнивание"
 msgid "Horizontal Alignment"
 msgstr "Горизонт. выравнивание"
 
-#: inc/integrations/elementor.php:131
+#: inc/integrations/elementor.php:134
 msgid "Full Width Section"
 msgstr "Раздел в полную ширину"
 
@@ -2991,7 +2995,7 @@ msgstr "Тип ссылок"
 msgid "Featured Image Radius"
 msgstr "Скругление углов обложки"
 
-#: inc/options/single-elements/related-posts.php:653
+#: inc/options/single-elements/related-posts.php:812
 #: inc/options/woocommerce/card-product-elements.php:1211
 msgid "Image Border Radius"
 msgstr "Скругление углов картинок"
@@ -3033,7 +3037,7 @@ msgstr "Параметры функциональности"
 msgid "Product Elements"
 msgstr "Элементы товаров"
 
-#: inc/options/single-elements/related-posts.php:555
+#: inc/options/single-elements/related-posts.php:693
 msgid "Posts Title Font Color"
 msgstr "Заголовки записей"
 
@@ -3292,6 +3296,7 @@ msgid "Button"
 msgstr "Кнопка"
 
 #: inc/options/general/buttons.php:34 inc/options/general/posts-listing.php:341
+#: inc/options/single-elements/related-posts.php:339
 #: inc/options/woocommerce/card-product-elements.php:333
 msgid "Hover Effect"
 msgstr "Анимация"
@@ -3464,11 +3469,11 @@ msgstr "Верхний ряд"
 msgid "by %s"
 msgstr "Автор: %s"
 
-#: inc/components/pagination.php:196
+#: inc/components/pagination.php:207
 msgid "Next"
 msgstr "Далее"
 
-#: inc/components/pagination.php:194
+#: inc/components/pagination.php:205
 msgid "Prev"
 msgstr "Назад"
 
@@ -3513,7 +3518,7 @@ msgstr "Описание сайта"
 
 #: inc/options/general/comments-single.php:181
 #: inc/options/general/page-title.php:1265
-#: inc/options/single-elements/related-posts.php:688
+#: inc/options/single-elements/related-posts.php:850
 #: inc/panel-builder/footer/options.php:89
 msgid "Container Background"
 msgstr "Фон контейнера"
@@ -3681,6 +3686,7 @@ msgstr "Типографика"
 #: inc/options/general/content-elements.php:25
 #: inc/options/general/page-title.php:748
 #: inc/options/general/posts-listing.php:349
+#: inc/options/single-elements/related-posts.php:347
 #: inc/options/woocommerce/card-product-elements.php:341
 #: inc/panel-builder/footer/socials/options.php:109
 #: inc/panel-builder/footer/widget-area-1/options.php:109
@@ -4108,11 +4114,11 @@ msgstr "Каталог товаров"
 msgid "Number of Posts"
 msgstr "Число записей"
 
-#: inc/options/single-elements/related-posts.php:412
+#: inc/options/single-elements/related-posts.php:543
 msgid "After Comments"
 msgstr "После"
 
-#: inc/options/single-elements/related-posts.php:411
+#: inc/options/single-elements/related-posts.php:542
 msgid "Before Comments"
 msgstr "Перед"
 
@@ -4263,7 +4269,7 @@ msgstr "Максимальная ширина сайта"
 
 #: inc/options/general/sidebar.php:91
 #: inc/options/single-elements/author-box.php:196
-#: inc/options/single-elements/related-posts.php:676
+#: inc/options/single-elements/related-posts.php:838
 msgid "Container Inner Spacing"
 msgstr "Внутр. отступы контейнера"
 
@@ -4685,10 +4691,10 @@ msgstr "Общие настройки"
 #: inc/options/single-elements/post-nav.php:156
 #: inc/options/single-elements/post-share-box.php:425
 #: inc/options/single-elements/post-tags.php:151
-#: inc/options/single-elements/related-posts.php:476
+#: inc/options/single-elements/related-posts.php:607
 #: inc/options/woocommerce/products-sorting.php:28
-#: inc/options/woocommerce/related-upsells.php:87
-#: inc/options/woocommerce/related-upsells.php:109
+#: inc/options/woocommerce/related-upsells.php:112
+#: inc/options/woocommerce/related-upsells.php:134
 #: inc/options/woocommerce/results-count.php:34
 #: inc/panel-builder/footer/copyright/options.php:77
 #: inc/panel-builder/footer/menu/options.php:135
@@ -4714,7 +4720,7 @@ msgstr "Десктоп"
 #: inc/options/single-elements/author-box.php:213
 #: inc/options/single-elements/post-share-box.php:415
 #: inc/options/single-elements/post-tags.php:140
-#: inc/options/single-elements/related-posts.php:465
+#: inc/options/single-elements/related-posts.php:596
 #: inc/options/woocommerce/products-sorting.php:16
 #: inc/options/woocommerce/results-count.php:21
 msgid "Visibility"
@@ -4733,10 +4739,10 @@ msgstr "Отображение"
 #: inc/options/single-elements/post-nav.php:158
 #: inc/options/single-elements/post-share-box.php:427
 #: inc/options/single-elements/post-tags.php:153
-#: inc/options/single-elements/related-posts.php:478
+#: inc/options/single-elements/related-posts.php:609
 #: inc/options/woocommerce/products-sorting.php:30
-#: inc/options/woocommerce/related-upsells.php:89
-#: inc/options/woocommerce/related-upsells.php:111
+#: inc/options/woocommerce/related-upsells.php:114
+#: inc/options/woocommerce/related-upsells.php:136
 #: inc/options/woocommerce/results-count.php:36
 #: inc/panel-builder/footer/copyright/options.php:79
 #: inc/panel-builder/footer/menu/options.php:137
@@ -4777,10 +4783,10 @@ msgstr "Смартфон"
 #: inc/options/single-elements/post-nav.php:157
 #: inc/options/single-elements/post-share-box.php:426
 #: inc/options/single-elements/post-tags.php:152
-#: inc/options/single-elements/related-posts.php:477
+#: inc/options/single-elements/related-posts.php:608
 #: inc/options/woocommerce/products-sorting.php:29
-#: inc/options/woocommerce/related-upsells.php:88
-#: inc/options/woocommerce/related-upsells.php:110
+#: inc/options/woocommerce/related-upsells.php:113
+#: inc/options/woocommerce/related-upsells.php:135
 #: inc/options/woocommerce/results-count.php:35
 #: inc/panel-builder/footer/copyright/options.php:78
 #: inc/panel-builder/footer/menu/options.php:136
@@ -4861,6 +4867,7 @@ msgstr "Автор"
 
 #: inc/options/general/page-title.php:524
 #: inc/options/general/posts-listing.php:539
+#: inc/options/single-elements/related-posts.php:453
 msgid "Post Meta"
 msgstr "Метаданные записи"
 
@@ -4876,7 +4883,7 @@ msgstr "Отрывок"
 
 #: inc/options/general/posts-listing.php:292
 #: inc/options/single-elements/featured-image.php:28
-#: inc/options/single-elements/related-posts.php:240
+#: inc/options/single-elements/related-posts.php:315
 #: inc/options/woocommerce/card-product-elements.php:299
 #: inc/options/woocommerce/general/cart-page.php:29
 #: inc/options/woocommerce/single-product-gallery.php:101
@@ -4886,7 +4893,7 @@ msgstr "Пропорции"
 
 #: inc/options/general/posts-listing.php:270
 #: inc/options/single-elements/featured-image.php:11
-#: inc/options/single-elements/related-posts.php:222
+#: inc/options/single-elements/related-posts.php:310
 msgid "Featured Image"
 msgstr "Изображение обложки"
 
@@ -4895,6 +4902,7 @@ msgid "Heading tag"
 msgstr "Тег заголовка"
 
 #: inc/options/general/posts-listing.php:88
+#: inc/options/single-elements/related-posts.php:222
 msgid "Card Elements"
 msgstr "Элементы карточки"
 
@@ -5104,8 +5112,8 @@ msgstr "Цвет границы"
 #: inc/options/single-elements/post-share-box.php:531
 #: inc/options/single-elements/post-share-box.php:589
 #: inc/options/single-elements/post-share-box.php:618
-#: inc/options/single-elements/related-posts.php:605
-#: inc/options/single-elements/related-posts.php:645
+#: inc/options/single-elements/related-posts.php:743
+#: inc/options/single-elements/related-posts.php:794
 #: inc/options/woocommerce/card-product-elements.php:765
 #: inc/options/woocommerce/card-product-elements.php:910
 #: inc/options/woocommerce/card-product-elements.php:948
@@ -5296,7 +5304,7 @@ msgstr "Цвет текста"
 #: inc/options/single-elements/post-nav.php:166
 #: inc/options/single-elements/post-share-box.php:635
 #: inc/options/single-elements/post-tags.php:161
-#: inc/options/single-elements/related-posts.php:486
+#: inc/options/single-elements/related-posts.php:617
 #: inc/options/woocommerce/archive-main.php:166
 #: inc/options/woocommerce/card-product-elements.php:687
 #: inc/options/woocommerce/general/account-page.php:74
@@ -5305,7 +5313,7 @@ msgstr "Цвет текста"
 #: inc/options/woocommerce/general/product-badges.php:182
 #: inc/options/woocommerce/general/quantity-input.php:61
 #: inc/options/woocommerce/general/store-notice.php:56
-#: inc/options/woocommerce/related-upsells.php:119
+#: inc/options/woocommerce/related-upsells.php:144
 #: inc/options/woocommerce/results-count.php:44
 #: inc/options/woocommerce/single-main.php:61
 #: inc/options/woocommerce/single-product-elements.php:129
@@ -5343,7 +5351,7 @@ msgstr "Верхний отступ блока"
 msgid "Infinite Scroll"
 msgstr "∞ прокрутка"
 
-#: inc/components/pagination.php:97 inc/options/general/pagination.php:38
+#: inc/components/pagination.php:108 inc/options/general/pagination.php:38
 #: inc/options/general/pagination.php:61
 msgid "Load More"
 msgstr "Загрузить ещё"
@@ -5471,9 +5479,9 @@ msgstr "Общее"
 #: inc/options/single-elements/post-share-box.php:584
 #: inc/options/single-elements/post-share-box.php:613
 #: inc/options/single-elements/post-tags.php:187
-#: inc/options/single-elements/related-posts.php:509
-#: inc/options/single-elements/related-posts.php:571
-#: inc/options/single-elements/related-posts.php:639
+#: inc/options/single-elements/related-posts.php:640
+#: inc/options/single-elements/related-posts.php:709
+#: inc/options/single-elements/related-posts.php:788
 #: inc/options/woocommerce/card-product-elements.php:102
 #: inc/options/woocommerce/card-product-elements.php:113
 #: inc/options/woocommerce/card-product-elements.php:149
@@ -5509,7 +5517,7 @@ msgstr "Общее"
 #: inc/options/woocommerce/general/quantity-input.php:124
 #: inc/options/woocommerce/general/store-notice.php:76
 #: inc/options/woocommerce/general/store-notice.php:97
-#: inc/options/woocommerce/related-upsells.php:148
+#: inc/options/woocommerce/related-upsells.php:171
 #: inc/options/woocommerce/results-count.php:74
 #: inc/options/woocommerce/single-product-elements.php:162
 #: inc/options/woocommerce/single-product-elements.php:203
@@ -5692,6 +5700,7 @@ msgstr "LinkedIn"
 #: inc/options/general/page-title.php:325
 #: inc/options/general/page-title.php:358
 #: inc/options/general/posts-listing.php:221
+#: inc/options/single-elements/related-posts.php:402
 #: inc/options/woocommerce/card-product-elements.php:388
 #: inc/options/woocommerce/card-product-elements.php:699
 #: inc/options/woocommerce/single-product-layers.php:83
