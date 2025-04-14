@@ -3,28 +3,72 @@ const router = express.Router();
 const connection = require('../database');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
-// Главная страница
-router.get('/', (req, res) => {
-    var sqlres
-    connection.CardGenerator(sqlres, (err, results) =>{
-        if (err){
-            console.error(err);
-        }
-        res.render('layout', {
-            sqlres: results,
-            body: 'index',
-            input_price_value: 10000,
-            selected_categories: ('')
-        })
-    })
+// Настройка multer для загрузки файлов
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const userDir = `uploads/${req.session.userId}`;
+        fs.mkdirSync(userDir, { recursive: true }); // Создаем папку пользователя, если она не существует
+        cb(null, userDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname); // Используем оригинальное имя файла
+    }
 });
+const upload = multer({ storage });
 
 // Список Аватарок 
 const avatars = [
     { url: '/images/xxx.png' },
     { url: '/images/ччч.jpg' }
 ];
+
+// // Главная страница
+// router.get('/', (req, res) => {
+//     res.render('layout', {
+//         body: 'games',
+//     })
+// });
+// Страница с играми
+router.get('/', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+    const session_id = req.session.userId
+    connection.GetGames(session_id, (err, results) => {
+        if (err) {
+            return res.status(500).send('Ошибка при получении игр');
+        }
+        res.render('layout', { body: 'games', games: results }); // Ваша страница с играми
+    });
+});
+
+// Форма создания новой игры
+router.get('/add', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
+    }
+    res.render('layout',{body:'addGame'}); // Ваша EJS форма для добавления игры
+});
+
+// Обработка формы добавления игры
+router.post('/add', upload.single('image'), (req, res) => {
+    const { title, description } = req.body;
+    const imagePath = `/${req.session.userId}/${req.file.originalname}`;
+    const session_id = req.session.userId
+    // Записываем информацию об игре в БД
+    connection.AddGame(session_id, title, description, imagePath, (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Ошибка при добавлении игры');
+        }
+        res.redirect('/games'); // Перенаправляем на страницу с играми
+    });
+});
+
 
 // Вход (GET)
 router.get('/login', (req, res) => {
@@ -38,19 +82,15 @@ router.get('/register', (req, res) => {
 
 // Регистрация (POST)
 router.post('/register', (req, res) => {
-    const { username, password, email, phone, confirmpassword } = req.body;
+    const { username, password, email, confirmpassword } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
     // Проверяем, что username, password и email не пустые
-    if (!username || !password || !email || !confirmpassword || !phone.length==11 ) {
+    if (!username || !password || !email || !confirmpassword) {
         return res.render('layout', { error: 'Все заполнить надо!', body: 'register' });
     };
     const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
     if(!emailRegex.test(email)){
         return res.render('layout', { error: 'Ты не знаешь как мыло пишется?', body: 'register' });
-    };
-    const phoneRedex = /^\+?[0-9]{10,15}$/;
-    if(!phoneRedex.test(phone)){
-        return res.render('layout', { error: 'номерок это что-то типо "88005553535"', body: 'register' });
     };
     if(password.length < 8){
         return res.render('layout', { error: 'Хотябы 8 циферок напиши', body: 'register' });
@@ -64,7 +104,7 @@ router.post('/register', (req, res) => {
             return res.render('layout', { error: 'Такой пользователь уже есть', body: 'register'});
         }
         else{
-            connection.createUser(username, hashedPassword, email, phone, (err, results) => {
+            connection.createUser(username, hashedPassword, email, (err, results) => {
             if (err) {
                 console.error(err);
                 return res.render('layout', { error: 'Ошибка при регистрации.', body: 'register' });
@@ -127,57 +167,6 @@ router.get('/acc_page', (req, res) => {
     })
 })
 
-router.post('/update_cat', (req, res) => {
-    const { categories, price_value } = req.body;
-    var category_list = ['1','2','3']
-
-    let selectedCategories = Array.isArray(categories) ? categories : [categories];
-
-    if (!categories && price_value == 10000) {
-        res.redirect('/');
-    } else if (price_value == 10000) {
-        connection.CardGeneratorCatAndPrise(selectedCategories, price_value, (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.render('layout', {
-                    sqlres: result,
-                    body: 'index',
-                    input_price_value: price_value,
-                    selected_categories: selectedCategories
-                });
-            }
-        });
-    } else if (!categories) {
-        selectedCategories = category_list
-        connection.CardGeneratorCatAndPrise(selectedCategories, price_value, (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.render('layout', {
-                    sqlres: result,
-                    body: 'index',
-                    input_price_value: price_value,
-                    selected_categories: ('')
-                });
-            }
-        });
-    } else {
-        connection.CardGeneratorCatAndPrise(selectedCategories, price_value, (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.render('layout', {
-                    sqlres: result,
-                    body: 'index',
-                    input_price_value: price_value,
-                    selected_categories: selectedCategories
-                });
-            }
-        });
-    }
-});
-
 router.post('/logoutandchange', (req, res) => {
     const logoutandchange = req.body.logoutandchange; // Получаем значение, нажатой кнопки
     const name_value = req.body.acc_label_name;
@@ -215,22 +204,12 @@ router.post('/logoutandchange', (req, res) => {
 
 });
 
-router.post('/add_to_cart', (req, res) => {
-    const { name, price } = req.body;
-
-    if (!req.session.cart) {
-        req.session.cart = [];
-    }
-
-    // Добавление товара в корзину
-    req.session.cart.push({ name, price });
-    res.json({ message: 'Товар добавлен в корзину', cart: req.session.cart });
-});
-
+//Выбор аватарки
 router.get('/select_thumbnail',(req,res) => {
     res.render('layout',{ body: 'select_avatar', avatars: avatars})
 })
 
+//
 router.post('/upload', async (req, res) => {
     const avatarId = req.body.avatar; // Получаем ID выбранного аватара
     const avatar = avatars[avatarId].url;
@@ -247,57 +226,6 @@ router.post('/upload', async (req, res) => {
     })
 });
 
-//Переход на страницу товара
-router.post('/product', (req, res) => {
-    const productId = req.body.productId;
-    res.redirect(`/product/${productId}`);
-});
 
-// Страница товара
-router.get('/product/:productId', (req, res) => {
-    const product_id = req.params.productId
-
-    connection.SelectedCardGenerator(product_id ,(err,result) => {
-        if(err){
-            console.log(err);
-            return res.render('layout', { error: 'Ошибка', body: 'index'});
-        }
-        else{
-            res.render('layout', { sqlres: result, body: 'product'})
-        }
-    })
-});
-
-router.post('/add_to_cart', (req, res) => {
-    const { name, price } = req.body;
-
-    // Инициализация корзины, если она еще не существует
-    if (!req.session.cart) {
-        req.session.cart = {};
-    }
-
-    // Если товар уже в корзине, увеличиваем его количество
-    if (req.session.cart[name]) {
-        req.session.cart[name].quantity += 1;
-    } else {
-        // Иначе добавляем новый товар в корзину
-        req.session.cart[name] = {
-            price: price,
-            quantity: 1,
-        };
-    }
-
-    res.json({ message: 'Товар добавлен в корзину', cart: req.session.cart });
-});
-
-// Обработчик для получения корзины
-router.get('/cart', (req, res) => {
-    res.json(req.session.cart || {});
-});
-
-
-router.get('/accept',(req, res) => {
-    res.render('layout',{body: 'accept'})
-})
 
 module.exports = router;

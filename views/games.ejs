@@ -1,0 +1,19 @@
+
+<div class="container bg-light">
+    <% i = 0 %>
+    <% games.forEach(game => { %>
+        <div>
+            <h2><%= games[i].gameTitle %></h2>
+            <img src="<%= games[i].gameImage %>" alt="<%= games[i].gameTitle %>" width="150px">
+            <p><%= games[i].gameDescription %></p>
+            <a href="/games/edit/<%= games[i].gameID %>">Редактировать</a>
+            <form action="/games/delete/<%= games[i].gameID %>" method="post" style="display:inline;">
+                <button type="submit">Удалить</button>
+            </form>
+        </div>
+        <% i++ %>
+    <% }); %>
+    <form action="/add" method="get">
+        <button type="submit">Добавить</button>
+    </form>
+</div>
