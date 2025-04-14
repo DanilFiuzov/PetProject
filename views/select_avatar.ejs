@@ -1,0 +1,13 @@
+<div class="container bg_lb" style="width: 500px; min-height: 38vw; padding-top: 7vw;">
+    <form id="avatarForm" action="/upload" method="POST">
+        <div id="avatarContainer">
+            <% avatars.forEach(function(avatar, index) { %>
+                <label class="avatar" data-id="<%= index %>">
+                    <input type="checkbox" name="avatar" value="<%= index %>" style="display: none;"> <!-- Скрытый чекбокс -->
+                    <img class="rounded-circle profile-pic" src="<%= avatar.url %>" alt="Avatar" />
+                </label>
+            <% }) %>
+        </div>
+        <button class="btn btn-primary" type="submit" style="float: right;">Принять</button>
+    </form>
+</div>
