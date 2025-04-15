@@ -11,8 +11,32 @@ const path = require('path');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const userDir = `uploads/${req.session.userId}`;
-        fs.mkdirSync(userDir, { recursive: true }); // Создаем папку пользователя, если она не существует
-        cb(null, userDir);
+        fs.mkdirSync(userDir, { recursive: true });
+        fs.mkdirSync(`uploads/${req.session.userId}/images`, { recursive: true });
+        fs.mkdirSync(`uploads/${req.session.userId}/styles`, { recursive: true });
+        fs.mkdirSync(`uploads/${req.session.userId}/routes`, { recursive: true }); 
+        fs.mkdirSync(`uploads/${req.session.userId}/scripts`, { recursive: true });
+        fs.mkdirSync(`uploads/${req.session.userId}/views`, { recursive: true });
+
+        let uploadPath = userDir; // По умолчанию — корневая папка
+        console.log(file.originalname)
+        if (file.mimetype.startsWith('image/')) {
+            uploadPath = `${userDir}/images`;
+        } 
+        else if (file.originalname.endsWith('.css') || file.mimetype.includes('css')) {
+            uploadPath = `${userDir}/styles`;
+        } 
+        else if (file.originalname.endsWith('.js') || file.mimetype.includes('javascript')) {
+            uploadPath = `${userDir}/scripts`;
+        } 
+        else if (file.originalname.endsWith('.ejs') || file.mimetype.includes('ejs')) {
+            uploadPath = `${userDir}/views`;
+        }
+        else if (file.originalname === 'route.js') {
+            uploadPath = `${userDir}/routes`;
+        }
+
+        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname); // Используем оригинальное имя файла
@@ -42,7 +66,7 @@ router.get('/', (req, res) => {
         if (err) {
             return res.status(500).send('Ошибка при получении игр');
         }
-        res.render('layout', { body: 'games', games: results }); // Ваша страница с играми
+        res.render('layout', { body: 'games', games: results });
     });
 });
 
@@ -51,23 +75,62 @@ router.get('/add', (req, res) => {
     if (!req.session.userId) {
         return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
     }
-    res.render('layout',{body:'addGame'}); // Ваша EJS форма для добавления игры
+    res.render('layout',{body:'addGame'}); 
 });
 
 // Обработка формы добавления игры
-router.post('/add', upload.single('image'), (req, res) => {
+router.post('/add', upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'style', maxCount: 1 },
+    { name: 'script', maxCount: 1 },
+    { name: 'route', maxCount: 1 },
+    { name: 'view', maxCount: 1 }
+]), (req, res) => {
     const { title, description } = req.body;
-    const imagePath = `/${req.session.userId}/${req.file.originalname}`;
     const session_id = req.session.userId
+    // Путь к загруженным файлам
+    const imagePath = req.files['image'] ? `/${req.session.userId}/images/${req.files['image'][0].originalname}` : null;
+    const cssFilePath = req.files['style'] ? `/${req.session.userId}/styles/${req.files['style'][0].originalname}` : null;
+    const jsFilePath = req.files['script'] ? `/${req.session.userId}/scripts/${req.files['script'][0].originalname}` : null;
+    const routeFilePath = req.files['route'] ? `/${req.session.userId}/routes/${req.files['route'][0].originalname}` : null;
+    const viewFilePath = req.files['view'] ? `/${req.session.userId}/views/${req.files['view'][0].originalname}` : null;
+
     // Записываем информацию об игре в БД
-    connection.AddGame(session_id, title, description, imagePath, (err) => {
+    connection.AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, (err) => {
         if (err) {
             console.error(err);
             return res.status(500).send('Ошибка при добавлении игры');
         }
-        res.redirect('/games'); // Перенаправляем на страницу с играми
+        res.redirect('/'); // Перенаправляем на страницу с играми
+    });
+    if (!req.files) {
+        return res.status(400).send('Файлы не загружены. Убедитесь, что вы прикрепили все необходимые файлы.');
+    }
+});
+
+// Удаление игры
+router.post('/delete/:id', (req, res) => {
+    const gameId = req.params.id;
+    const session_id = req.session.userId
+
+    connection.DeleteGame(gameId, session_id, (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Ошибка при удалении игры');
+        }
+        res.redirect('/');
     });
 });
+
+router.get('/game/:id', (res,req) => {
+    const gameId = req.params.id;
+    connection.SelectGame(gameId,(err,result) => {
+        if (err) {
+            return res.status(500).send('Ошибка при получении игр');
+        }
+        res.render('layout', { body: `${result[0].viewFile}` }); // Ваша страница с играми
+    })
+})
 
 
 // Вход (GET)
@@ -92,7 +155,7 @@ router.post('/register', (req, res) => {
     if(!emailRegex.test(email)){
         return res.render('layout', { error: 'Ты не знаешь как мыло пишется?', body: 'register' });
     };
-    if(password.length < 8){
+    if(password.length < 0){
         return res.render('layout', { error: 'Хотябы 8 циферок напиши', body: 'register' });
     };
     if(password !== confirmpassword){
@@ -156,6 +219,9 @@ router.post('/login', (req, res) => {
 
 router.get('/acc_page', (req, res) => {
     const session_id = req.session.userId
+    if (!req.session.userId) {
+        return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
+    }
 
     connection.AccPageRender(session_id, (err,result) => {
         if(err){
@@ -172,6 +238,9 @@ router.post('/logoutandchange', (req, res) => {
     const name_value = req.body.acc_label_name;
     const phone_value = req.body.acc_label_phone;
     const session_id = req.session.userId;
+    if (!req.session.userId) {
+        return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
+    }
 
     switch (logoutandchange) {
         case 'logout':
@@ -207,6 +276,9 @@ router.post('/logoutandchange', (req, res) => {
 //Выбор аватарки
 router.get('/select_thumbnail',(req,res) => {
     res.render('layout',{ body: 'select_avatar', avatars: avatars})
+    if (!req.session.userId) {
+        return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
+    }
 })
 
 //
@@ -214,6 +286,10 @@ router.post('/upload', async (req, res) => {
     const avatarId = req.body.avatar; // Получаем ID выбранного аватара
     const avatar = avatars[avatarId].url;
     const session_id = req.session.userId;  
+    if (!req.session.userId) {
+        return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
+    }
+
     connection.UpdateAvatar(avatar,session_id ,(err,result) => {
         if(err){
             console.log(err);

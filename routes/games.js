@@ -5,40 +5,6 @@ const path = require('path');
 const router = express.Router();
 const connection = require('../database'); // Импортируйте соединение с вашей БД
 
-// Настройка multer для загрузки файлов
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const userDir = `uploads/${req.session.userId}`;
-        fs.mkdirSync(userDir, { recursive: true }); // Создаем папку пользователя, если она не существует
-        cb(null, userDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname); // Используем оригинальное имя файла
-    }
-});
-const upload = multer({ storage });
-
-// Форма создания новой игры
-router.get('/add', (req, res) => {
-    if (!req.session.userId) {
-        return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
-    }
-    res.render('addGame'); // Ваша EJS форма для добавления игры
-});
-
-// Страница с играми
-router.get('/', (req, res) => {
-    if (!req.session.userId) {
-        return res.redirect('/login');
-    }
-    const session_id = req.session.userId
-    connection.GetGames(session_id, (err, results) => {
-        if (err) {
-            return res.status(500).send('Ошибка при получении игр');
-        }
-        res.render('layout', { body: 'games', games: results }); // Ваша страница с играми
-    });
-});
 
 // Редактирование игры
 router.get('/edit/:id', (req, res) => {
@@ -62,19 +28,6 @@ router.post('/edit/:id', upload.single('image'), (req, res) => {
         if (err) {
             console.error(err);
             return res.status(500).send('Ошибка при обновлении игры');
-        }
-        res.redirect('/games');
-    });
-});
-
-// Удаление игры
-router.post('/delete/:id', (req, res) => {
-    const gameId = req.params.id;
-
-    connection.query('DELETE FROM games WHERE gameID = ? AND customerID = ?', [gameId, req.session.userId], (err) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Ошибка при удалении игры');
         }
         res.redirect('/games');
     });

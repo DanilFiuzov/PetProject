@@ -55,9 +55,19 @@ function GetGames( session_id, callback ){
     connection.query(query, [session_id], callback)
 }
 
-function AddGame(session_id, title, description, imagePath, callback){
-    const query = `INSERT INTO games (customerID, gameTitle, gameDescription, gameImage) VALUES (?, ?, ?, ?)`
-    connection.query(query, [session_id, title, description, imagePath], callback)
+function AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, callback){
+    const query = `INSERT INTO games (customerID, gameTitle, gameDescription, gameImage, cssFile, jsFile, routeFile, viewFile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    connection.query(query, [session_id, title, description, imagePath , cssFilePath, jsFilePath, routeFilePath, viewFilePath], callback)
+}
+
+function DeleteGame(gameId ,session_id, callback){
+    const query = `DELETE FROM games WHERE gameID = (?) AND customerID = (?)`
+    connection.query(query, [gameId, session_id], callback)
+}
+
+function SelectGame(gameId ,callback){
+    const query = `SELECT * from games WHERE gameID = (?)`
+    connection.query(query , [gameId], callback)
 }
 
 
@@ -70,5 +80,7 @@ module.exports = {
     UpdateAvatar,
     UpdateNameandPhone,
     GetGames,
-    AddGame
+    AddGame,
+    DeleteGame,
+    SelectGame
  };
