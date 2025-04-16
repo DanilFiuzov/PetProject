@@ -26,16 +26,15 @@ const storage = multer.diskStorage({
         else if (file.originalname.endsWith('.css') || file.mimetype.includes('css')) {
             uploadPath = `${userDir}/styles`;
         } 
+        else if (file.originalname === 'route.js') {
+            uploadPath = `${userDir}/routes`;
+        }
         else if (file.originalname.endsWith('.js') || file.mimetype.includes('javascript')) {
             uploadPath = `${userDir}/scripts`;
         } 
         else if (file.originalname.endsWith('.ejs') || file.mimetype.includes('ejs')) {
             uploadPath = `${userDir}/views`;
         }
-        else if (file.originalname === 'route.js') {
-            uploadPath = `${userDir}/routes`;
-        }
-
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
@@ -122,7 +121,7 @@ router.post('/delete/:id', (req, res) => {
     });
 });
 
-router.get('/game/:id', (res,req) => {
+router.get('/game/:id', (req, res) => {
     const gameId = req.params.id;
     connection.SelectGame(gameId,(err,result) => {
         if (err) {
