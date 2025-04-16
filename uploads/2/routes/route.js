@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-router.get(`/test`,(req, res) => {
-    console.log('awda')
-    res.redirect('/')
+router.get('/',(req, res) => {
+    res.render('layout',{body: '2/views/index.ejs'})
 })
 
 module.exports = router;
