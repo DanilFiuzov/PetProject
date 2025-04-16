@@ -8,76 +8,164 @@
             <div class="col-4 border-r">
                 <div class="p-3">
                     <div style="height: 70px; padding-top: 10px; padding-top: 0 !important;">
-                        <label for="">Название игры (18)</label>
+                        <h3>Название игры (18)</h3>
                         <input type="text" name="title" placeholder="Нареките игру" required class="w-100" maxlength="18"> 
                     </div>
                     <hr>
                     <div style="height: 145px; padding-top: 10px; padding-top: 0 !important;">
-                        <label for="">Описание игры (100)</label>
+                        <h3>Описание игры (100)</h3>
                         <textarea name="description" placeholder="Краткое описание игры" maxlength="100" style="height: 100px; resize: none;" class="w-100" required></textarea>
                     </div>
                     <hr>
-                    <div style="height: 350px; padding-top: 10px; padding-top: 0 !important;">
-                        <label for="">Изображение для вашей игры</label>
-                        <input type="file" name="image" accept="image/*" required>
+                    <div style="height: 360px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Изображения для вашей игры</h3>
+                        <input type="file" name="image" accept="image/*" required multiple>
                     </div>
                     <hr>
-                    <div style="height: 130px; padding-top: 10px; padding-top: 0 !important;">
-                        <input type="file" name="script" accept="script/*" required>   
+                    <div style="height: 480px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>EJS Views</h3>
+                        <input type="file" name="view" accept="view/*" required multiple>
                     </div>
                     <hr>
-                    <div style="height: 40px; padding-top: 10px; padding-top: 0 !important;">
+                    <div style="height: 190px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Java Scripts</h3>
+                        <input type="file" name="script" accept="script/*" required multiple>   
+                    </div>
+                    <hr>
+                    <div style="height: 120px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>CSS Styles</h3>
                         <input type="file" name="style" accept="style/*" required>
                     </div>
                     <hr>
-                    <div style="height: 40px; padding-top: 10px; padding-top: 0 !important;">
+                    <div style="height: 290px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Route file</h3>
                         <input type="file" name="route" accept="route/*" required>
-                    </div>
-                    <hr>
-                    <div style="height: 40px; padding-top: 10px; padding-top: 0 !important;">
-                        <input type="file" name="view" accept="view/*" required>
                     </div>
                 </div>  
             </div>
             <div class="col-8 p-3">
                 <div class="d-flex" style="height: 70px; padding-top: 10px;">
-                    <img src="/images/game_title.png" alt="">
-                    <span style="margin-left: 10px;">Будет видно здесь</span>
-                </div>
-                <hr>
-                <div style="height: 145px; padding-top: 10px;">
-                    <img src="/images/game_description.png" alt="">
-                    <span style="margin-left: 10px;">Описание игры отобраежается здесь(коротко, но емко)</span>
-                </div>
-                <hr>
-                <div class="row" style="height: 350px; padding-top: 10px;">
-                    <div class="col-auto">
-                        <img src="/images/game_image.png" alt="">
+                    <div class="col-5">
+                        <img width="90%" src="/images/game_title.png" alt="">
                     </div>
-                    <div class="col-auto">
-                        <p>Картинка формата '.png', обязательно квадратная!<br>(желательно 500x500px)</p>
+                    <div class="col-7">
+                        <h5>Название игры - это название игры!</h5> 
+                    </div>  
+                </div>
+                <hr>
+                <div class="row" style="height: 145px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/game_description.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Описание </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p>Описание игры должно быть написано кратко, но должно быть информативным.</p>
+                            </li>
+                        </ul> 
+                    </div>    
+                </div>
+                <hr>
+                <div class="row" style="height: 360px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/game_image.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Изображения (до 25 и весом не более 10МБ) </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <h5>Основное изображение игры</h5>
+                                <p>Изображение формата '.png', обязательно квадратная!<br>(желательно 500x500px) <br> Главное изображениие <b>должно!</b> называться "Logo.png"</p>
+                            </li>
+                            <li class="list-group-item"> 
+                                <h5>Другие изображения</h5>
+                                <p>Вы можете загрузить до 24 изображений, которые будут располагаться по пути: <br>src = '/(Ваш ID = <b><%- session.userId %></b>)/images/' <br>(Пример: /1/images/img.png) <br>Либо вы можете использовать web ссылки.
+                                </p>
+                            </li>
+                        </ul>
                     </div>       
                 </div>
                 <hr>
-                <div class="row" style="height: 130px; padding-top: 10px;">
-                    <div class="col-7">
-                        <img src="/images/script_image.png" alt="">
-                    </div>
+                <div class="row" style="height: 480px; padding-top: 10px;">
                     <div class="col-5">
-                        <p>Ваши скрипты. Вы можете подключить несколько скриптов. <br> Путь для скриптов будет выглядеть как src='/1/scripts/script.js' <br> (Ваш ID = <%- session.userId %>)</p>
+                        <img width="90%" src="/images/game_view.png" alt="">
+                        <hr>
+                        <img width="90%" src="/images/game_view2.png" alt="">
+                        <hr>
+                        <img width="90%" src="/images/game_view3.png" alt="">
                     </div>
+                    <div class="col-7">
+                        <h5>Представления (до 5 и весом не более 2МБ) </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <h5>Основное ejs представление</h5>
+                                <p>Главное представление <b>должно!</b> называться "index.ejs"</p>
+                            </li>
+                            <li class="list-group-item">
+                                <h5>Остальные представления</h5>
+                                <p>Вы можете загрузить до 4 представлений, которые будут располагаться по пути: <br>'(Ваш ID = <b><%- session.userId %></b>)/views/' <br>(Пример: 1/views/view.ejs) <br>Предствления вставляются между основными header и footer на сайте, <u>поэтому никаких тегов head или body</u>. <br> Соответственно при ренднре страницы необходимо указать необходимое представление в переменную body, а основным представлением указать 'layout' <br>
+                                    <b>Пример:</b> <br>
+                                    res.render('layout', { <br>
+                                    body: `1/views/view.ejs`,<br>
+                                    });
+                            </li>
+                        </ul>
+                    </div>  
                 </div>
                 <hr>
-                <div style="height: 40px; padding-top: 10px;">
-                    <span style="margin-left: 10px;">css</span>
+                <div class="row" style="height: 190px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/script_image.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Скрипты (до 5 и весом не более 2МБ) </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p>Вы можете загрузить до 5 скриптов, которые будут располагаться по пути: <br>src = '/(Ваш ID = <b><%- session.userId %></b>)/scripts/' <br>(Пример: /1/scripts/script.js) <br>Либо вы можете использовать web ссылки.
+                            </li>
+                        </ul>
+                    </div>  
                 </div>
                 <hr>
-                <div style="height: 40px; padding-top: 10px;">
-                    <span style="margin-left: 10px;">route</span>
+                <div class="row" style="height: 120px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/css_image.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Стили (Не более 1)</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p>О них можете не волноваться, они подключаются автоматически</p>
+                            </li>
+                        </ul> 
+                    </div> 
                 </div>
                 <hr>
-                <div style="height: 40px; padding-top: 10px;">
-                    <span style="margin-left: 10px;">view</span>
+                <div class="row" style="height: 290px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/game_route.png" alt="">
+                        <hr>
+                        <img width="90%" src="/images/game_route2.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Маршрутизация (Не более 1)</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <h5>Файл</h5>
+                                <p>Файл маршрутизации <b>должен!</b> называться: "route.js"</p>
+                            </li>
+                            <li class="list-group-item">
+                                <h5>Маршруты</h5>
+                                <p>
+                                    Путь в route файле: <br>
+                                    ('<b>/test</b>) <br>
+                                    Путь в ejs представлении: <br>
+                                    ('/game/&lt;%= session.activeGameID %&gt;<b>/test</b>') 
+                                </p>
+                            </li>
+                        </ul> 
+                    </div> 
                 </div>
             </div>
         </div> 

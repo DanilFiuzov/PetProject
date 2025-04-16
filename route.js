@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-router.get(`/game/:id/test`,(req, res) => {
-    console.log('awda')
+router.get('/test',(req, res) => {
+    console.log('Succses')
 })
 
 module.exports = router;
