@@ -88,11 +88,11 @@ router.post('/add', upload.fields([
     const { title, description } = req.body;
     const session_id = req.session.userId
     // Путь к загруженным файлам
-    const imagePath = req.files['image'] ? `/${req.session.userId}/images/${req.files['image'][0].originalname}` : null;
+    const imagePath = req.files['image'] ? `${req.session.userId}/images/${req.files['image'][0].originalname}` : null;
     const cssFilePath = req.files['style'] ? `/${req.session.userId}/styles/${req.files['style'][0].originalname}` : null;
     const jsFilePath = req.files['script'] ? `/${req.session.userId}/scripts/${req.files['script'][0].originalname}` : null;
     const routeFilePath = req.files['route'] ? `/${req.session.userId}/routes/${req.files['route'][0].originalname}` : null;
-    const viewFilePath = req.files['view'] ? `/${req.session.userId}/views/${req.files['view'][0].originalname}` : null;
+    const viewFilePath = req.files['view'] ? `${req.session.userId}/views/${req.files['view'][0].originalname}` : null;
 
     // Записываем информацию об игре в БД
     connection.AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, (err) => {
@@ -124,10 +124,12 @@ router.post('/delete/:id', (req, res) => {
 router.get('/game/:id', (req, res) => {
     const gameId = req.params.id;
     connection.SelectGame(gameId,(err,result) => {
-        if (err) {
-            return res.status(500).send('Ошибка при получении игр');
+        if (err || result.length === 0) {
+            return res.render('layout',{global_error: 'Ошибка при данных получении игры', body: 'games'});
         }
-        res.render('layout', { body: `${result[0].viewFile}` }); // Ваша страница с играми
+        req.session.activeGameID = result[0].gameID
+        console.log(req.session.activeGameID)
+        res.render('layout', { body: `${result[0].viewFile}`, result: result }); // Ваша страница с играми
     })
 })
 

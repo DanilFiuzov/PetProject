@@ -22,7 +22,7 @@
                         <input type="file" name="image" accept="image/*" required>
                     </div>
                     <hr>
-                    <div style="height: 40px; padding-top: 10px; padding-top: 0 !important;">
+                    <div style="height: 130px; padding-top: 10px; padding-top: 0 !important;">
                         <input type="file" name="script" accept="script/*" required>   
                     </div>
                     <hr>
@@ -59,8 +59,13 @@
                     </div>       
                 </div>
                 <hr>
-                <div style="height: 40px; padding-top: 10px;">
-                    <span style="margin-left: 10px;">java script</span>
+                <div class="row" style="height: 130px; padding-top: 10px;">
+                    <div class="col-7">
+                        <img src="/images/script_image.png" alt="">
+                    </div>
+                    <div class="col-5">
+                        <p>Ваши скрипты. Вы можете подключить несколько скриптов. <br> Путь для скриптов будет выглядеть как src='/1/scripts/script.js' <br> (Ваш ID = <%- session.userId %>)</p>
+                    </div>
                 </div>
                 <hr>
                 <div style="height: 40px; padding-top: 10px;">

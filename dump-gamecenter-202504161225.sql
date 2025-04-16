@@ -1,10 +1,10 @@
 
 CREATE TABLE `customers` (
-  `customerName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `customerEmail` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `customerName` varchar(50) DEFAULT NULL,
+  `customerEmail` varchar(45) DEFAULT NULL,
   `customerID` int NOT NULL AUTO_INCREMENT,
-  `customerThumbnail` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '/images/xxx.png',
-  `customerPassword` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `customerThumbnail` varchar(255)  DEFAULT '/images/xxx.png',
+  `customerPassword` varchar(100) NOT NULL,
   `customerRank` varchar(100) DEFAULT 'Дефолтный чел',
   PRIMARY KEY (`customerID`)
 )
