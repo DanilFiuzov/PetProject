@@ -9,11 +9,11 @@
         </ul>
         <% if (session.userId) { %>
             <a href="/acc_page" class="btn btn-primary nav-btn nav-btn-with-img" style="padding: 0 !important; width: 40px;"><img src="/images/avatar.png" alt="Button Images" class="img-responsive nav-btn-img"></a>
-        <% } else { %>
+            <button class="btn btn-primary nav-btn nav-btn-with-img" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"><img src="/images/list.png" alt="Button Images" class="nav-btn-img"></button>
+            <% } else { %>
             <a href="/register" class="btn btn-primary nav-btn">Sign Up</a>
             <a href="/login" class="btn btn-primary nav-btn">Log In</a>
         <% } %>   
-        <button class="btn btn-primary nav-btn nav-btn-with-img" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"><img src="/images/list.png" alt="Button Images" class="nav-btn-img"></button>
       </div>
     </div>
   </nav>
@@ -21,7 +21,7 @@
   <div class="container">
     <div class="row justify-content-md-center">
       <div class="col-md-auto">
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" style="width: 300px;">
           <div class="offcanvas-header" style="height: 55px;">
             <h4 class="d-flex justify-content-between align-items-center mt-4">
               <span class="text-muted">Label</span>
@@ -29,7 +29,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
           </div>
           <div class="offcanvas-body">
-      
+              <img src="<%- session.userThumbnail %>" alt="" class="w-100 p-3">
           </div>
           <div><a href="/accept"><img src="/images/shoping_cart.png" alt="" width="38px" class="float-end" style="margin-right: 10px; margin-bottom: 10px;"></a></div>
         </div>

@@ -50,9 +50,14 @@ function UpdateNameandPhone(name_value, phone_value, session_id, callback){
 //
 
 //Игры
-function GetGames( session_id, callback ){
+function GetDeveloperGames( session_id, callback ){
     const query = `SELECT * FROM games WHERE customerID = (?)`
     connection.query(query, [session_id], callback)
+}
+
+function GetGames(callback){
+    const query = `SELECT * FROM games`
+    connection.query(query,callback)
 }
 
 function AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, callback){
@@ -70,6 +75,10 @@ function SelectGame(gameId ,callback){
     connection.query(query , [gameId], callback)
 }
 
+function CountGames(session_id,callback){
+    const query = `SELECT * FROM games WHERE customerID = ?`
+    connection.query(query,[session_id],callback)
+}
 
 
 module.exports = { 
@@ -82,5 +91,7 @@ module.exports = {
     GetGames,
     AddGame,
     DeleteGame,
-    SelectGame
+    SelectGame,
+    GetDeveloperGames,
+    CountGames
  };

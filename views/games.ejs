@@ -1,11 +1,11 @@
 
-<div class="container bg-light"> 
-    <div class="row">
+<div class="container"> 
+    <div class="row" style="margin-bottom: 20px;">
         <% i=0 %>
         <% games.forEach(game => { %>
         <div class="col-3">
             <div class="card cards w-60 mt-4 shadow-sm bordered_1" style="height: 550px;">
-                <img src="<%= games[i].gameImage %>" alt="<%= games[i].gameTitle %>" class="card-img-top">
+                <img src="<%= games[i].gameImage %>" alt="<%= games[i].gameTitle %>" class="card-img-top bordered_top">
                 <div class="card-body" style="padding-bottom: 0 !important;">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4 class="mb-0"><%= games[i].gameTitle %></h4>
@@ -25,20 +25,19 @@
                             Играть
                         </button>
                     </form>
-                    <form action="/delete/<%= games[i].gameID %>" method="post">
-                        <button type="submit">
-                            Удалить
-                        </button>
-                    </form>
                 </div>           
             </div>
-            </div>
-            <% i++ %>
+        </div>
+        <% i++ %>
         <% }) %>
-        <% if (typeof session.userId !== 'undefined') { %>
-            <form action="/add" method="get">
-                <button type="submit">Добавить</button>
-            </form>
+        <% if (typeof session.userId !== 'undefined' && session.userRank === 'Разработчик' && session.userCountGames < 1 ) { %>
+            <div class="col-3">
+                <div class="card cards w-60 mt-4 shadow-sm bordered_1" style="height: 550px;">
+                    <a href="/add">
+                        <img src="/images/plus.png" alt="Добавить новую игру" class="card-img w-100 h-100">   
+                    </a>    
+                </div>
+            </div>
         <% } %>
     </div>
 </div>

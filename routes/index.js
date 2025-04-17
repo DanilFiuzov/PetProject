@@ -56,11 +56,7 @@ const avatars = [
 // });
 // Страница с играми
 router.get('/', (req, res) => {
-    if (!req.session.userId) {
-        return res.redirect('/login');
-    }
-    const session_id = req.session.userId
-    connection.GetGames(session_id, (err, results) => {
+    connection.GetGames((err, results) => {
         if (err) {
             return res.status(500).send('Ошибка при получении игр');
         }
@@ -70,7 +66,7 @@ router.get('/', (req, res) => {
 
 // Форма создания новой игры
 router.get('/add', (req, res) => {
-    if (!req.session.userId) {
+    if (!req.session.userId || req.session.userRank !== 'Разработчик') {
         return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
     }
     res.render('layout',{body:'addGame'}); 
@@ -254,13 +250,16 @@ router.post('/login', (req, res) => {
             // Проверяем переданный пароль с хэшем
             const isMatch = bcrypt.compareSync(password, user.customerPassword); // здесь происходит сравнение
             if (isMatch) {
-                req.session.userId = user.customerID;  // Сохранение userId в сессии
-                req.session.userThumbnail = user.customerThumbnail;
-                req.session.userEmail = user.customerEmail;
-                req.session.userRank = user.customerRank;
-                req.session.userName = user.customerName;
-                req.session.userPhone = user.customerPhone;
-                res.redirect('/');
+                let session_id = user.customerID
+                connection.CountGames(session_id,(err,countgames) =>{
+                    req.session.userCountGames = countgames.length
+                    req.session.userId = user.customerID;
+                    req.session.userThumbnail = user.customerThumbnail;
+                    req.session.userEmail = user.customerEmail;
+                    req.session.userRank = user.customerRank;
+                    req.session.userName = user.customerName;
+                    res.redirect('/');
+                })
             } else {
                 return res.render('layout', { error: 'Все таки забыл дароль, да?', body: 'login' });
             }
