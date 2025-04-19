@@ -32,14 +32,6 @@ body{
     background-repeat: repeat;
     background-position: 50% 0;
   }
-.header_bg{
-    background: url("/images/header_background.png");
-    background-position: bottom;
-}
-.footer_bg{
-    background: url("/images/footer_background.png");
-    background-position: top;
-}
 
 .flex-cards {
     display: flex;
@@ -105,11 +97,11 @@ body{
     border-top: 2px solid rgba(171, 171, 171, 1);
 }
 
-.offcanvas-body,.LogRegBtn a { color: rgb(3, 3, 3); }
-.offcanvas-body,.LogRegBtn a:link { text-decoration: none; }
-.offcanvas-body,.LogRegBtn a:visited { text-decoration: none; }
-.offcanvas-body,.LogRegBtn a:active { text-decoration: none; }
-.offcanvas-body,.LogRegBtn a:hover { color: rgb(46, 46, 46); }
+.offcanvas-body a, .LogRegBtn a { color: rgb(3, 3, 3); }
+.offcanvas-body a:link, .LogRegBtn a:link { text-decoration: none; }
+.offcanvas-body a:visited, .LogRegBtn a:visited { text-decoration: none; }
+.offcanvas-body a:active, .LogRegBtn a:active { text-decoration: none; }
+.offcanvas-body a:hover, .LogRegBtn a:hover { color: rgb(46, 46, 46); }
 
 .LogRegBtn{
     background: url("/images/LogRegBtns.png");
@@ -140,4 +132,20 @@ body{
     background: transparent;
     border: 0 !important;
 }
-
+.CanvaHeader{
+    background: url("/images/CanvaHeader.png");
+}
+.header_bg{
+    background: url("/images/header_background.png");
+    background-position: bottom;
+}
+.footer_bg{
+    background: url("/images/footer_background.png");
+    background-position: top;
+}
+.CanvaThumbnail{
+    background: url("/images/CanvaThumbnail.png");
+}
+.CanvaBody{
+    background: url("/images/CanvaBody.png") !important;
+}
