@@ -166,19 +166,23 @@ router.post('/delete/:id', (req, res) => {
     });
 });
 // const viewsArray = result[0].viewFile.split(',');
+
 //Игра
 router.get('/game/:id', (req, res) => {
     const gameId = req.params.id;
-    connection.SelectGame(gameId,(err,result) => {
-        if (err || result.length === 0) {
-            return res.render('layout',{global_error: 'Ошибка при данных получении игры', body: 'games'});
-        }
-        req.session.activeGameID = result[0].gameID
-        res.render('layout', { 
-            body: `${req.session.userId}/views/index.ejs`,
-            result: result 
-        });
-    })
+    if(!req.session.userId){
+        res.redirect('/login')
+    }
+    else{
+        connection.SelectGame(gameId,(err,result) => {
+            if (err || result.length === 0) {
+                return res.render('layout',{global_error: 'Ошибка при данных получении игры', body: 'games'});
+            }
+            req.session.activeGameID = result[0].gameID
+            res.render(`${req.session.userId}/views/index.ejs`, { result: result, });
+        })
+    }
+    
 })
 
 

@@ -28,10 +28,18 @@ span.carousel-control-next-icon {
     color: rgb(24, 24, 24) !important;
 }
 body{
-    background: url("/images/fon.png");
+    background: url("/images/background.png");
     background-repeat: repeat;
     background-position: 50% 0;
   }
+.header_bg{
+    background: url("/images/header_background.png");
+    background-position: bottom;
+}
+.footer_bg{
+    background: url("/images/footer_background.png");
+    background-position: top;
+}
 
 .flex-cards {
     display: flex;
@@ -96,3 +104,40 @@ body{
 .border-t{
     border-top: 2px solid rgba(171, 171, 171, 1);
 }
+
+.offcanvas-body,.LogRegBtn a { color: rgb(3, 3, 3); }
+.offcanvas-body,.LogRegBtn a:link { text-decoration: none; }
+.offcanvas-body,.LogRegBtn a:visited { text-decoration: none; }
+.offcanvas-body,.LogRegBtn a:active { text-decoration: none; }
+.offcanvas-body,.LogRegBtn a:hover { color: rgb(46, 46, 46); }
+
+.LogRegBtn{
+    background: url("/images/LogRegBtns.png");
+    background-position: bottom;
+    position: absolute;
+    top: 14px;
+    right: 15px;
+    width: 100px;
+    height: 186px;
+}
+.AccBtn{
+    background: url("/images/AccBtn.png");
+    background-position: bottom;
+    position: absolute;
+    top: 14px;
+    right: 15px;
+    width: 100px;
+    height: 186px;
+}
+.AccBtn div{
+    height: 82px;
+    width: 100px;
+    margin-bottom: 59px;
+}
+.AccBtn button{
+    height: 82px;
+    width: 100px;
+    background: transparent;
+    border: 0 !important;
+}
+

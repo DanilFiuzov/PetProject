@@ -1,35 +1,92 @@
-<nav class="navbar navbar-expand-lg sticky-top border-bottom" style="background-color: rgb(117, 126, 255); border-bottom: 0 !important;">
+<nav class="navbar navbar-expand-lg sticky-top border-bottom header_bg" style=" border-bottom: 0 !important;">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">Магазинчик</a>
+      <a class="navbar-brand" href="/"><h3><b>GameCenter</b></h3></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">     
-        </ul>
-        <% if (session.userId) { %>
-            <a href="/acc_page" class="btn btn-primary nav-btn nav-btn-with-img" style="padding: 0 !important; width: 40px;"><img src="/images/avatar.png" alt="Button Images" class="img-responsive nav-btn-img"></a>
-            <button class="btn btn-primary nav-btn nav-btn-with-img" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"><img src="/images/list.png" alt="Button Images" class="nav-btn-img"></button>
-            <% } else { %>
-            <a href="/register" class="btn btn-primary nav-btn">Sign Up</a>
-            <a href="/login" class="btn btn-primary nav-btn">Log In</a>
-        <% } %>   
+        </ul> 
       </div>
     </div>
   </nav>
+  <% if (session.userId) { %>
+    <div class="p-0 m-0 AccBtn text-decoration-none" style="display: flex; flex-direction: column; justify-content: flex-end;">
+      <div class="w-100" style="height: 39px; vertical-align: middle; text-align: center;">
+        <button class='' type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"><img class="h-100 p-1" src="/images/avatar.png" alt="Button Images"></button>
+      </div>
+    </div>
+    <% } else { %>
+      <div class="p-0 m-0 LogRegBtn text-decoration-none" style="display: flex; flex-direction: column; justify-content: flex-end;">
+        <div class="w-100" style="height: 39px; margin-top: auto; vertical-align: middle; text-align: center;">
+          <a href="/login"><b>Log In</b></a>
+        </div>
+        <div class="w-100" style="height: 39px; margin-top: 15px; vertical-align: middle; text-align: center;">
+          <a href="/register"><b>Sign Up</b></a>
+        </div> 
+      </div>
+  <% } %>  
+  
 
   <div class="container">
     <div class="row justify-content-md-center">
       <div class="col-md-auto">
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" style="width: 300px;">
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" style="width: 300px; background-color: wheat;">
           <div class="offcanvas-header" style="height: 55px;">
-            <h4 class="d-flex justify-content-between align-items-center mt-4">
-              <span class="text-muted">Label</span>
-            </h4>
+            <span class="mt-3">
+              <h4 class="d-flex justify-content-between align-items-center mt-4" style="margin-bottom: 2px;">
+                <b>
+                  <%- session.userName %>
+                </b>
+              </h4>
+              <p"><%- session.userRank %></p>
+            </span>
+            
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
           </div>
-          <div class="offcanvas-body">
-              <img src="<%- session.userThumbnail %>" alt="" class="w-100 p-3">
+          <img src="<%- session.userThumbnail %>" alt="" class="p-3 rounded-circle profile-pic" style="width: 250px;height: 250px; margin: 25px; padding: 5px !important;">
+          <hr style="margin: 0 !important;">
+          <div class="offcanvas-body p-0">
+            <a href="/acc_page" class="text-decoration-none">
+              <div class="w-100 p-2 d-flex" style="height: 59px;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <img src="/images/Mini_acc_img.png">
+                </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                  <h3>Аккаунт</h3>
+                </div>
+              </div>
+            </a>
+            <a href="/acc_page" class="text-decoration-none">
+              <div class="w-100 p-2 d-flex" style="height: 59px;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <img src="/images/Mini_friends_img.png">
+                </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                  <h3>Друзья</h3>
+                </div>
+              </div>
+            </a>
+            <a href="/acc_page" class="text-decoration-none">
+              <div class="w-100 p-2 d-flex" style="height: 59px;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <img src="/images/Mini_ach_img.png">
+                </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                  <h3>Достижения</h3>
+                </div>
+              </div>
+            </a>
+            <a href="/acc_page" class="text-decoration-none">
+              <div class="w-100 p-2 d-flex" style="height: 59px;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <img src="/images/Mini_logout_img.png">
+                </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                  <h3>Выйти</h3>
+                </div>
+              </div>
+            </a>
           </div>
           <div><a href="/accept"><img src="/images/shoping_cart.png" alt="" width="38px" class="float-end" style="margin-right: 10px; margin-bottom: 10px;"></a></div>
         </div>
