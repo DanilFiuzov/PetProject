@@ -23,4 +23,16 @@ CREATE TABLE `games` (
   KEY `customerID` (`customerID`),
   CONSTRAINT `games_ibfk_1` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`)
 )
+CREATE TABLE `winandloss` (
+  `wins` int DEFAULT '0',
+  `losses` int DEFAULT '0',
+  `customerID` int NOT NULL,
+  `gameID` int NOT NULL,
+  `winlossID` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`winlossID`),
+  KEY `winandloss_customers_FK` (`customerID`),
+  KEY `winandloss_games_FK` (`gameID`),
+  CONSTRAINT `winandloss_customers_FK` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`),
+  CONSTRAINT `winandloss_games_FK` FOREIGN KEY (`gameID`) REFERENCES `games` (`gameID`)
+)
 
