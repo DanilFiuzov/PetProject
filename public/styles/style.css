@@ -135,6 +135,9 @@ body{
 .CanvaHeader{
     background: url("/images/CanvaHeader.png");
 }
+.p{
+    color: bisque;
+}
 .header_bg{
     background: url("/images/header_background.png");
     background-position: 50% 100%;
@@ -145,6 +148,7 @@ body{
 }
 .CanvaThumbnail{
     background: url("/images/CanvaThumbnail.png");
+    background-size: cover;
 }
 .CanvaBody{
     background: url("/images/CanvaBody.png") !important;
@@ -154,3 +158,6 @@ body{
     background-repeat: repeat;
     background-position: 50% 0;
   }
+h1,h2,h3,h4,h5,h6{
+    color: bisque;
+}

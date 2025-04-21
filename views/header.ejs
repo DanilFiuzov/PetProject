@@ -18,12 +18,20 @@
     </div>
     <% } else { %>
       <div class="p-0 m-0 LogRegBtn text-decoration-none" style="display: flex; flex-direction: column; justify-content: flex-end;">
-        <div class="w-100" style="height: 39px; margin-top: auto; vertical-align: middle; text-align: center;">
-          <a href="/login"><b>Log In</b></a>
-        </div>
-        <div class="w-100" style="height: 39px; margin-top: 15px; vertical-align: middle; text-align: center;">
-          <a href="/register"><b>Sign Up</b></a>
-        </div> 
+        <a href="/login">
+          <div class="w-100" style="height: 39px; margin-top: auto; vertical-align: middle; text-align: center;padding-top: 2px;">
+            <p style="margin-top: 5px;">
+              <b>Log In</b>
+            </p>
+          </div>
+        </a>
+        <a href="/register">
+          <div class="w-100" style="height: 39px; margin-top: 16px; margin-bottom: 5px; vertical-align: middle; text-align: center;padding-top: 6px;">
+            <p>
+              <b>Sign Up</b>
+            </p>
+          </div> 
+        </a>
       </div>
   <% } %>  
   
@@ -39,7 +47,7 @@
                   <%- session.userName %>
                 </b>
               </h4>
-              <p"><%- session.userRank %></p>
+              <p class="p"><%- session.userRank %></p>
             </span>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
           </div>
