@@ -6,6 +6,7 @@ const session = require('express-session');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const { console } = require('inspector');
 
 // Настройка multer для загрузки файлов
 const storage = multer.diskStorage({
@@ -185,15 +186,47 @@ router.get('/game/:id', (req, res) => {
         res.redirect('/login')
     }
     else{
-        connection.SelectGame(gameId,(err,result) => {
-            if (err || result.length === 0) {
-                return res.render('layout',{global_error: 'Ошибка при данных получении игры', body: 'games'});
+        const session_id = req.session.userId
+        connection.SelectWinLoss(session_id, gameId,(err,winloss_result) => {
+            if(err){
+                console.log(err)
+                return res.render('layout',{global_error: 'Ошибка при получении данных игры', body: 'games'});
             }
-            req.session.activeGameID = result[0].gameID
-            res.render(`${req.session.userId}/views/index.ejs`, { result: result, });
+            else if (winloss_result.length<1){
+                connection.AddEmpty(session_id,gameId,(err) => {
+                    if (err) {
+                        console.log(err)
+                        return res.render('layout',{global_error: 'Ошибка при получении данных игры', body: 'games'});
+                    }
+                    else{
+                        connection.SelectGame(gameId,(err,result) => {
+                            if (err || result.length === 0) {
+                                console.log(err)
+                                return res.render('layout',{global_error: 'Ошибка при получении данных игры', body: 'games'});
+                            }
+                            req.session.activeGameID = result[0].gameID
+                            req.session.SelectGameWins = winloss_result[0].wins
+                            req.session.SelectGameLosses = winloss_result[0].losses
+                            res.render(`${req.session.userId}/views/index.ejs`, { result: result });
+                        })
+                    }
+                })
+            }
+            else{
+                connection.SelectGame(gameId,(err,result) => {
+                    if (err || result.length === 0) {
+                        console.log(err)
+                        return res.render('layout',{global_error: 'Ошибка при получении данных игры', body: 'games'});
+                    }
+                    req.session.activeGameID = result[0].gameID
+                    req.session.SelectGameWins = winloss_result[0].wins
+                    req.session.SelectGameLosses = winloss_result[0].losses
+                    console.log(req.session)
+                    res.render(`${req.session.userId}/views/index.ejs`, { result: result });
+                })
+            }
         })
     }
-    
 })
 
 // Вход (GET)

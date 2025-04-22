@@ -80,6 +80,16 @@ function CountGames(session_id,callback){
     connection.query(query,[session_id],callback)
 }
 
+function SelectWinLoss(session_id,gameId,callback){
+    const query = "select * from winandloss where customerID = (?) and gameID = (?)"
+    connection.query(query,[session_id,gameId],callback)
+}
+
+function AddEmpty(session_id,gameId,callback){
+    const query = "insert into winandloss (customerID,gameID) values (?,?)"
+    connection.query(query, [session_id,gameId],callback)
+}
+
 
 module.exports = { 
     connection, 
@@ -93,5 +103,7 @@ module.exports = {
     DeleteGame,
     SelectGame,
     GetDeveloperGames,
-    CountGames
+    CountGames,
+    SelectWinLoss,
+    AddEmpty
  };
