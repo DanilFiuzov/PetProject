@@ -19,15 +19,15 @@
     <% } else { %>
       <div class="p-0 m-0 LogRegBtn text-decoration-none" style="display: flex; flex-direction: column; justify-content: flex-end;">
         <a href="/login">
-          <div class="w-100" style="height: 39px; margin-top: auto; vertical-align: middle; text-align: center;padding-top: 2px;">
-            <p style="margin-top: 5px;">
+          <div class="w-100 p" style="height: 39px; margin-top: auto; vertical-align: middle; text-align: center;padding-top: 2px;">
+            <p style="font-size: 21px;">
               <b>Log In</b>
             </p>
           </div>
         </a>
         <a href="/register">
-          <div class="w-100" style="height: 39px; margin-top: 16px; margin-bottom: 5px; vertical-align: middle; text-align: center;padding-top: 6px;">
-            <p>
+          <div class="w-100 p" style="height: 39px; margin-top: 16px; margin-bottom: 5px; vertical-align: middle; text-align: center; padding-top: 2px;">
+            <p style="font-size: 21px;">
               <b>Sign Up</b>
             </p>
           </div> 
@@ -52,7 +52,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
           </div>
           <div class="w-100 CanvaThumbnail" style="padding: 40px;height: 300px;">
-            <img src="<%- session.userThumbnail %>" alt="" class="rounded-circle profile-pic" style="width: 220px;height: 220px; margin-top: 0px;">
+            <img src="<%- session.userThumbnail %>" alt="" class="rounded-circle profile-pic tr-mask" style="width: 220px;height: 220px; margin: 0px; border: 0 !important; background-color: transparent !important;">
           </div>
           <div class="offcanvas-body CanvaBody p-0" style="border-radius: 5px 5px;">
             <a href="/acc_page" class="text-decoration-none">
@@ -60,7 +60,7 @@
                 <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
                   <img src="/images/Mini_acc_img.png">
                 </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
                   <h3>Аккаунт</h3>
                 </div>
               </div>
@@ -70,7 +70,7 @@
                 <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
                   <img src="/images/Mini_friends_img.png">
                 </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
                   <h3>Друзья</h3>
                 </div>
               </div>
@@ -80,23 +80,22 @@
                 <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
                   <img src="/images/Mini_ach_img.png">
                 </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
                   <h3>Достижения</h3>
                 </div>
               </div>
             </a>
-            <a href="/acc_page" class="text-decoration-none">
+            <a href="/logout" class="text-decoration-none">
               <div class="w-100 p-2 d-flex" style="height: 59px;">
                 <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
                   <img src="/images/Mini_logout_img.png">
                 </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 8px !important;">
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
                   <h3>Выйти</h3>
                 </div>
               </div>
             </a>
           </div>
-          <div><a href="/accept"><img src="/images/shoping_cart.png" alt="" width="38px" class="float-end" style="margin-right: 10px; margin-bottom: 10px;"></a></div>
         </div>
       </div>
     </div>

@@ -42,19 +42,16 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Список Аватарок 
+// Список Аватарок по умолчанию 
 const avatars = [
-    { url: '/images/xxx.png' },
-    { url: '/images/ччч.jpg' }
+    { url: '/images/Avatars/Thumbnail_1.jpg' },
+    { url: '/images/Avatars/Thumbnail_2.png' },
+    { url: '/images/Avatars/Thumbnail_3.jpg' },
+    { url: '/images/Avatars/Thumbnail_4.png' },
+    { url: '/images/Avatars/Thumbnail_5.jpg' }
 ];
 
-// // Главная страница
-// router.get('/', (req, res) => {
-//     res.render('layout', {
-//         body: 'games',
-//     })
-// });
-// Страница с играми
+//Главная страница
 router.get('/', (req, res) => {
     connection.GetGames((err, results) => {
         if (err) {
@@ -75,9 +72,9 @@ router.get('/add', (req, res) => {
 // Обработка формы добавления игры
 router.post('/add', upload.fields([
     { name: 'image', maxCount: 25 }, // maxCount: 25 для картинок
-    { name: 'style', maxCount: 1 },
+    { name: 'style', maxCount: 5 }, // maxCount: 5 для стилей
     { name: 'script', maxCount: 5 }, // maxCount: 5 для скриптов
-    { name: 'route', maxCount: 1 },
+    { name: 'route', maxCount: 1 }, // maxCount: 1 для роутинга
     { name: 'view', maxCount: 5 } // maxCount: 5 для представлений
 ]), (req, res) => {
     const { title, description } = req.body;
@@ -85,8 +82,9 @@ router.post('/add', upload.fields([
     let [
         view_files_array,
         image_files_array,
-        script_files_array
-    ] = [[], [], []];
+        script_files_array,
+        css_files_array
+    ] = [[], [], [], []];
 
     // Проверка наличия файлов представлений
     let view_files = req.files['view'];
@@ -130,9 +128,22 @@ router.post('/add', upload.fields([
         }
     }
 
+    let css_files = req.files['style'];
+    if (css_files && css_files.length > 5) {
+        return res.render('layout', { body: 'addGame', global_error: 'Количество файлов стилей не может превышать 5' });
+    }
+    if (css_files) {
+        for (const element of css_files) {
+            if (element.size > 20971520) {
+                return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 2МБ` });
+            }
+            css_files_array.push(`${req.session.userId}/styles/${element.originalname}`);
+        }
+    }
+
     // Путь к загруженным файлам
     const imagePath = image_files_array.join(',');
-    const cssFilePath = req.files['style'] ? `/${req.session.userId}/styles/${req.files['style'][0].originalname}` : null;
+    const cssFilePath = css_files_array.join(',');
     const jsFilePath = script_files_array.join(',');
     const routeFilePath = req.files['route'] ? `/${req.session.userId}/routes/${req.files['route'][0].originalname}` : null;
     const viewFilePath = view_files_array.join(',');
@@ -184,7 +195,6 @@ router.get('/game/:id', (req, res) => {
     }
     
 })
-
 
 // Вход (GET)
 router.get('/login', (req, res) => {
@@ -323,28 +333,35 @@ router.post('/logoutandchange', (req, res) => {
         default:
             console.log('Неизвестное действие');
     }
-
-
-
-
 });
+
+router.get('/logout',(req, res) =>{
+    if(req.session.userId){
+        req.session.destroy(err => {
+            if (err) {
+                return res.render('layout', { body:games, global_error: "Ошибка при выходе"}); // Ошибка при выходе
+            }
+            res.redirect('/'); // Успешный выход
+        });
+    }
+})
 
 //Выбор аватарки
 router.get('/select_thumbnail',(req,res) => {
-    res.render('layout',{ body: 'select_avatar', avatars: avatars})
     if (!req.session.userId) {
         return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
     }
+    res.render('layout',{ body: 'select_avatar', avatars: avatars})
 })
 
 //
 router.post('/upload', async (req, res) => {
-    const avatarId = req.body.avatar; // Получаем ID выбранного аватара
-    const avatar = avatars[avatarId].url;
     const session_id = req.session.userId;  
     if (!req.session.userId) {
         return res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу логина
     }
+    const avatarId = req.body.avatar; // Получаем ID выбранного аватара
+    const avatar = avatars[avatarId].url;
 
     connection.UpdateAvatar(avatar,session_id ,(err,result) => {
         if(err){

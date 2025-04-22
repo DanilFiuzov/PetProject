@@ -1,10 +1,10 @@
 
-<div class="container"> 
+<div class="container def-bg-settings"> 
     <div class="row" style="margin-bottom: 20px; min-height: 750px;">
         <% i=0 %>
         <% games.forEach(game => { %>
         <div class="col-3">
-            <div class="card cards w-60 mt-4 shadow-sm bordered_1" style="height: 500px;">
+            <div class="card cards w-60 mt-4 shadow-sm bordered_1 CardBody" style="height: 500px;">
                 <img src="<%= games[i].gameImage %>" alt="<%= games[i].gameTitle %>" class="card-img-top bordered_top">
                 <div class="card-body" style="padding-bottom: 0 !important;">
                 <div class="d-flex justify-content-between align-items-center">
@@ -21,8 +21,10 @@
                 </div> 
                 <div class="p-4" style="padding-top: 2px !important; ">
                     <form action="/game/<%= games[i].gameID %>" method="get">
-                        <button class="btn btn-primary float-end" type="submit">
-                            Играть
+                        <button class="btn ButtonSmBG float-end" type="submit">
+                            <p class="p p-0" style="font-size: 18px; margin: 0 15px 0 15px;">
+                                Играть
+                            </p>
                         </button>
                     </form>
                 </div>           
@@ -32,9 +34,9 @@
         <% }) %>
         <% if (typeof session.userId !== 'undefined' && session.userRank === 'Разработчик' && session.userCountGames < 3 ) { %>
             <div class="col-3">
-                <div class="card cards w-60 mt-4 shadow-sm bordered_1" style="height: 500px;">
+                <div class="card cards w-60 mt-4 shadow-sm bordered_1 CardBody" style="height: 500px;">
                     <a href="/add">
-                        <img src="/images/plus.png" alt="Добавить новую игру" class="card-img w-100 h-100">   
+                        <img src="/images/plus.png" alt="Добавить новую игру" class="card-img w-100" style="height: 500px;">   
                     </a>    
                 </div>
             </div>
