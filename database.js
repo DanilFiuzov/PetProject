@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'GameCenter'
-});
-
 // const connection = mysql.createConnection({
-//     host: '192.168.88.188',
-//     user: 'student2',
-//     password: 'n8z6qv',
-//     database: 'gamecenter'
+//     host: 'localhost',
+//     user: 'root',
+//     password: 'root',
+//     database: 'GameCenter'
 // });
+
+const connection = mysql.createConnection({
+    host: '192.168.88.188',
+    user: 'student2',
+    password: 'n8z6qv',
+    database: 'gamecenter'
+});
 
 //Аккаунт
 connection.connect((err) => {
@@ -43,9 +43,9 @@ function UpdateAvatar(avatar, session_id, callback){
     connection.query(query, [avatar,session_id],callback)
 }
 
-function UpdateNameandPhone(name_value, phone_value, session_id, callback){
-    const query = `UPDATE customers SET customerName = (?),customerPhone = (?) where customerID = (?)`
-    connection.query(query, [name_value,phone_value,session_id],callback)
+function UpdateNameandPhone(name_value, session_id, callback){
+    const query = `UPDATE customers SET customerName = (?) where customerID = (?)`
+    connection.query(query, [name_value,session_id],callback)
 }
 //
 

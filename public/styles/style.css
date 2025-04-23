@@ -213,3 +213,6 @@ nav h6,
     background-repeat: no-repeat;
     color: bisque;
 }
+.ButtonLgBG:hover, .ButtonMdBG:hover, .ButtonXlBG:hover,.ButtonXsBG:hover,.ButtonSmBG:hover{
+    color:  rgb(253, 211, 160);
+}

@@ -1,6 +1,254 @@
-<form action="/games/edit/<%= game.id %>" method="post" enctype="multipart/form-data">
-    <input type="text" name="title" value="<%= game.title %>" required>
-    <textarea name="description" required><%= game.description %></textarea>
-    <input type="file" name="image" accept="image/*">
-    <button type="submit">Обновить игру</button>
-</form>
+
+<div class="container def-bg-settings">
+    <form action="/edit/<%= games[0].gameID %>" method="post" enctype="multipart/form-data">
+        <div class="border-b">
+            <h1>Редактор Изменения игры</h1>
+        </div>
+        <div class="row">
+            <div class="col-4 border-r">
+                <div class="p-3">
+                    <div style="height: 70px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Название игры (18)</h3>
+                        <input type="text" name="title" placeholder="Сейчас: <%- games[0].gameTitle %>" class="w-100" maxlength="18"> 
+                    </div>
+                    <hr>
+                    <div style="height: 145px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Описание игры (100)</h3>
+                        <textarea name="description" placeholder="Сейчас: <%- games[0].gameDescription %>" maxlength="100" style="height: 100px; resize: none;" class="w-100"></textarea>
+                    </div>
+                    <hr>
+                    <div style="height: 360px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Изображения для вашей игры</h3>
+                        <input type="file" name="image" accept="image/*" multiple>
+                        <h4>Ваши изобраения:</h4>
+                        <p><%- games[0].gameImage.split(',') %></p>
+                    </div>
+                    <hr>
+                    <div style="height: 190px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Java Scripts</h3>
+                        <input type="file" name="script" accept="script/*" multiple> 
+                        <h4>Ваши скрипты:</h4>
+                        <p><%- games[0].jsFile.split(',') %></p>  
+                    </div>
+                    <hr>
+                    <div style="height: 210px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>CSS Styles</h3>
+                        <input type="file" name="style" accept="style/*" multiple>
+                        <h4>Ваши стили:</h4>
+                        <p><%- games[0].cssFile.split(',') %></p>
+                    </div>
+                    <hr>
+                    <div style="height: 290px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>Route file</h3>
+                        <input type="file" name="route" accept="route/*">
+                        <h4>Ваши файлы маршрутизации:</h4>
+                        <p><%- games[0].routeFile.split(',') %></p>
+                    </div>
+                    <hr>
+                    <div style="height: 500px; padding-top: 10px; padding-top: 0 !important;">
+                        <h3>EJS Views</h3>
+                        <input type="file" name="view" accept="view/*" multiple>
+                        <h4>Ваши ejs представления:</h4>
+                        <p><%- games[0].viewFile.split(',') %></p>
+                    </div>
+                </div>  
+            </div>
+            <div class="col-8 p-3">
+                <div class="d-flex" style="height: 70px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/game_title.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Название игры - это название игры!</h5> 
+                    </div>  
+                </div>
+                <hr>
+                <div class="row" style="height: 145px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/game_description.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Описание </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p>Описание игры должно быть написано кратко, но должно быть информативным.</p>
+                            </li>
+                        </ul> 
+                    </div>    
+                </div>
+                <hr>
+                <div class="row" style="height: 360px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/game_image.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Изображения (до 25 и весом не более 10МБ) </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <h5>Основное изображение игры</h5>
+                                <p>Изображение формата '.png', обязательно квадратная!<br>(желательно 500x500px) <br> Главное изображениие <b>должно!</b> называться "Logo.png"</p>
+                            </li>
+                            <li class="list-group-item"> 
+                                <h5>Другие изображения</h5>
+                                <p>Вы можете загрузить до 24 изображений, которые будут располагаться по пути: <br>src = '/(Ваш ID = <b><%- session.userId %></b>)/images/' <br>(Пример: /1/images/img.png) <br>Либо вы можете использовать web ссылки.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>       
+                </div>
+                <hr>
+                <div class="row" style="height: 190px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/script_image.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Скрипты (до 5 и весом не более 2МБ) </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p>Вы можете загрузить до 5 скриптов, которые будут располагаться по пути: <br>
+                                    src = '/(Ваш ID = <b><%- session.userId %></b>)/scripts/' <br>
+                                    (Пример: /1/scripts/script.js) <br>
+                                    Либо вы можете использовать web ссылки.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>  
+                </div>
+                <hr>
+                <div class="row" style="height: 210px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/css_image.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Стили (Не более 5 и весом не более 2МБ)</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p>
+                                    Вы можете загрузить до 5 стилей, которые будут располагаться по пути: <br>
+                                    src = '/(Ваш ID = <b><%- session.userId %></b>)/styles/' <br>
+                                    (Пример: /1/styles/style.css) <br>
+                                    Либо вы можете использовать web ссылки(Такие как Bootstrap). 
+                                </p>
+                            </li>
+                        </ul> 
+                    </div> 
+                </div>
+                <hr>
+                <div class="row" style="height: 290px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/game_route.png" alt="">
+                        <hr>
+                        <img width="90%" src="/images/AddGame/game_route2.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Маршрутизация (Не более 1)</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <h5>Файл</h5>
+                                <p>Файл маршрутизации <b>должен!</b> называться: "route.js"</p>
+                            </li>
+                            <li class="list-group-item">
+                                <h5>Маршруты</h5>
+                                <p>
+                                    Путь в route файле: <br>
+                                    ('<b>/test</b>) <br>
+                                    Путь в ejs представлении: <br>
+                                    ('/game/&lt;%= session.activeGameID %&gt;<b>/test</b>') 
+                                </p>
+                            </li>
+                        </ul> 
+                    </div> 
+                </div>
+                <hr>
+                <div class="row" style="height: 500px; padding-top: 10px;">
+                    <div class="col-5">
+                        <img width="90%" src="/images/AddGame/game_view.png" alt="">
+                        <hr>
+                        <img width="90%" src="/images/AddGame/game_view2.png" alt="">
+                        <hr>
+                        <img width="90%" src="/images/AddGame/game_view3.png" alt="">
+                    </div>
+                    <div class="col-7">
+                        <h5>Представления (до 5 и весом не более 2МБ) </h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <h5>Основное ejs представление</h5>
+                                <p>Главное представление <b>должно!</b> называться "index.ejs"</p>
+                            </li>
+                            <li class="list-group-item">
+                                <h5>Остальные представления</h5>
+                                <p>Вы можете загрузить до 4 представлений, которые будут располагаться по пути: <br>
+                                    '(Ваш ID = <b><%- session.userId %></b>)/views/' <br>
+                                    (Пример: 1/views/view.ejs) <br>
+                                    Предствления вставляются между основными header и footer на сайте, <u>поэтому никаких тегов head или body</u>. <br>
+                                     Соответственно при ренднре страницы необходимо указать необходимое представление в переменную body, а основным представлением указать 'layout' <br>
+                                    <b>Пример:</b> <br>
+                                    res.render('layout', { <br>
+                                    body: `1/views/view.ejs`,<br>
+                                    });
+                            </li>
+                        </ul>
+                    </div>  
+                </div>
+            </div>
+        </div> 
+        <div class="row p-4 border-t">
+            <div class="col">
+                <h2>Основные маршруты на сайте</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <p>('/') -> Главная страница</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>('/login') -> Страница авторизации</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>('/register') -> Страница регистрации</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>('/acc_page') -> Страница аккаунта</p>
+                    </li>
+                </ul>
+            </div>
+            <div class="col"> 
+                <h2>Данные сохраненные в сессии</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <p>(req.session.userId) -> ID пользователя</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.userName) -> Имя пользователя</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.userRank) -> Ранг пользователя</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.userThumbnail) -> Аватарка пользователя</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.SelectGameLosses) -> Кол-во поражений в активной игре</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.SelectGameWins) -> Кол-во побед в активной игре</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.SelectGameLosses) -> Кол-во ничьих в активной игре</p>
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.SelectGameWins) -> Общий счет в активной игре</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class='d-flex justify-content-end border-t'>
+            <div class="p-3" style="height: 70px;">
+                <button class="btn ButtonSmBG" type="submit" style="float: right;">Изменить</button>
+            </div>
+        </form>
+        <form action="/delete/<%- games[0].gameID %>" method="post">
+            <div class="p-3" style="height: 70px;">
+                <button class="btn ButtonSmBG" type="submit"style="float: right;">Удалить</button>
+            </div>
+        </form>
+    </div>
+</div>

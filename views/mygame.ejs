@@ -20,10 +20,10 @@
                     </div>                      
                 </div> 
                 <div class="p-4" style="padding-top: 2px !important; ">
-                    <form action="/game/<%= games[i].gameID %>" method="get">
+                    <form action="/edit/<%= games[i].gameID %>" method="get">
                         <button class="btn ButtonSmBG float-end" type="submit">
                             <p class="p p-0" style="font-size: 18px; margin: 0 15px 0 15px;">
-                                Играть
+                                Изменить
                             </p>
                         </button>
                     </form>
@@ -32,7 +32,7 @@
         </div>
         <% i++ %>
         <% }) %>
-        <% if (typeof session.userId !== 'undefined' && session.userRank === 'Разработчик' && session.userCountGames < 3 ) { %>
+        <% if (typeof session.userId !== 'undefined' && session.userRank === 'Разработчик' && session.userCountGames < 1 ) { %>
             <div class="col-3">
                 <div class="card cards w-60 mt-4 shadow-sm bordered_1 CardBody" style="height: 500px;">
                     <a href="/add">
