@@ -3,7 +3,7 @@ CREATE TABLE `customers` (
   `customerName` varchar(50) DEFAULT NULL,
   `customerEmail` varchar(45) DEFAULT NULL,
   `customerID` int NOT NULL AUTO_INCREMENT,
-  `customerThumbnail` varchar(255)i DEFAULT '/images/Avatars/Thumbnail_1.jpg',
+  `customerThumbnail` varchar(255) DEFAULT '/images/Avatars/Thumbnail_1.jpg',
   `customerPassword` varchar(100) NOT NULL,
   `customerRank` varchar(100) DEFAULT 'Дефолтный чел',
   PRIMARY KEY (`customerID`)

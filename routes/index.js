@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const bodyParser = require('body-parser');
 
 
 // Настройка multer для загрузки файлов
@@ -268,16 +267,17 @@ router.get('/edit/:id', (req, res) =>{
     }
 });
 
-router.post('/edit/:id',upload.fields([
-    { name: 'image', maxCount: 25 }, // maxCount: 25 для картинок
-    { name: 'style', maxCount: 5 }, // maxCount: 5 для стилей
-    { name: 'script', maxCount: 5 }, // maxCount: 5 для скриптов
-    { name: 'route', maxCount: 1 }, // maxCount: 1 для роутинга
-    { name: 'view', maxCount: 5 } // maxCount: 5 для представлений
+router.post('/edit/:id', upload.fields([
+    { name: 'image', maxCount: 25 },
+    { name: 'style', maxCount: 5 },
+    { name: 'script', maxCount: 5 },
+    { name: 'route', maxCount: 1 },
+    { name: 'view', maxCount: 5 }
 ]), (req, res) => {
     const gameId = req.params.id;
-    const { title, description } = req.body;
-    const session_id = req.session.userId
+    let { title, description } = req.body;
+    const session_id = req.session.userId;
+
     let [
         view_files_array,
         image_files_array,
@@ -285,50 +285,56 @@ router.post('/edit/:id',upload.fields([
         css_files_array
     ] = [[], [], [], []];
 
-    connection.SelectGame(gameId,(err,result) => {
-        if(err){
-            console.log(err)
-            return res.redirect(`/edit/${gameId}`)
+    // Получение данных об игре из базы данных
+    connection.SelectGame(gameId, (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.redirect(`/edit/${gameId}`);
         }
-        // Проверка наличия файлов представлений
+
+        // Получение текущих файлов из базы данных
+        const oldViewFiles = result[0].viewFile.split(',');
+        const oldImageFiles = result[0].gameImage.split(',');
+        const oldScriptFiles = result[0].jsFile.split(',');
+        const oldCssFiles = result[0].cssFile.split(',');
+        const oldRouteFile = result[0].routeFile;
+
+
+        // Проверка и обработка файлов представлений
         let view_files = req.files['view'];
         if (view_files && view_files.length > 5) {
             return res.render('layout', { body: 'addGame', global_error: 'Количество файлов ejs представлений не может превышать 5' });
         }
-        if (view_files) {
+        else if(!view_files){
+            view_files_array = oldViewFiles;
+        }
+        else {
             for (const element of view_files) {
                 if (element.size > 2098576) {
                     return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 2МБ` });
                 }
                 view_files_array.push(`${req.session.userId}/views/${element.originalname}`);
             }
-            const viewsArray = result[0].viewFile.split(',');
-            console.log(view_files_array.toString() === viewsArray.toString())
-            if(view_files_array.toString() === viewsArray.toString()){
-
-            }
-            else{
-                try {
-                    const folderPath = `/uploads/${req.session.userId}/views`
-                    const files = fs.readdirSync(folderPath);
-                    
-                    files.forEach(file => {
-                        fs.unlinkSync(path.join(folderPath, file));
-                    });
-                    
-                    console.log(`Все файлы в ${folderPath} удалены!`);
-                } catch (err) {
-                    console.error('Ошибка:', err);
-                }  
-            }
         }
 
-        // Проверка наличия картинок
+        // Выполняем сравнение
+        if (view_files_array.toString() !== oldViewFiles.toString()) {
+            // Удаление старых файлов представлений
+            removeFilesFromDirectory(oldViewFiles);
+        } else {
+            // Если не изменилось, сохраняем старые файлы
+            view_files_array = oldViewFiles;
+        }
+
+        // Проверка и обработка изображений
         let image_files = req.files['image'];
         if (image_files && image_files.length > 25) {
             return res.render('layout', { body: 'addGame', global_error: 'Количество картинок не может превышать 25' });
         }
-        if (image_files) {
+        else if(!image_files){
+            image_files_array = oldImageFiles;
+        }
+        else {
             for (const element of image_files) {
                 if (element.size > 10485760) {
                     return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 10МБ` });
@@ -337,55 +343,107 @@ router.post('/edit/:id',upload.fields([
             }
         }
 
-        // Проверка наличия скриптов
+        // Сравнение для изображений
+        if (image_files_array.toString() !== oldImageFiles.toString()) {
+            removeFilesFromDirectory(oldImageFiles);
+        } else {
+            image_files_array = oldImageFiles;
+        }
+
+        // Проверка и обработка скриптов
         let script_files = req.files['script'];
         if (script_files && script_files.length > 5) {
             return res.render('layout', { body: 'addGame', global_error: 'Количество файлов скриптов не может превышать 5' });
         }
-        if (script_files) {
+        else if(!script_files){
+            script_files_array = oldScriptFiles;
+        }
+        else{
             for (const element of script_files) {
                 if (element.size > 20971520) {
-                    return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 2МБ` });
+                    return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 20МБ` });
                 }
                 script_files_array.push(`${req.session.userId}/scripts/${element.originalname}`);
             }
         }
+        // Сравнение для скриптов
+        if (script_files_array.toString() !== oldScriptFiles.toString()) {
+            removeFilesFromDirectory(oldScriptFiles);
+        } else {
+            script_files_array = oldScriptFiles;
+        }
 
+        // Проверка и обработка стилей
         let css_files = req.files['style'];
         if (css_files && css_files.length > 5) {
             return res.render('layout', { body: 'addGame', global_error: 'Количество файлов стилей не может превышать 5' });
         }
-        if (css_files) {
+        else if(!css_files){
+            css_files_array = oldCssFiles;
+        }
+        else {
             for (const element of css_files) {
                 if (element.size > 20971520) {
-                    return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 2МБ` });
+                    return res.render('layout', { body: 'addGame', global_error: `Файл ${element.originalname} весит более 20МБ` });
                 }
                 css_files_array.push(`${req.session.userId}/styles/${element.originalname}`);
             }
+        }
+
+        // Сравнение для стилей
+        if (css_files_array.toString() !== oldCssFiles.toString()) {
+            removeFilesFromDirectory(oldCssFiles);
+        } else {
+            css_files_array = oldCssFiles;
+        }
+
+        if(!title){
+            title = result[0].gameTitle
+        }
+        if(!description){
+            description = result[0].gameDescription
         }
 
         // Путь к загруженным файлам
         const imagePath = image_files_array.join(',');
         const cssFilePath = css_files_array.join(',');
         const jsFilePath = script_files_array.join(',');
-        const routeFilePath = req.files['route'] ? `/${req.session.userId}/routes/${req.files['route'][0].originalname}` : null;
+        const routeFilePath = req.files['route'] ? `/${req.session.userId}/routes/${req.files['route'][0].originalname}` : oldRouteFile;
         const viewFilePath = view_files_array.join(',');
 
-        // Проверка, что файлы загружены
-        if (!req.files) {
-            return res.render('layout', { body: 'addGame', global_error: `Убедитесь что все файлы загружены. Даже если у вас например нет файлв стилей вам небходимо добавить пустой файл` });
-        }
+
 
         // Записываем информацию об игре в БД
-        connection.AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, (err) => {
+        connection.UpdateGame(title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath,session_id, (err) => {
             if (err) {
                 console.error(err);
-                return res.status(500).send('Ошибка при добавлении игры');
+                return res.status(500).send('Ошибка при изменении игры');
             }
-            res.redirect('/'); // Перенаправляем на страницу с играми
+            res.redirect('/acc_page'); // Перенаправляем на страницу с играми
         });
-    })
+    });
 });
+
+// Функция для удаления файлов из папки
+const removeFilesFromDirectory = (files) => {
+    try {
+        // Читаем файлы в папке
+        const existingFiles = fs.readdirSync("./uploads/"+files);
+
+        // Удаляем только те файлы, что есть в текущем массиве файлов
+        files.forEach(file => {
+            const filePath = path.join("./uploads/"+file);
+            if (existingFiles.includes(file)) {
+                fs.unlinkSync(filePath);
+                console.log(`Файл ${filePath} удален.`);
+            }
+        });
+
+        console.log(`Все файлы из ${"."+directoryPath} удалены!`);
+    } catch (err) {
+        console.error('Ошибка:', err);
+    }
+}
 
 // Вход (GET)
 router.get('/login', (req, res) => {

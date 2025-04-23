@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
-    host: '192.168.88.188',
-    user: 'student2',
-    password: 'n8z6qv',
-    database: 'gamecenter'
+    host: 'localhost',
+    user: 'root',
+    password: 'root',
+    database: 'GameCenter'
 });
+
+// const connection = mysql.createConnection({
+//     host: '192.168.88.188',
+//     user: 'student2',
+//     password: 'n8z6qv',
+//     database: 'gamecenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -70,6 +70,11 @@ function DeleteGame(gameId ,session_id, callback){
     connection.query(query, [gameId, session_id], callback)
 }
 
+function UpdateGame(title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id, callback){
+    const query = `update games set gameTitle = ?, gameDescription = ?, gameImage = ?, cssFile = ?, jsFile = ?, routeFile = ?, viewFile = ? where customerID = ?`
+    connection.query(query, [title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id],callback)
+}
+
 function SelectGame(gameId ,callback){
     const query = `SELECT * from games WHERE gameID = (?)`
     connection.query(query , [gameId], callback)
@@ -101,6 +106,7 @@ module.exports = {
     GetGames,
     AddGame,
     DeleteGame,
+    UpdateGame,
     SelectGame,
     GetDeveloperGames,
     CountGames,
