@@ -75,6 +75,11 @@ function UpdateGame(title, description, imagePath, cssFilePath, jsFilePath, rout
     connection.query(query, [title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id],callback)
 }
 
+function DeleteGameData(data ,gameId, callback){
+    const query = `update games set ?? = null where gameID = ?`
+    connection.query(query, [data, gameId],callback)
+}
+
 function SelectGame(gameId ,callback){
     const query = `SELECT * from games WHERE gameID = (?)`
     connection.query(query , [gameId], callback)
@@ -108,6 +113,7 @@ module.exports = {
     DeleteGame,
     UpdateGame,
     SelectGame,
+    DeleteGameData,
     GetDeveloperGames,
     CountGames,
     SelectWinLoss,

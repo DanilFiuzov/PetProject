@@ -17,39 +17,128 @@
                         <textarea name="description" placeholder="Сейчас: <%- games[0].gameDescription %>" maxlength="100" style="height: 100px; resize: none;" class="w-100"></textarea>
                     </div>
                     <hr>
-                    <div style="height: 360px; padding-top: 10px; padding-top: 0 !important;">
+                    <div style="height: 370px; padding-top: 10px; padding-top: 0 !important;">
                         <h3>Изображения для вашей игры</h3>
-                        <input type="file" name="image" accept="image/*" multiple>
-                        <h4>Ваши изобраения:</h4>
-                        <p><%- games[0].gameImage.split(',') %></p>
+                        <input type="file" id="gameImage" name="image" accept="image/*" style="display: none;" multiple>
+                        <div class="p-0" id="gameImage2">
+                            <% if (games[0].gameImage) { %>
+                                <h4>Ваши изображения:</h4>
+                                <ul class="list-group list-group-flush" style="margin-bottom: 7px;">
+                                    <%
+                                    const gameImages = games[0].gameImage.split(',');
+                                    const displayCount = 4; 
+                                    const totalImages = gameImages.length;
+                                    
+                                    // Цикл для отображения первых 5 изображений
+                                    for (let i = 0; i < Math.min(displayCount, totalImages); i++) { %>
+                                        <li class="list-group-item"><%- gameImages[i].split('/').pop() %></li>
+                                    <% } %>
+                            
+                                    <% if (totalImages > displayCount) { %>
+                                        <li class="list-group-item">И другие (<%= totalImages - displayCount %>)</li>
+                                    <% } %>
+                                </ul>
+                            <% } else { %>
+                                <p>Нет изображений</p>
+                            <% } %>                      
+                        </div>
+                        <button class="btn ButtonMdBG" type="button" onclick="clearInput('gameImage', this)" style="padding-left: 20px; padding-right: 20px;">Удалить текущие</button>
                     </div>
                     <hr>
-                    <div style="height: 190px; padding-top: 10px; padding-top: 0 !important;">
+                    <div style="height: 240px; padding-top: 10px; padding-top: 0 !important;">
                         <h3>Java Scripts</h3>
-                        <input type="file" name="script" accept="script/*" multiple> 
-                        <h4>Ваши скрипты:</h4>
-                        <p><%- games[0].jsFile.split(',') %></p>  
+                        <input type="file" id="jsFile" name="script" accept="script/*" style="display: none;" multiple> 
+                        <div class="p-0" id="jsFile2">
+                            <% if (games[0].jsFile) { %>
+                                <h4>Ваши Скрипты:</h4>
+                                <ul class="list-group list-group-flush" style="margin-bottom: 7px;">
+                                    <% 
+                                    const gameScripts = games[0].jsFile.split(',');
+                                    const displayCount = 2; 
+                                    const totalScripts = gameScripts.length;
+                                    
+                                    // Цикл для отображения первых 5 изображений
+                                    for (let i = 0; i < Math.min(displayCount, totalScripts); i++) { %>
+                                        <li class="list-group-item"><%- gameScripts[i].split('/').pop() %></li>
+                                    <% } %>
+                            
+                                    <% if (totalScripts > displayCount) { %>
+                                        <li class="list-group-item">И другие (<%= totalScripts - displayCount %>)</li>
+                                    <% } %>
+                                </ul>
+                            <% } else { %>
+                                <p>Нет скриптов</p>
+                            <% } %>                              
+                        </div>
+                        <button class="btn ButtonMdBG" type="button" onclick="clearInput('jsFile', this)" style="padding-left: 20px; padding-right: 20px;">Удалить текущие</button>
                     </div>
                     <hr>
-                    <div style="height: 210px; padding-top: 10px; padding-top: 0 !important;">
+                    <div style="height: 240px; padding-top: 10px; padding-top: 0 !important;">
                         <h3>CSS Styles</h3>
-                        <input type="file" name="style" accept="style/*" multiple>
-                        <h4>Ваши стили:</h4>
-                        <p><%- games[0].cssFile.split(',') %></p>
+                        <input type="file" id="cssFile" name="style" accept="style/*" style="display: none;" multiple>
+                        <div class="p-0" id="cssFile2">
+                            <% if (games[0].cssFile) { %>
+                                <h4>Ваши стили:</h4>
+                                <ul class="list-group list-group-flush" style="margin-bottom: 7px;">
+                                    <% 
+                                    const gameCss = games[0].cssFile.split(',');
+                                    const displayCount = 2; 
+                                    const totalCss = gameCss.length;
+                                    
+                                    // Цикл для отображения первых 5 изображений
+                                    for (let i = 0; i < Math.min(displayCount, totalCss); i++) { %>
+                                        <li class="list-group-item"><%- gameCss[i].split('/').pop() %></li>
+                                    <% } %>
+                            
+                                    <% if (totalCss > displayCount) { %>
+                                        <li class="list-group-item">И другие (<%= totalCss - displayCount %>)</li>
+                                    <% } %>
+                                </ul>
+                            <% } else { %>
+                                <p>Нет стилей</p>
+                            <% } %>                          
+                        </div>
+                        <button class="btn ButtonMdBG" type="button" onclick="clearInput('cssFile', this)" style="padding-left: 20px; padding-right: 20px;">Удалить текущие</button>
                     </div>
                     <hr>
                     <div style="height: 290px; padding-top: 10px; padding-top: 0 !important;">
                         <h3>Route file</h3>
-                        <input type="file" name="route" accept="route/*">
-                        <h4>Ваши файлы маршрутизации:</h4>
-                        <p><%- games[0].routeFile.split(',') %></p>
+                        <input type="file" id="routeFile" name="route" accept="route/*" style="display: none;">
+                        <div class="p-0" id="routeFile2">
+                            <% if (games[0].viewFile) { %>
+                            <h4>Ваш файл маршрутизации:</h4>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <%- games[0].routeFile %>
+                                </li>
+                            </ul> 
+                            <% } else { %>
+                                <p>Нет файла маршрутизации</p>
+                            <% } %>          
+                        </div>
+                        <button class="btn ButtonMdBG" type="button" onclick="clearInput('routeFile', this)" style="padding-left: 20px; padding-right: 20px;">Удалить текущий</button>                     
                     </div>
                     <hr>
                     <div style="height: 500px; padding-top: 10px; padding-top: 0 !important;">
                         <h3>EJS Views</h3>
-                        <input type="file" name="view" accept="view/*" multiple>
-                        <h4>Ваши ejs представления:</h4>
-                        <p><%- games[0].viewFile.split(',') %></p>
+                        <input type="file" id="viewFile" name="view" accept="view/*" style="display: none;" multiple>
+                        <div class="p-0" id="viewFile2">
+                            <% if (games[0].viewFile) { %>
+                                <h4>Ваши изображения:</h4>
+                                <ul class="list-group list-group-flush">
+                                    <% 
+                                    const gameViews = games[0].viewFile.split(',');
+                                    gameViews.forEach(imagePath => {
+                                        const fileName = imagePath.split('/').pop();
+                                    %>
+                                        <li class="list-group-item"><%- fileName %></li>
+                                    <% }); %>
+                                </ul>
+                            <% } else { %>
+                                <p>Нет ejs представлений</p>
+                            <% } %>                         
+                        </div>
+                            <button class="btn ButtonMdBG" type="button" onclick="clearInput('viewFile', this)" style="padding-left: 20px; padding-right: 20px;">Удалить текущие</button>
                     </div>
                 </div>  
             </div>
@@ -77,7 +166,7 @@
                     </div>    
                 </div>
                 <hr>
-                <div class="row" style="height: 360px; padding-top: 10px;">
+                <div class="row" style="height: 370px; padding-top: 10px;">
                     <div class="col-5">
                         <img width="90%" src="/images/AddGame/game_image.png" alt="">
                     </div>
@@ -97,7 +186,7 @@
                     </div>       
                 </div>
                 <hr>
-                <div class="row" style="height: 190px; padding-top: 10px;">
+                <div class="row" style="height: 240px; padding-top: 10px;">
                     <div class="col-5">
                         <img width="90%" src="/images/AddGame/script_image.png" alt="">
                     </div>
@@ -115,7 +204,7 @@
                     </div>  
                 </div>
                 <hr>
-                <div class="row" style="height: 210px; padding-top: 10px;">
+                <div class="row" style="height: 240px; padding-top: 10px;">
                     <div class="col-5">
                         <img width="90%" src="/images/AddGame/css_image.png" alt="">
                     </div>
@@ -245,10 +334,29 @@
                 <button class="btn ButtonSmBG" type="submit" style="float: right;">Изменить</button>
             </div>
         </form>
-        <form action="/delete/<%- games[0].gameID %>" method="post">
+        <form id="deleteForm" action="/delete/<%- games[0].gameID %>" method="post">
             <div class="p-3" style="height: 70px;">
-                <button class="btn ButtonSmBG" type="submit"style="float: right;">Удалить</button>
+                <button class="btn ButtonSmBG" type="button" data-bs-toggle="modal" data-bs-target="#confirmationModal" style="float: right;">
+                    Удалить
+                </button>
             </div>
         </form>
+    </div>
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: bisque;">
+                <div class="modal-header" style="border-bottom: 0 !important;">
+                    <h5 class="modal-title" id="confirmationModalLabel">Подтверждение удаления</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    Вы уверены, что хотите удалить игру <%- games[0].gameTitle %>?
+                </div>
+                <div class="modal-footer" style="border-top: 0 !important;">
+                    <button type="button" class="btn ButtonXsBG" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn ButtonXsBG" id="confirmDelete">Удалить</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

@@ -88,13 +88,13 @@ body{
     border: 3px solid rgb(0, 0, 0) !important;
 }
 .border-r{
-    border-right: 2px solid rgba(171, 171, 171, 1); 
+    border-right: 2px solid rgb(255, 196, 123);
 }
 .border-b{
-    border-bottom: 2px solid rgba(171, 171, 171, 1);
+    border-bottom: 2px solid rgb(255, 196, 123);
 }
 .border-t{
-    border-top: 2px solid rgba(171, 171, 171, 1);
+    border-top: 2px solid rgb(255, 196, 123);
 }
 
 .offcanvas-body a, .LogRegBtn a { color: rgb(3, 3, 3); }
@@ -215,4 +215,7 @@ nav h6,
 }
 .ButtonLgBG:hover, .ButtonMdBG:hover, .ButtonXlBG:hover,.ButtonXsBG:hover,.ButtonSmBG:hover{
     color:  rgb(253, 211, 160);
+}
+hr{
+    border: 2px solid rgb(255, 196, 123);
 }
