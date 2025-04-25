@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'GameCenter'
-});
-
 // const connection = mysql.createConnection({
-//     host: '192.168.88.188',
-//     user: 'student2',
-//     password: 'n8z6qv',
-//     database: 'gamecenter'
+//     host: 'localhost',
+//     user: 'root',
+//     password: 'root',
+//     database: 'GameCenter'
 // });
+
+const connection = mysql.createConnection({
+    host: '192.168.88.188',
+    user: 'student2',
+    password: 'n8z6qv',
+    database: 'gamecenter'
+});
 
 //Аккаунт
 connection.connect((err) => {
@@ -100,6 +100,29 @@ function AddEmpty(session_id,gameId,callback){
     connection.query(query, [session_id,gameId],callback)
 }
 
+//Достижеия
+function SelectAchivements(userId, callback){
+    const query = ` SELECT achievement_type, count, achieved 
+        FROM achievements 
+        WHERE customerID = ?`
+    connection.query(query, [userId], callback)
+}
+
+function SelectOneAchivement(userId, achievement_type,callback){
+    const query = `SELECT count FROM achievements WHERE customerID = ? AND achievement_type = ?`
+    connection.query(query,[userId,achievement_type],callback)
+}
+
+function InsertAchivement(userId, achievement_type, newCount, callback){
+    const query = `INSERT INTO achievements (customerID, achievement_type, count, achieved) VALUES (?, ?, ?, true) ON DUPLICATE KEY UPDATE count = ?, achieved = true`;
+    connection.query(query, [userId, achievement_type, newCount, newCount], callback);
+}
+
+function UpdateAchivement(newCount, userId, achievement_type, callback){
+    const query = `UPDATE achievements SET count = ? WHERE customerID = ? AND achievement_type = ?`;
+    connection.query(query, [newCount, userId, achievement_type], callback);
+}
+
 
 module.exports = { 
     connection, 
@@ -117,5 +140,9 @@ module.exports = {
     GetDeveloperGames,
     CountGames,
     SelectWinLoss,
-    AddEmpty
+    AddEmpty,
+    SelectAchivements,
+    SelectOneAchivement,
+    InsertAchivement,
+    UpdateAchivement
  };

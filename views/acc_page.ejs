@@ -41,10 +41,13 @@
                 </div>
                 <div class='d-flex justify-content-end'>
                     <% if (session.userId && session.userRank == "Разработчик") { %>
-                    <button type="submit" name="logoutandchange" value="mygame" class="btn ButtonSmBG m-4 ml-auto" style="margin-right: 0 !important;">
-                        Мои игры
-                    </button>
+                        <button type="submit" name="logoutandchange" value="mygame" class="btn ButtonSmBG m-4 ml-auto" style="margin-right: 0 !important;">
+                            Мои игры
+                        </button>
                     <% } %>  
+                    <button type="submit" name="logoutandchange" value="achivements" class="btn ButtonMdBG m-4 ml-auto" style="margin-right: 0 !important;">
+                        Достижения
+                    </button>
                     <button type="submit" name="logoutandchange" value="update" class="btn ButtonMdBG m-4 ml-auto" style="margin-right: 0 !important;">
                         Применить изменения
                     </button>

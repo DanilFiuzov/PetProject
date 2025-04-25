@@ -52,6 +52,19 @@ const avatars = [
     { url: '/images/Avatars/Thumbnail_6.png' }
 ];
 
+// Пороги достижений
+const achievements = {
+    wins: [1, 3, 5, 10],           // победы
+    losses: [1, 3, 5, 10]          // поражения
+};
+
+// Достижения
+const achievementsList = [
+    { type: 'wins', Name: 'Побед 1', value: 1 },
+    { type: 'wins', Name: 'Побед 3', value: 3 },
+    { type: 'wins', Name: 'Побед 5', value: 5 },
+    { type: 'wins', Name: 'Побед 10', value: 10 },
+];
 //Главная страница
 router.get('/', (req, res) => {
     connection.GetGames((err, results) => {
@@ -252,6 +265,7 @@ router.get('/game/:id', (req, res) => {
     }
 })
 
+//Страница изменения игры
 router.get('/edit/:id', (req, res) =>{
     const gameId = req.params.id;
     if (!req.session.userId || req.session.userRank !== 'Разработчик') {
@@ -305,6 +319,7 @@ const removeFilesFromDirectory = (files) => {
     }));
 };
 
+//Удаление данных игры
 router.post('/delete_data/:id',(req,res) => {
     let datafordelete = req.params.id.split("_")
     let data = datafordelete[0], gameId = datafordelete[1]
@@ -330,6 +345,7 @@ router.post('/delete_data/:id',(req,res) => {
     })
 })
 
+//Форма изменения данных игры
 router.post('/edit/:id', upload.fields([
     { name: 'image', maxCount: 25 },
     { name: 'style', maxCount: 5 },
@@ -405,6 +421,33 @@ router.post('/edit/:id', upload.fields([
     });
 });
 
+router.get('/achivements', (req, res) => {
+    const userId = req.session.userId;
+
+    if (!req.session.userId) return res.redirect('/login');
+
+    connection.SelectAchivements(userId, (err, results) => {
+        if (err) return console.log(err);
+
+        // Подготовим объект для всех достижений
+        const resAchievements = achievementsList.map(achievement => {
+            const userAchievement = results.find(item => item.achievement_type === achievement.type);
+
+            return {
+                Name: achievement.Name,
+                count: userAchievement ? userAchievement.count : 0,
+                achieved: userAchievement ? userAchievement.count >= achievement.value : false,
+                status: userAchievement ? (userAchievement.achieved ? 'Выполнено' : 'Не выполнено') : 'Не выполнено'
+            };
+        });
+
+        // Вызов функции проверки достижений
+        checkAchievements(userId, 'wins', 1);
+        console.log(resAchievements);
+        // Рендеринг страницы с учетом новых достижений
+        res.render('layout', { body: 'achivements', achievements: resAchievements });
+    });
+});
 
 // Вход (GET)
 router.get('/login', (req, res) => {
@@ -497,6 +540,7 @@ router.post('/login', (req, res) => {
     });
 });
 
+//Страница аккаунта
 router.get('/acc_page', (req, res) => {
     const session_id = req.session.userId
     if (!req.session.userId) {
@@ -513,6 +557,7 @@ router.get('/acc_page', (req, res) => {
     })
 })
 
+//Выход и выбор
 router.post('/logoutandchange', (req, res) => {
     const logoutandchange = req.body.logoutandchange; // Получаем значение, нажатой кнопки
     const name_value = req.body.acc_label_name;
@@ -523,12 +568,10 @@ router.post('/logoutandchange', (req, res) => {
 
     switch (logoutandchange) {
         case 'logout':
-            req.session.destroy(err => {
-                if (err) {
-                    return res.redirect('/'); // Ошибка при выходе
-                }
-                res.redirect('/'); // Успешный выход
-            });
+            res.redirect('/logout')
+            break;
+        case 'achivements':
+            res.redirect('/achivements')
             break;
         case 'update':
             connection.UpdateNameandPhone(name_value,session_id,(err,result) => {
@@ -565,6 +608,7 @@ router.post('/logoutandchange', (req, res) => {
     }
 });
 
+//Выход
 router.get('/logout',(req, res) =>{
     if(req.session.userId){
         req.session.destroy(err => {
@@ -584,7 +628,7 @@ router.get('/select_thumbnail',(req,res) => {
     res.render('layout',{ body: 'select_avatar', avatars: avatars})
 })
 
-//
+//Замена аватарки
 router.post('/upload', async (req, res) => {
     const session_id = req.session.userId;  
     if (!req.session.userId) {
@@ -605,6 +649,34 @@ router.post('/upload', async (req, res) => {
     })
 });
 
+function checkAchievements(userId, achievement_type, value) {
+    const thresholds = achievements[achievement_type]; // Пороги достижений
+
+    connection.SelectOneAchivement(userId, achievement_type, (err, results) => {
+        if (err) throw err;
+
+        const currentCount = results[0]?.count || 0; // Текущее количество достижений
+        const newCount = currentCount + value; // Новое количество достижений
+
+        // Перебираем только пороги текущего типа достижения
+        thresholds.forEach(threshold => {
+            // Проверяем, достигнуто ли достижение
+            if (currentCount < threshold && newCount >= threshold) {
+                // Достижение достигнуто, вставляем или обновляем запись
+                connection.InsertAchivement(userId, achievement_type, newCount, (err) => {
+                    if (err) return console.log(err);
+                });
+                // Зафиксируем, что мы обновили достижение, чтобы избежать повторного обновления для других порогов
+                return; // Не продолжаем дальше проверять пороги
+            }
+        });
+
+        // Обновляем текущее количество достижений независимо
+        connection.UpdateAchivement(newCount, userId, achievement_type, (err) => {
+            if (err) return console.log(err);
+        });
+    });
+}
 
 
 module.exports = router;
