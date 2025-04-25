@@ -219,3 +219,15 @@ nav h6,
 hr{
     border: 2px solid rgb(255, 196, 123);
 }
+.ach-div{
+    padding: 0;
+    width: 120px;
+    height: 140px;
+    margin: 0.5vw;
+}
+.ach-div p{
+    width: 120px;
+    height: 20px;
+    text-align: center;
+    padding: 5px;
+}

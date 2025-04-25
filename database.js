@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
-    host: '192.168.88.188',
-    user: 'student2',
-    password: 'n8z6qv',
-    database: 'gamecenter'
+    host: 'localhost',
+    user: 'root',
+    password: 'root',
+    database: 'GameCenter'
 });
+
+// const connection = mysql.createConnection({
+//     host: '192.168.88.188',
+//     user: 'student2',
+//     password: 'n8z6qv',
+//     database: 'gamecenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -101,26 +101,31 @@ function AddEmpty(session_id,gameId,callback){
 }
 
 //Достижеия
-function SelectAchivements(userId, callback){
-    const query = ` SELECT achievement_type, count, achieved 
-        FROM achievements 
-        WHERE customerID = ?`
+function SelectAchievements(userId, callback){
+    const query = ` SELECT achievement_type, count, achieved FROM achievements WHERE customerID = ?`
     connection.query(query, [userId], callback)
 }
 
-function SelectOneAchivement(userId, achievement_type,callback){
-    const query = `SELECT count FROM achievements WHERE customerID = ? AND achievement_type = ?`
-    connection.query(query,[userId,achievement_type],callback)
+function SelectOneAchievement(userId, callback) {
+    const query = `SELECT wins, losses FROM winandloss WHERE customerID = ?`;
+    connection.query(query, [userId], callback);
 }
 
-function InsertAchivement(userId, achievement_type, newCount, callback){
-    const query = `INSERT INTO achievements (customerID, achievement_type, count, achieved) VALUES (?, ?, ?, true) ON DUPLICATE KEY UPDATE count = ?, achieved = true`;
-    connection.query(query, [userId, achievement_type, newCount, newCount], callback);
+function InsertAchievement(userId, achievement_type, newCount, achievement_name ,callback){
+    const query = `INSERT INTO achievements (customerID, achievement_type, count, achieved, Name)
+                   VALUES (?, ?, ?, true, ?) 
+                   ON DUPLICATE KEY UPDATE count = ?, achieved = true`;
+    connection.query(query, [userId, achievement_type, newCount, achievement_name, newCount], callback);
 }
 
-function UpdateAchivement(newCount, userId, achievement_type, callback){
+function UpdateAchievement(newCount, userId, achievement_type, callback){
     const query = `UPDATE achievements SET count = ? WHERE customerID = ? AND achievement_type = ?`;
     connection.query(query, [newCount, userId, achievement_type], callback);
+}
+
+function UpdateWinRate(gameId, userId, callback){
+    const query =  `Update winandloss SET wins = wins+1 where gameID = ? AND customerID = ?`
+    connection.query(query,[gameId,userId],callback)
 }
 
 
@@ -141,8 +146,9 @@ module.exports = {
     CountGames,
     SelectWinLoss,
     AddEmpty,
-    SelectAchivements,
-    SelectOneAchivement,
-    InsertAchivement,
-    UpdateAchivement
+    SelectAchievements,
+    SelectOneAchievement,
+    InsertAchievement,
+    UpdateAchievement,
+    UpdateWinRate
  };

@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const { type } = require('os');
 
 
 // Настройка multer для загрузки файлов
@@ -52,18 +53,14 @@ const avatars = [
     { url: '/images/Avatars/Thumbnail_6.png' }
 ];
 
-// Пороги достижений
-const achievements = {
-    wins: [1, 3, 5, 10],           // победы
-    losses: [1, 3, 5, 10]          // поражения
-};
-
 // Достижения
 const achievementsList = [
-    { type: 'wins', Name: 'Побед 1', value: 1 },
-    { type: 'wins', Name: 'Побед 3', value: 3 },
-    { type: 'wins', Name: 'Побед 5', value: 5 },
-    { type: 'wins', Name: 'Побед 10', value: 10 },
+    { type: 'wins', Name: 'Побед 1', value: 1 , img: "/images/Achievements/1_Win.png"},
+    { type: 'wins', Name: 'Побед 3', value: 3 , img: "/images/Achievements/3_Wins.png"},
+    { type: 'wins', Name: 'Побед 5', value: 5 , img: "/images/Achievements/5_Wins.png"},
+    { type: 'losses', Name: 'Поражений 1', value: 1 , img: "/images/Achievements/1_Loss.png"},
+    { type: 'losses', Name: 'Поражений 3', value: 3 , img: "/images/Achievements/3_Losses.png"},
+    { type: 'losses', Name: 'Поражений 5', value: 5 , img: "/images/Achievements/5_Losses.png"},
 ];
 //Главная страница
 router.get('/', (req, res) => {
@@ -421,15 +418,15 @@ router.post('/edit/:id', upload.fields([
     });
 });
 
-router.get('/achivements', (req, res) => {
+//Страница достижений
+router.get('/achievements', (req, res) => {
     const userId = req.session.userId;
 
     if (!req.session.userId) return res.redirect('/login');
 
-    connection.SelectAchivements(userId, (err, results) => {
+    connection.SelectAchievements(userId, (err, results) => {
         if (err) return console.log(err);
 
-        // Подготовим объект для всех достижений
         const resAchievements = achievementsList.map(achievement => {
             const userAchievement = results.find(item => item.achievement_type === achievement.type);
 
@@ -437,17 +434,26 @@ router.get('/achivements', (req, res) => {
                 Name: achievement.Name,
                 count: userAchievement ? userAchievement.count : 0,
                 achieved: userAchievement ? userAchievement.count >= achievement.value : false,
-                status: userAchievement ? (userAchievement.achieved ? 'Выполнено' : 'Не выполнено') : 'Не выполнено'
+                status: userAchievement ? (userAchievement.achieved ? 'Выполнено' : 'Не выполнено') : 'Не выполнено',
+                img: achievement.img
             };
         });
 
-        // Вызов функции проверки достижений
-        checkAchievements(userId, 'wins', 1);
-        console.log(resAchievements);
-        // Рендеринг страницы с учетом новых достижений
-        res.render('layout', { body: 'achivements', achievements: resAchievements });
+        // Теперь просто вызываем функцию проверки достижений
+        checkAchievements(userId);
+
+        res.render('layout', { body: 'achievements', achievements: resAchievements });
     });
 });
+
+//Тест
+// router.post('/updatewinrate',(req,res) => {
+//     connection.UpdateWinRate(1,2,(err) => {
+//         if(err) throw err
+//         res.redirect('/achievements')
+//     })
+// })
+//
 
 // Вход (GET)
 router.get('/login', (req, res) => {
@@ -570,8 +576,8 @@ router.post('/logoutandchange', (req, res) => {
         case 'logout':
             res.redirect('/logout')
             break;
-        case 'achivements':
-            res.redirect('/achivements')
+        case 'achievements':
+            res.redirect('/achievements')
             break;
         case 'update':
             connection.UpdateNameandPhone(name_value,session_id,(err,result) => {
@@ -649,34 +655,69 @@ router.post('/upload', async (req, res) => {
     })
 });
 
-function checkAchievements(userId, achievement_type, value) {
-    const thresholds = achievements[achievement_type]; // Пороги достижений
-
-    connection.SelectOneAchivement(userId, achievement_type, (err, results) => {
-        if (err) throw err;
-
-        const currentCount = results[0]?.count || 0; // Текущее количество достижений
-        const newCount = currentCount + value; // Новое количество достижений
-
-        // Перебираем только пороги текущего типа достижения
-        thresholds.forEach(threshold => {
-            // Проверяем, достигнуто ли достижение
-            if (currentCount < threshold && newCount >= threshold) {
-                // Достижение достигнуто, вставляем или обновляем запись
-                connection.InsertAchivement(userId, achievement_type, newCount, (err) => {
-                    if (err) return console.log(err);
-                });
-                // Зафиксируем, что мы обновили достижение, чтобы избежать повторного обновления для других порогов
-                return; // Не продолжаем дальше проверять пороги
-            }
-        });
-
-        // Обновляем текущее количество достижений независимо
-        connection.UpdateAchivement(newCount, userId, achievement_type, (err) => {
-            if (err) return console.log(err);
+function SelectAchievementsPromise(userId) {
+    return new Promise((resolve, reject) => {
+        connection.SelectAchievements(userId, (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
         });
     });
 }
 
+function SelectOneAchievementPromise(userId) {
+    return new Promise((resolve, reject) => {
+        connection.SelectOneAchievement(userId, (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+        });
+    });
+}
+
+function InsertAchievementPromise(userId, achievement_type, newCount, achievement_name) {
+    return new Promise((resolve, reject) => {
+        connection.InsertAchievement(userId, achievement_type, newCount, achievement_name, (err) => {
+            if (err) return reject(err);
+            resolve();
+        });
+    });
+}
+
+async function checkAchievements(userId) {
+    // Получаем текущие достижения пользователя
+    const results = await SelectOneAchievementPromise(userId);
+    const wins = results[0]?.wins || 0; // Получаем количество побед
+    const losses = results[0]?.losses || 0; // Получаем количество поражений
+
+    // Получаем существующие достижения пользователя
+    const userAchievements = await SelectAchievementsPromise(userId);
+
+    // Пробегаем по каждому достижению в achievementsList для побед
+    for (const achievement of achievementsList) {
+        if (achievement.type === 'wins' && wins >= achievement.value) {
+            const achievementExists = userAchievements.some(item => 
+                item.achievement_type === achievement.type && item.Name === achievement.Name
+            );
+
+            // Если его нет, вставляем новое достижение
+            if (!achievementExists) {
+                await InsertAchievementPromise(userId, achievement.type, wins, achievement.Name);
+            }
+        }
+    }
+
+    // Пробегаем по каждому достижению в achievementsList для поражений
+    for (const achievement of achievementsList) {
+        if (achievement.type === 'losses' && losses >= achievement.value) {
+            const achievementExists = userAchievements.some(item => 
+                item.achievement_type === achievement.type && item.Name === achievement.Name
+            );
+
+            // Если его нет, вставляем новое достижение
+            if (!achievementExists) {
+                await InsertAchievementPromise(userId, achievement.type, losses, achievement.Name);
+            }
+        }
+    }
+}
 
 module.exports = router;

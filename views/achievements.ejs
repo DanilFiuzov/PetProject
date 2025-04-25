@@ -1,0 +1,13 @@
+<div class="container def-bg-settings">
+    <div style="height: 800px;">
+        <h1>Достижения</h1>
+        <div class="d-flex p-3 bordered_1" style="background-color: rgb(253, 211, 160);;">
+                <% achievements.forEach(achievement => { %>
+                    <div class="ach-div d-inline-block">
+                        <img src="<%= achievement.img %>" alt="<%= achievement.Name %>" title="<%= achievement.Name %>"  style="<%= achievement.achieved  ? '' : 'filter: grayscale(95%);' %>">
+                        <p><%= achievement.Name %></p>
+                    </div>                 
+                <% }) %>
+        </div>
+    </div>
+</div>
