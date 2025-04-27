@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+const connection = require('../../../database');
 
 //Главный сайт
 router.get('/', function(req, res, next) {
@@ -9,13 +10,13 @@ router.get('/', function(req, res, next) {
 });
 
 //Режимы игры
-router.get('/Solo_game', function(req, res, next) {
+router.get('/Solo_game', function(req, res) {
     res.render(`2/views/Solo_game.ejs`);
 });
-router.get('/Duo_game', function(req, res, next) {
+router.get('/Duo_game', function(req, res) {
     res.render(`2/views/Duo_game.ejs`);
 });
-router.get('/Net_game', function(req, res, next) {
+router.get('/Net_game', function(req, res) {
     res.render(`2/views/Net_game.ejs`);
 });
 
@@ -36,3 +37,12 @@ router.post('/go_out',(req,res)=>{
 
 
 module.exports = router;
+
+
+
+const connection = require('../../../database');
+
+
+connection.UpdateWinRate(
+    0,1,0,0,req.session.activeGameID,req.session.userId
+)

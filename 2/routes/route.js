@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+const connection = require('../database');
 
 //Главный сайт
 router.get('/', function(req, res, next) {
@@ -9,7 +10,7 @@ router.get('/', function(req, res, next) {
 });
 
 //Режимы игры
-router.get('/Solo_game', function(req, res, next) {
+router.get('/Solo_game', function(req, res) {
     res.render(`2/views/Solo_game.ejs`);
 });
 router.get('/Duo_game', function(req, res, next) {

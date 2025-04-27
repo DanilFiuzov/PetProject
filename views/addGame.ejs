@@ -230,6 +230,37 @@
                 </ul>
             </div>
         </div>
+        <div class="row p-4 border-t">
+            <div class="col">
+                <h2>База Данных MySql Server</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <p>Если вы хотите использовать фунуции Базы данных необходимо сделать подключение в файле маршрутизации добавив строчку <u> "const connection = require('../../../database');"</u></p>
+                    </li>
+                    <li class="list-group-item">
+                        <img width="90%" src="/images/AddGame/database_image.png" alt="">
+                    </li>
+                </ul>
+            </div>
+            <div class="col"> 
+                <h2>Функции Базы данных</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <H3>Function UpdateWinRate()</H3>
+                        <p>Эта функция может быть использована для добавления очков побед, поражений, счета, и ничьих. Передавать добавляемые значения необходимо в числовом формате. <br>
+                            Принимает значения, которые необходимо добавить, в следующем порядке: Победы, Поражения, Счет, Ничьи, req.session.activeGameID,req.session.userId <br>
+                            Пример: <br>
+                            connection.UpdateWinRate(0,1,0,0, req.session.activeGameID,req.session.userId) <br>
+                            Этот код добавит активному пользователю 1 поражение
+                        </p>
+                        <img width="90%" src="/images/AddGame/update_function.png" alt="">
+                    </li>
+                    <li class="list-group-item">
+                        <p>(req.session.userName) -> Имя пользователя</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
         <div class="border-t p-3" style="height: 70px;">
             <button class="btn ButtonMdBG" type="submit" style="float: right;">Добавить игру</button>
         </div>

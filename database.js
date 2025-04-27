@@ -123,9 +123,9 @@ function UpdateAchievement(newCount, userId, achievement_type, callback){
     connection.query(query, [newCount, userId, achievement_type], callback);
 }
 
-function UpdateWinRate(gameId, userId, callback){
-    const query =  `Update winandloss SET wins = wins+1 where gameID = ? AND customerID = ?`
-    connection.query(query,[gameId,userId],callback)
+function UpdateWinRate(added_wins,added_losses,added_score,added_draws,gameId, userId, callback){
+    const query =  `Update winandloss SET wins = wins + ?, losses = losses + ?, score = score + ?, draws = draws + ? where gameID = ? AND customerID = ?`
+    connection.query(query,[added_wins,added_losses,added_score,added_draws,gameId,userId],callback)
 }
 
 

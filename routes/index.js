@@ -58,9 +58,20 @@ const achievementsList = [
     { type: 'wins', Name: 'Побед 1', value: 1 , img: "/images/Achievements/1_Win.png"},
     { type: 'wins', Name: 'Побед 3', value: 3 , img: "/images/Achievements/3_Wins.png"},
     { type: 'wins', Name: 'Побед 5', value: 5 , img: "/images/Achievements/5_Wins.png"},
+    { type: 'wins', Name: 'Побед 10', value: 10 , img: "/images/Achievements/10_Wins.png"},
     { type: 'losses', Name: 'Поражений 1', value: 1 , img: "/images/Achievements/1_Loss.png"},
     { type: 'losses', Name: 'Поражений 3', value: 3 , img: "/images/Achievements/3_Losses.png"},
     { type: 'losses', Name: 'Поражений 5', value: 5 , img: "/images/Achievements/5_Losses.png"},
+    { type: 'losses', Name: 'Поражений 10', value: 10 , img: "/images/Achievements/10_Losses.png"},
+    { type: 'score', Name: 'Счет 2500', value: 2500 , img: "/images/Achievements/2500_Score.png"},
+    { type: 'score', Name: 'Счет 5000', value: 5000 , img: "/images/Achievements/5000_Score.png"},
+    { type: 'score', Name: 'Счет 7500', value: 7500 , img: "/images/Achievements/7500_Score.png"},
+    { type: 'score', Name: 'Счет 10000', value: 10000 , img: "/images/Achievements/10000_Score.png"},
+    { type: 'draws', Name: 'Ничьих 1', value: 1 , img: "/images/Achievements/1_Draws.png"},
+    { type: 'draws', Name: 'Ничьих 3', value: 3 , img: "/images/Achievements/3_Draws.png"},
+    { type: 'draws', Name: 'Ничьих 5', value: 5 , img: "/images/Achievements/5_Draws.png"},
+    { type: 'draws', Name: 'Ничьих 10', value: 10 , img: "/images/Achievements/10_Draws.png"},
+
 ];
 //Главная страница
 router.get('/', (req, res) => {
