@@ -1,27 +1,29 @@
-<div class="container" style="width: 500px; min-height: 38vw; padding-top: 5vw;">
-    <h3>Регистрация</h3>
-    <form action="/register" method="POST" name>
-        <div class="form-group mb-3">
-            <label>Пагоняло</label>
-            <input type="text" class="form-control" placeholder="Ну кличка на районе какая?" name="username">
-        </div>
-        <div class="form-group mb-3">
-            <label>Мыло</label>
-            <input type="text" class="form-control" placeholder="Какое мыло?" name="email">
-        </div>
-        <div class="form-group mb-3">
-            <label>Секретные циферки</label>
-            <input type="password" class="form-control" placeholder="Я никому не скажу, честно-честно" name="password">
-        </div>
-        <div class="form-group mb-3">
-            <label>Секретные циферки 2.0</label>
-            <input type="password" class="form-control" placeholder="Такие же, что секунду назад" name="confirmpassword">
-        </div>
-        <div class="d-grid mt-3">
-            <button type="submit" class="btn ButtonXlBG form-control">Принять Ислам</button>
-        </div>
-    </form>
-    <% if (typeof error !== 'undefined') { %>
-        <div class="alert alert-danger mt-3"><%= error %></div>
-    <% } %>
+<div class="container def-bg-settings" style="width: 600px;">
+    <div style="width: 100%; height: 800px;padding:50px; padding-top: 5vw;">
+        <h3>Регистрация</h3>
+        <form action="/register" method="POST" name>
+            <div class="form-group mb-3">
+                <label>Пагоняло</label>
+                <input type="text" class="form-control" placeholder="Ну кличка на районе какая?" name="username">
+            </div>
+            <div class="form-group mb-3">
+                <label>Мыло</label>
+                <input type="text" class="form-control" placeholder="Какое мыло?" name="email">
+            </div>
+            <div class="form-group mb-3">
+                <label>Секретные циферки</label>
+                <input type="password" class="form-control" placeholder="Я никому не скажу, честно-честно" name="password">
+            </div>
+            <div class="form-group mb-3">
+                <label>Секретные циферки 2.0</label>
+                <input type="password" class="form-control" placeholder="Такие же, что секунду назад" name="confirmpassword">
+            </div>
+            <div class="d-grid mt-3">
+                <button type="submit" class="btn ButtonXlBG form-control">Принять Ислам</button>
+            </div>
+        </form>
+        <% if (typeof error !== 'undefined') { %>
+            <div class="alert alert-danger mt-3"><%= error %></div>
+        <% } %>
+    </div>
 </div>

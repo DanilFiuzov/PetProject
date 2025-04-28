@@ -166,7 +166,7 @@
                     </div>    
                 </div>
                 <hr>
-                <div class="row" style="height: 370px; padding-top: 10px;">
+                <div class="row" style="height: 360px; padding-top: 10px;">
                     <div class="col-5">
                         <img width="90%" src="/images/AddGame/game_image.png" alt="">
                     </div>
@@ -186,7 +186,7 @@
                     </div>       
                 </div>
                 <hr>
-                <div class="row" style="height: 240px; padding-top: 10px;">
+                <div class="row" style="height: 190px; padding-top: 10px;">
                     <div class="col-5">
                         <img width="90%" src="/images/AddGame/script_image.png" alt="">
                     </div>
@@ -204,7 +204,7 @@
                     </div>  
                 </div>
                 <hr>
-                <div class="row" style="height: 240px; padding-top: 10px;">
+                <div class="row" style="height: 210px; padding-top: 10px;">
                     <div class="col-5">
                         <img width="90%" src="/images/AddGame/css_image.png" alt="">
                     </div>
@@ -242,7 +242,9 @@
                                     Путь в route файле: <br>
                                     ('<b>/test</b>) <br>
                                     Путь в ejs представлении: <br>
-                                    ('/game/&lt;%= session.activeGameID %&gt;<b>/test</b>') 
+                                    ('/game/&lt;%= session.activeGameID %&gt;<b>/test</b>') <br>
+                                    Этот путь будет вести на страницу test <u>вашего сайта</u>
+
                                 </p>
                             </li>
                         </ul> 
@@ -268,13 +270,10 @@
                                 <h5>Остальные представления</h5>
                                 <p>Вы можете загрузить до 4 представлений, которые будут располагаться по пути: <br>
                                     '(Ваш ID = <b><%- session.userId %></b>)/views/' <br>
-                                    (Пример: 1/views/view.ejs) <br>
-                                    Предствления вставляются между основными header и footer на сайте, <u>поэтому никаких тегов head или body</u>. <br>
-                                     Соответственно при ренднре страницы необходимо указать необходимое представление в переменную body, а основным представлением указать 'layout' <br>
+                                    (Пример: 1/views/view) <br>
                                     <b>Пример:</b> <br>
-                                    res.render('layout', { <br>
-                                    body: `1/views/view.ejs`,<br>
-                                    });
+                                    res.render(`1/views/view`);
+                                    (без ".ejs" и без "/" в начале)
                             </li>
                         </ul>
                     </div>  
