@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { type } = require('os');
 
 
 // Настройка multer для загрузки файлов
@@ -181,6 +180,9 @@ router.post('/add', upload.fields([
             console.error(err);
             return res.status(500).send('Ошибка при добавлении игры');
         }
+        if(req.session.CountGames){
+            req.session.CountGames = 1
+        }
         res.redirect('/'); // Перенаправляем на страницу с играми
     });
 });
@@ -208,6 +210,9 @@ router.post('/delete/:id', (req, res) => {
         else{
             const folderPath = path.join('./uploads', `${session_id}`);
             deleteFolder(folderPath); 
+            if(req.session.CountGames){
+                req.session.CountGames = req.session.CountGames-1
+            }
             res.redirect('/acc_page')
         }
     });

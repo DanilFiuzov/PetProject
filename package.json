@@ -20,5 +20,13 @@
     "path": "^0.12.7"
   },
   "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PUP04ka2014/CursWork_ISIP_42213.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PUP04ka2014/CursWork_ISIP_42213/issues"
+  },
+  "homepage": "https://github.com/PUP04ka2014/CursWork_ISIP_42213#readme",
   "description": ""
 }

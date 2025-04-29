@@ -21,7 +21,6 @@ connection.connect((err) => {
 });
 
 function createUser(username, hashedPassword, email, callback) {
-
     const query = 'INSERT INTO customers (customerName, customerPassword, customerEmail) VALUES (?, ?, ?)';
     connection.query(query, [username, hashedPassword, email], callback);
 }
@@ -32,9 +31,7 @@ function findUserByUsername(email, callback) {
 }
 
 function AccPageRender(session_id, callback){
-
     const query = `select * from customers where customerID = (?)`
-
     connection.query(query, [session_id], callback);
 }
 

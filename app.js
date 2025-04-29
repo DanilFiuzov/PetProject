@@ -1,10 +1,11 @@
 const express = require('express');
 const session = require('express-session');
+const path = require('path');
 
 const app = express();
 const indexRouter = require('./routes/index');
 const connection = require('./database');
-const path = require('path');
+
 
 app.set('view engine', 'ejs');
 app.set('views',[ 
