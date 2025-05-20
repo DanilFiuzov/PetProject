@@ -180,9 +180,7 @@ router.post('/add', upload.fields([
             console.error(err);
             return res.status(500).send('Ошибка при добавлении игры');
         }
-        if(req.session.CountGames){
-            req.session.CountGames = 1
-        }
+        req.session.userCountGames = 1
         res.redirect('/'); // Перенаправляем на страницу с играми
     });
 });
@@ -620,6 +618,7 @@ router.post('/logoutandchange', (req, res) => {
                     return res.render("layout",{body:'acc_page', global_error: 'Ошибка при получении данных игры'})
                 }
                 else{
+                    req.session.userCountGames = result.length
                     res.render("layout",{body:'mygame', games:result})
                 }
             })

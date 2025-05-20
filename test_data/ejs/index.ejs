@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Морской бой</title>
-    <link rel="stylesheet" href="/2/styles/style2.css">
-</head>
-<body>
+
     <div class="block_profil">
         <% if(session.userId) {%>
             <div id="profil" class="block_log_reg">
@@ -43,8 +35,8 @@
             <div class="crests" id="crest1"></div>
             <div class="block_bt">
                 <center>
-                    <a href="/game/<%- session.activeGameID %>/Solo_game"><div class="button_game" id="solo_game"><p>Игра с ботом</p></div></a>
-                    <a href="/game/<%- session.activeGameID %>/Duo_game"><div class="button_game" id="duo_game"><p>Игра на двоих</p></div></a>
+                    <a href="/game/<%= session.activeGameID %>/Solo_game"><div class="button_game" id="solo_game"><p>Игра с ботом</p></div></a>
+                    <a href="/game/<%= session.activeGameID %>/Duo_game"><div class="button_game" id="duo_game"><p>Игра на двоих</p></div></a>
                     <% if(session.userId) {%>
                         <a href="/Net_game"><div class="button_game" id="network_game"><p>Игра по сети</p></div></a>
                     <% }else {%>
@@ -70,5 +62,3 @@
 
     <!---------------------------Скрипт--------------------------------->
     <script src="/2/scripts/script_web.js"></script>
-</body>
-</html>

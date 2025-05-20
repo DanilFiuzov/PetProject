@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
-const connection = require('../database');
+var bcrypt = require('bcrypt') 
+const connection_db =require('../data_base')
 
 //Главный сайт
 router.get('/', function(req, res, next) {
@@ -10,14 +11,14 @@ router.get('/', function(req, res, next) {
 });
 
 //Режимы игры
-router.get('/Solo_game', function(req, res) {
-    res.render(`2/views/Solo_game.ejs`);
+router.get('/Solo_game', function(req, res, next) {
+    res.render('Solo_game');
 });
 router.get('/Duo_game', function(req, res, next) {
-    res.render(`2/views/Duo_game.ejs`);
+    res.render('Duo_game');
 });
 router.get('/Net_game', function(req, res, next) {
-    res.render(`2/views/Net_game.ejs`);
+    res.render('Net_game');
 });
 
 
@@ -32,7 +33,12 @@ router.get('/take_data', (req,res)=>{
 })
 //Выйти с аккаунта(post)
 router.post('/go_out',(req,res)=>{
-        res.redirect('/');
+    req.session.destroy(err => {
+        if (err) {
+            return res.redirect('/'); // Ошибка при выходе
+        }
+        res.redirect('/'); // Успешный выход
+    });
 })
 
 
