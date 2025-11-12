@@ -42,15 +42,36 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Список Аватарок по умолчанию 
-const avatars = [
-    { url: '/images/Avatars/Thumbnail_1.jpg' },
-    { url: '/images/Avatars/Thumbnail_2.png' },
-    { url: '/images/Avatars/Thumbnail_3.jpg' },
-    { url: '/images/Avatars/Thumbnail_4.png' },
-    { url: '/images/Avatars/Thumbnail_5.jpg' },
-    { url: '/images/Avatars/Thumbnail_6.png' }
-];
+// Глобальный массив для хранения аватарок
+let avatars = [];
+
+// Функция для загрузки аватарок из файловой системы
+const loadAvatars = () => {
+    // Используйте __dirname для указания абсолютного пути к директории с аватарами
+    const avatarsDir = path.join(__dirname, '../public/images/Avatars'); // Поднимаемся на уровень выше, чтобы достигнуть 'public'
+    console.log('Путь к директории аватарок:', avatarsDir);
+    
+    // Проверяем существование директории
+    if (!fs.existsSync(avatarsDir)) {
+        console.error('Папка с аватарами не найдена:', avatarsDir);
+        return;
+    }
+
+    fs.readdir(avatarsDir, (err, files) => {
+        if (err) {
+            console.error('Ошибка при чтении директории аватарок:', err);
+            return;
+        }
+
+        // Формируем массив аватарок
+        avatars = files.map(file => ({
+            url: `/images/Avatars/${file}`
+        }));
+    });
+};
+
+// Загружаем аватарки при запуске сервера
+loadAvatars();
 
 // Достижения
 const achievementsList = [

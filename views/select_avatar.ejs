@@ -4,12 +4,12 @@
             <div id="avatarContainer">
                 <% avatars.forEach(function(avatar, index) { %>
                     <label class="avatar" data-id="<%= index %>" style="margin-top: 100px;">
-                        <input type="checkbox" name="avatar" value="<%= index %>" style="display: none;"> <!-- Скрытый чекбокс -->
+                        <input type="checkbox" name="avatar" value="<%= index %>" style="display: none;">
                         <img class="rounded-circle profile-pic" src="<%= avatar.url %>" alt="Avatar" />
                     </label>
                 <% }) %>
             </div>
-            <button class="btn ButtonSmBG" type="submit" style="float: right;">Принять</button>
+            <button class="btn ButtonSmBG" type="submit" style="float: right;">Submit</button>
         </form>
     </div>
 

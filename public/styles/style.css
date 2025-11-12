@@ -85,7 +85,7 @@ body{
     border: 3px solid transparent;
 }
 .avatar.selected .profile-pic {
-    border: 3px solid rgb(0, 0, 0) !important;
+    border: 3px solid rgb(255, 196, 123) !important;
 }
 .border-r{
     border-right: 2px solid rgb(255, 196, 123);
@@ -120,6 +120,15 @@ body{
     right: 15px;
     width: 100px;
     height: 186px;
+}
+.BackBtn{
+    background: url("/images/BackBtn.png");
+    background-position: bottom;
+    position: absolute;
+    top: 14px;
+    left: 15px;
+    width: 59px;
+    height: 150px;
 }
 .AccBtn div{
     height: 82px;
@@ -212,6 +221,10 @@ nav h6,
     background-size: 100% 100%;
     background-repeat: no-repeat;
     color: bisque;
+}
+.btn-txt{
+    padding-left: 18px !important;
+    padding-right: 18px !important;
 }
 .ButtonLgBG:hover, .ButtonMdBG:hover, .ButtonXlBG:hover,.ButtonXsBG:hover,.ButtonSmBG:hover{
     color:  rgb(253, 211, 160);

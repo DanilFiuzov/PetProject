@@ -14,9 +14,9 @@
                         
                     </div>
                     <div class="text-truncate-container">
-                    <p>
+                        <p>
                         <%= games[i].gameDescription %>       
-                    </p>
+                        </p>
                     </div>                      
                 </div> 
                 <div class="p-4" style="padding-top: 2px !important; ">
@@ -32,14 +32,5 @@
         </div>
         <% i++ %>
         <% }) %>
-        <% if (typeof session.userId !== 'undefined' && session.userRank === 'Разработчик' && session.userCountGames < 1 ) { %>
-            <div class="col-3">
-                <div class="card cards w-60 mt-4 shadow-sm bordered_1 CardBody" style="height: 500px;">
-                    <a href="/add">
-                        <img src="/images/plus.png" alt="Добавить новую игру" class="card-img w-100" style="height: 500px;">   
-                    </a>    
-                </div>
-            </div>
-        <% } %>
     </div>
 </div>
