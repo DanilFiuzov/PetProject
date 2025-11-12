@@ -1,4 +1,5 @@
 
+DROP TABLE IF EXISTS `achievements`;
 CREATE TABLE `achievements` (
   `achivementID` int NOT NULL AUTO_INCREMENT,
   `customerID` int NOT NULL,
@@ -10,10 +11,11 @@ CREATE TABLE `achievements` (
   UNIQUE KEY `unique_achievement` (`customerID`,`achievement_type`),
   KEY `customerID` (`customerID`),
   CONSTRAINT `achievements_ibfk_1` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`)
-) 
+) ENGINE=InnoDB AUTO_INCREMENT=220 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO `achievements` VALUES (210,2,'wins',1,1,'Побед 1');
 
+DROP TABLE IF EXISTS `customers`;
 CREATE TABLE `customers` (
   `customerName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `customerEmail` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -22,10 +24,12 @@ CREATE TABLE `customers` (
   `customerPassword` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `customerRank` varchar(100) DEFAULT 'Дефолтный чел',
   PRIMARY KEY (`customerID`)
-) 
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO `customers` VALUES ('Пользователь','danil228lol12@mail.ru',2,'/images/Avatars/Thumbnail_6.png','$2b$10$MxZIE6UteU3wcmvjUspqU.7z2roSy2MwJuJONN92jQsjh0nYlX8im','Разработчик'),('PUPA','sbiktobirov@gmail.com',3,'/images/Avatars/Thumbnail_1.jpg','$2b$10$jd.ShLukC7NVDyftFeEcLOmhvvZ.h71bbV8Py54pLHKGmr/QL8qZ.','Дефолтный чел'),('test','test@mail.ru',13,'/images/Avatars/Thumbnail_2.png','$2b$10$3adq0qU2ERtfS9UGam5dbO/E6AZtofnqR3BpHO4he1dKj86p/804.','Разработчик');
 
+INSERT INTO `customers` VALUES ('User','danil228lol12@mail.ru',2,'/images/Avatars/Thumbnail_2.png','$2b$10$MxZIE6UteU3wcmvjUspqU.7z2roSy2MwJuJONN92jQsjh0nYlX8im','Разработчик'),('PUPA','sbiktobirov@gmail.com',3,'/images/Avatars/Thumbnail_1.jpg','$2b$10$jd.ShLukC7NVDyftFeEcLOmhvvZ.h71bbV8Py54pLHKGmr/QL8qZ.','Дефолтный чел'),('test','test@mail.ru',13,'/images/Avatars/Thumbnail_2.png','$2b$10$3adq0qU2ERtfS9UGam5dbO/E6AZtofnqR3BpHO4he1dKj86p/804.','Разработчик');
+
+DROP TABLE IF EXISTS `games`;
 CREATE TABLE `games` (
   `gameID` int NOT NULL AUTO_INCREMENT,
   `customerID` int NOT NULL,
@@ -39,8 +43,9 @@ CREATE TABLE `games` (
   PRIMARY KEY (`gameID`),
   KEY `customerID` (`customerID`),
   CONSTRAINT `games_ibfk_1` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`) ON DELETE CASCADE ON UPDATE RESTRICT
-) 
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+DROP TABLE IF EXISTS `winandloss`;
 CREATE TABLE `winandloss` (
   `wins` int DEFAULT '0',
   `losses` int DEFAULT '0',
@@ -54,4 +59,6 @@ CREATE TABLE `winandloss` (
   KEY `winandloss_games_FK` (`gameID`),
   CONSTRAINT `winandloss_customers_FK` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `winandloss_games_FK` FOREIGN KEY (`gameID`) REFERENCES `games` (`gameID`) ON DELETE CASCADE ON UPDATE RESTRICT
-) 
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
