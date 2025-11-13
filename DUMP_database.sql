@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS `achievements`;
 CREATE TABLE `achievements` (
   `achivementID` int NOT NULL AUTO_INCREMENT,
@@ -11,9 +10,32 @@ CREATE TABLE `achievements` (
   UNIQUE KEY `unique_achievement` (`customerID`,`achievement_type`),
   KEY `customerID` (`customerID`),
   CONSTRAINT `achievements_ibfk_1` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`)
-) ENGINE=InnoDB AUTO_INCREMENT=220 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) 
 
 INSERT INTO `achievements` VALUES (210,2,'wins',1,1,'Побед 1');
+
+DROP TABLE IF EXISTS `categories`;
+CREATE TABLE `categories` (
+  `categorieName` varchar(100) NOT NULL,
+  `categorieID` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`categorieID`)
+) 
+
+INSERT INTO `categories` VALUES ('Dumbbells',1);
+
+DROP TABLE IF EXISTS `categoriesandproducts`;
+CREATE TABLE `categoriesandproducts` (
+  `categoriesandproductsID` int NOT NULL AUTO_INCREMENT,
+  `categorieID` int NOT NULL,
+  `productID` int NOT NULL,
+  PRIMARY KEY (`categoriesandproductsID`,`categorieID`,`productID`),
+  KEY `categoriesandproducts_products_FK` (`productID`),
+  KEY `categoriesandproducts_categories_FK` (`categorieID`),
+  CONSTRAINT `categoriesandproducts_categories_FK` FOREIGN KEY (`categorieID`) REFERENCES `categories` (`categorieID`),
+  CONSTRAINT `categoriesandproducts_products_FK` FOREIGN KEY (`productID`) REFERENCES `products` (`productID`)
+)
+
+INSERT INTO `categoriesandproducts` VALUES (1,1,8),(2,1,9);
 
 DROP TABLE IF EXISTS `customers`;
 CREATE TABLE `customers` (
@@ -24,41 +46,18 @@ CREATE TABLE `customers` (
   `customerPassword` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `customerRank` varchar(100) DEFAULT 'Дефолтный чел',
   PRIMARY KEY (`customerID`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) 
 
 INSERT INTO `customers` VALUES ('User','danil228lol12@mail.ru',2,'/images/Avatars/Thumbnail_2.png','$2b$10$MxZIE6UteU3wcmvjUspqU.7z2roSy2MwJuJONN92jQsjh0nYlX8im','Разработчик'),('PUPA','sbiktobirov@gmail.com',3,'/images/Avatars/Thumbnail_1.jpg','$2b$10$jd.ShLukC7NVDyftFeEcLOmhvvZ.h71bbV8Py54pLHKGmr/QL8qZ.','Дефолтный чел'),('test','test@mail.ru',13,'/images/Avatars/Thumbnail_2.png','$2b$10$3adq0qU2ERtfS9UGam5dbO/E6AZtofnqR3BpHO4he1dKj86p/804.','Разработчик');
 
-DROP TABLE IF EXISTS `games`;
-CREATE TABLE `games` (
-  `gameID` int NOT NULL AUTO_INCREMENT,
-  `customerID` int NOT NULL,
-  `gameTitle` varchar(255) NOT NULL,
-  `gameDescription` text NOT NULL,
-  `gameImage` varchar(255) NOT NULL,
-  `cssFile` varchar(255) DEFAULT NULL,
-  `jsFile` varchar(255) DEFAULT NULL,
-  `routeFile` varchar(255) DEFAULT NULL,
-  `viewFile` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`gameID`),
-  KEY `customerID` (`customerID`),
-  CONSTRAINT `games_ibfk_1` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+DROP TABLE IF EXISTS `products`;
+CREATE TABLE `products` (
+  `productID` int NOT NULL AUTO_INCREMENT,
+  `productDescription` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `productTitle` varchar(100) NOT NULL,
+  `productThumbnail` varchar(100) NOT NULL,
+  PRIMARY KEY (`productID`)
+)
 
-DROP TABLE IF EXISTS `winandloss`;
-CREATE TABLE `winandloss` (
-  `wins` int DEFAULT '0',
-  `losses` int DEFAULT '0',
-  `customerID` int NOT NULL,
-  `gameID` int NOT NULL,
-  `winlossID` int NOT NULL AUTO_INCREMENT,
-  `draws` int DEFAULT '0',
-  `score` int DEFAULT '0',
-  PRIMARY KEY (`winlossID`),
-  KEY `winandloss_customers_FK` (`customerID`),
-  KEY `winandloss_games_FK` (`gameID`),
-  CONSTRAINT `winandloss_customers_FK` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`) ON DELETE CASCADE ON UPDATE RESTRICT,
-  CONSTRAINT `winandloss_games_FK` FOREIGN KEY (`gameID`) REFERENCES `games` (`gameID`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+INSERT INTO `products` VALUES (8,'dumbbells 2kg','Dumbbells Xs','dumbbells2kg.jpg'),(9,'dumbbells 5kg','dumbbells Sm','dumbbells5kg.jpg');
 

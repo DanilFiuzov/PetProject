@@ -2,28 +2,28 @@
 <div class="container def-bg-settings"> 
     <div class="row" style="margin-bottom: 20px; min-height: 750px;">
         <% i=0 %>
-        <% games.forEach(game => { %>
+        <% products.forEach(game => { %>
         <div class="col-3">
             <div class="card cards w-60 mt-4 shadow-sm bordered_1 CardBody" style="height: 500px;">
-                <img src="/<%=games[i].customerID%>/images/Logo.png" class="card-img-top bordered_top">
+                <img src="/images/products/<%= products[i].productThumbnail %>" class="card-img-top bordered_top">
                 <div class="card-body" style="padding-bottom: 0 !important;">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0"><%= games[i].gameTitle %></h4>
+                    <h4 class="mb-0"><%= products[i].productTitle %></h4>
                 </div>
                     <div class="d-flex justify-content-between align-items-center">
                         
                     </div>
                     <div class="text-truncate-container">
                     <p>
-                        <%= games[i].gameDescription %>       
+                        <%= products[i].productDescription %>     
                     </p>
                     </div>                      
                 </div> 
                 <div class="p-4" style="padding-top: 2px !important; ">
-                    <form action="/game/<%= games[i].gameID %>" method="get">
+                    <form action="/product/<%= products[i].productID %>" method="get">
                         <button class="btn ButtonSmBG float-end" type="submit">
                             <p class="p p-0" style="font-size: 18px; margin: 0 15px 0 15px;">
-                                Играть
+                                More
                             </p>
                         </button>
                     </form>

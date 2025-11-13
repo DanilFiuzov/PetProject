@@ -40,112 +40,112 @@ function UpdateAvatar(avatar, session_id, callback){
     connection.query(query, [avatar,session_id],callback)
 }
 
-function UpdateNameandPhone(name_value, session_id, callback){
+function UpdateName(name_value, session_id, callback){
     const query = `UPDATE customers SET customerName = (?) where customerID = (?)`
     connection.query(query, [name_value,session_id],callback)
 }
-//
+
 
 //Игры
-function GetDeveloperGames( session_id, callback ){
-    const query = `SELECT * FROM games WHERE customerID = (?)`
-    connection.query(query, [session_id], callback)
-}
+// function GetDeveloperGames( session_id, callback ){
+//     const query = `SELECT * FROM games WHERE customerID = (?)`
+//     connection.query(query, [session_id], callback)
+// }
 
-function GetGames(callback){
-    const query = `SELECT * FROM games`
+function GetProducts(callback){
+    const query = `SELECT * FROM products`
     connection.query(query,callback)
 }
 
-function AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, callback){
-    const query = `INSERT INTO games (customerID, gameTitle, gameDescription, gameImage, cssFile, jsFile, routeFile, viewFile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    connection.query(query, [session_id, title, description, imagePath , cssFilePath, jsFilePath, routeFilePath, viewFilePath], callback)
-}
+// function AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, callback){
+//     const query = `INSERT INTO games (customerID, gameTitle, gameDescription, gameImage, cssFile, jsFile, routeFile, viewFile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+//     connection.query(query, [session_id, title, description, imagePath , cssFilePath, jsFilePath, routeFilePath, viewFilePath], callback)
+// }
 
-function DeleteGame(gameId ,session_id, callback){
-    const query = `DELETE FROM games WHERE gameID = (?) AND customerID = (?)`
-    connection.query(query, [gameId, session_id], callback)
-}
+// function DeleteGame(gameId ,session_id, callback){
+//     const query = `DELETE FROM games WHERE gameID = (?) AND customerID = (?)`
+//     connection.query(query, [gameId, session_id], callback)
+// }
 
-function UpdateGame(title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id, callback){
-    const query = `update games set gameTitle = ?, gameDescription = ?, gameImage = ?, cssFile = ?, jsFile = ?, routeFile = ?, viewFile = ? where customerID = ?`
-    connection.query(query, [title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id],callback)
-}
+// function UpdateGame(title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id, callback){
+//     const query = `update games set gameTitle = ?, gameDescription = ?, gameImage = ?, cssFile = ?, jsFile = ?, routeFile = ?, viewFile = ? where customerID = ?`
+//     connection.query(query, [title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id],callback)
+// }
 
-function DeleteGameData(data ,gameId, callback){
-    const query = `update games set ?? = null where gameID = ?`
-    connection.query(query, [data, gameId],callback)
-}
+// function DeleteGameData(data ,gameId, callback){
+//     const query = `update games set ?? = null where gameID = ?`
+//     connection.query(query, [data, gameId],callback)
+// }
 
-function SelectGame(gameId ,callback){
-    const query = `SELECT * from games WHERE gameID = (?)`
-    connection.query(query , [gameId], callback)
-}
+// function SelectGame(gameId ,callback){
+//     const query = `SELECT * from games WHERE gameID = (?)`
+//     connection.query(query , [gameId], callback)
+// }
 
-function CountGames(session_id,callback){
-    const query = `SELECT * FROM games WHERE customerID = ?`
-    connection.query(query,[session_id],callback)
-}
+// function CountGames(session_id,callback){
+//     const query = `SELECT * FROM games WHERE customerID = ?`
+//     connection.query(query,[session_id],callback)
+// }
 
-function SelectWinLoss(session_id,gameId,callback){
-    const query = "select * from winandloss where customerID = (?) and gameID = (?)"
-    connection.query(query,[session_id,gameId],callback)
-}
+// function SelectWinLoss(session_id,gameId,callback){
+//     const query = "select * from winandloss where customerID = (?) and gameID = (?)"
+//     connection.query(query,[session_id,gameId],callback)
+// }
 
-function AddEmpty(session_id,gameId,callback){
-    const query = "insert into winandloss (customerID,gameID) values (?,?)"
-    connection.query(query, [session_id,gameId],callback)
-}
+// function AddEmpty(session_id,gameId,callback){
+//     const query = "insert into winandloss (customerID,gameID) values (?,?)"
+//     connection.query(query, [session_id,gameId],callback)
+// }
 
 //Достижеия
-function SelectAchievements(userId, callback){
-    const query = ` SELECT achievement_type, count, achieved FROM achievements WHERE customerID = ?`
-    connection.query(query, [userId], callback)
-}
+// function SelectAchievements(userId, callback){
+//     const query = ` SELECT achievement_type, count, achieved FROM achievements WHERE customerID = ?`
+//     connection.query(query, [userId], callback)
+// }
 
-function SelectOneAchievement(userId, callback) {
-    const query = `SELECT wins, losses FROM winandloss WHERE customerID = ?`;
-    connection.query(query, [userId], callback);
-}
+// function SelectOneAchievement(userId, callback) {
+//     const query = `SELECT wins, losses FROM winandloss WHERE customerID = ?`;
+//     connection.query(query, [userId], callback);
+// }
 
-function InsertAchievement(userId, achievement_type, newCount, achievement_name ,callback){
-    const query = `INSERT INTO achievements (customerID, achievement_type, count, achieved, Name)
-                   VALUES (?, ?, ?, true, ?) 
-                   ON DUPLICATE KEY UPDATE count = ?, achieved = true`;
-    connection.query(query, [userId, achievement_type, newCount, achievement_name, newCount], callback);
-}
+// function InsertAchievement(userId, achievement_type, newCount, achievement_name ,callback){
+//     const query = `INSERT INTO achievements (customerID, achievement_type, count, achieved, Name)
+//                    VALUES (?, ?, ?, true, ?) 
+//                    ON DUPLICATE KEY UPDATE count = ?, achieved = true`;
+//     connection.query(query, [userId, achievement_type, newCount, achievement_name, newCount], callback);
+// }
 
-function UpdateAchievement(newCount, userId, achievement_type, callback){
-    const query = `UPDATE achievements SET count = ? WHERE customerID = ? AND achievement_type = ?`;
-    connection.query(query, [newCount, userId, achievement_type], callback);
-}
+// function UpdateAchievement(newCount, userId, achievement_type, callback){
+//     const query = `UPDATE achievements SET count = ? WHERE customerID = ? AND achievement_type = ?`;
+//     connection.query(query, [newCount, userId, achievement_type], callback);
+// }
 
-function UpdateWinRate(added_wins,added_losses,added_score,added_draws,gameId, userId, callback){
-    const query =  `Update winandloss SET wins = wins + ?, losses = losses + ?, score = score + ?, draws = draws + ? where gameID = ? AND customerID = ?`
-    connection.query(query,[added_wins,added_losses,added_score,added_draws,gameId,userId],callback)
-}
+// function UpdateWinRate(added_wins,added_losses,added_score,added_draws,gameId, userId, callback){
+//     const query =  `Update winandloss SET wins = wins + ?, losses = losses + ?, score = score + ?, draws = draws + ? where gameID = ? AND customerID = ?`
+//     connection.query(query,[added_wins,added_losses,added_score,added_draws,gameId,userId],callback)
+// }
 
 
 module.exports = { 
-    connection, 
+    // connection, 
     createUser, 
     findUserByUsername, 
     AccPageRender,
     UpdateAvatar,
-    UpdateNameandPhone,
-    GetGames,
-    AddGame,
-    DeleteGame,
-    UpdateGame,
-    SelectGame,
-    DeleteGameData,
-    GetDeveloperGames,
-    CountGames,
-    SelectWinLoss,
-    AddEmpty,
-    SelectAchievements,
-    SelectOneAchievement,
-    InsertAchievement,
-    UpdateAchievement,
-    UpdateWinRate
+    UpdateName,
+    GetProducts,
+    // AddGame,
+    // DeleteGame,
+    // UpdateGame,
+    // SelectGame,
+    // DeleteGameData,
+    // GetDeveloperGames,
+    // CountGames,
+    // SelectWinLoss,
+    // AddEmpty,
+    // SelectAchievements,
+    // SelectOneAchievement,
+    // InsertAchievement,
+    // UpdateAchievement,
+    // UpdateWinRate
  };
