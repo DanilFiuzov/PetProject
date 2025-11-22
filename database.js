@@ -127,7 +127,7 @@ function GetProducts(callback){
 
 
 module.exports = { 
-    // connection, 
+    connection, 
     createUser, 
     findUserByUsername, 
     AccPageRender,
