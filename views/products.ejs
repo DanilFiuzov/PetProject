@@ -1,45 +1,49 @@
 <div class="container def-bg-settings"> 
-    <div class="row" style="margin-bottom: 20px; min-height: 750px;">
+    <div class="row" style="margin-bottom: 20px; margin-top: 30px;">
         <% products.forEach((product) => { %>
-        <div class="col-3">
-            <div class="card cards w-60 mt-4 shadow-sm bordered_1 CardBody" style="height: 550px;">
-                <img src="/images/products/<%= product.productThumbnail %>" class="card-img-top bordered_top" alt="<%= product.productTitle %>">
-                
-                <div class="card-body" style="padding-bottom: 0 !important;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><%= product.productTitle %></h5>
+        <div class="col-12">
+            <div class="card cards shadow-sm bordered_1 border-0 CardBody" style="height: 200px; margin-top: 8px;">
+                <div class="row g-0">
+                    <div class="col-md-2">
+                        <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded-start" alt="<%= product.productTitle %>">
                     </div>
-                    
-                    <div class="text-truncate-container mt-2">
-                        <p class="text-muted"><%= product.productDescription %></p>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= product.productTitle %></h5>
+                            <p class="card-text text-muted"><%= product.productDescription %></p>
+                            <div class="d-flex justify-content-between mt-4">
+                                <span class="badge bg-secondary"><%= product.category %></span>
+                                <span class="text-warning">
+                                    <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
+                                        <i class="fas fa-star"></i>
+                                    <% } %>
+                                    <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
+                                        <i class="far fa-star"></i>
+                                    <% } %>
+                                </span>
+                            </div>
+                        </div>
                     </div>
+                    <div class="col-md-2 d-flex flex-column align-items-end" style="padding: 20px;"> 
+                        <div class="d-flex flex-column align-items-end">
+                            <h6 class="mb-2 font-weight-bold text-end" style="font-size: 20px;">$<%= product.productPrice %></h6>
+                            <div class="d-flex justify-content-end align-items-center">
+                                <% if (session.userId) { %> 
+                                    <button class="btn btn-link" type="button" title="Add to favorites" onclick="toggleFavorite(event, '<%= product.productID %>')">
+                                        <i class="fa-heart <%= session.favorites && session.favorites.includes(product.productID) ? 'fas' : 'far' %>" id="heart-<%= product.productID %>"></i> <!-- Иконка сердца -->
+                                    </button>
+                                <% } else { %>
 
-                    <div class="d-flex justify-content-between mt-4">
-                        <span class="badge bg-secondary"><%= product.category %></span>
-                        <span class="text-warning">
-                            <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
-                                <i class="fas fa-star"></i>
-                            <% } %>
-                            <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
-                                <i class="far fa-star"></i>
-                            <% } %>
-                        </span>
+                                <% } %>  
+                                <form action="/product/<%= product.productID %>" method="get" class="ms-2"> <!-- Кнопка "Купить" с отступом -->
+                                    <button class="btn btn-primary" type="submit" style="height: 40px; padding-left: 20px; padding-right: 20px;"> <!-- Повышаем высоту кнопки -->
+                                        <b>Buy</b>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="d-flex justify-content-between align-items-center mt-2">
-                        <h6 class="mb-0 font-weight-bold">Price: $<%= product.productPrice %></h6>
-                    </div>
-                </div>
-
-                <div class="p-4" style="padding-top: 2px !important;">
-                    <form action="/product/<%= product.productID %>" method="get">
-                        <button class="btn ButtonSmBG float-end" type="submit">
-                            <p class="p p-0" style="font-size: 18px; margin: 0 15px 0 15px;">
-                                More
-                            </p>
-                        </button>
-                    </form>
-                </div>           
+                </div>            
             </div>
         </div>
         <% }) %>

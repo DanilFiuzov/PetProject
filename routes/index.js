@@ -75,14 +75,33 @@ loadAvatars();
 
 //Главная страница
 router.get('/', (req, res) => {
-    connection.GetProducts((err, results) => {
+    // Получаем все продукты из базы данных
+    connection.GetProducts((err, products) => {
         if (err) {
             return res.status(500).send('Ошибка при получении списка продуктов');
         }
-        res.render('layout', { body: 'products', products: results });
+
+        // Проверяем, вошел ли пользователь
+        if (req.session.userId) {
+            // Получаем избранные товары для текущего пользователя
+            connection.getFavoritesByCustomerID(req.session.userId, (err, favorites) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).send('Ошибка при получении избранных товаров');
+                }
+
+                // Обновляем массив избранных товаров в сессии
+                req.session.favorites = favorites.map(item => item.productID); // Сохраняем только productID
+
+                // Отправляем данные на рендеринг
+                res.render('layout', { body: 'products', products: products, session: req.session });
+            });
+        } else {
+            // Если пользователь не вошел, просто передаем все продукты
+            res.render('layout', { body: 'products', products: products, session: req.session });
+        }
     });
 });
-
 // Форма создания новой игры
 // router.get('/add', (req, res) => {
 //     if (!req.session.userId || req.session.userRank !== 'Разработчик') {
@@ -520,41 +539,98 @@ router.post('/register', (req, res) => {
 
 // Вход (POST)
 router.post('/login', (req, res) => {
-    
     const { email, password } = req.body;
 
-    // Проверяем, что username и password не пустые
     if (!email || !password) {
         return res.render('layout', { error: 'Fill in all the fields!', body: 'login' });
     }
 
-
-    // Поиск пользователя по имени
     connection.findUserByUsername(email, (err, results) => {
         if (err) {
             console.error(err);
             return res.render('layout', { error: 'Error when logging in.', body: 'login' });
         }
 
-        // Проверяем наличие пользователя с таким именем
         if (results.length > 0) {
             const user = results[0];
-            // Проверяем переданный пароль с хэшем
-            const isMatch = bcrypt.compareSync(password, user.customerPassword); // здесь происходит сравнение
+            const isMatch = bcrypt.compareSync(password, user.customerPassword);
             if (isMatch) {
                 req.session.userId = user.customerID;
                 req.session.userThumbnail = user.customerThumbnail;
                 req.session.userEmail = user.customerEmail;
                 req.session.userName = user.customerName;
-                res.redirect('/');
+
+                // Получение избранных товаров после входа
+                connection.getFavoritesByCustomerID(user.customerID, (err, favorites) => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        req.session.favorites = favorites.map(item => item.productID); // Сохраним в сессии
+                    }
+                    res.redirect('/');
+                });
             } else {
                 return res.render('layout', { error: 'Wrong password', body: 'login' });
             }
         } else {
-            return res.render('layout', { error: 'In correct user', body: 'login'});
+            return res.render('layout', { error: 'In correct user', body: 'login' });
         }
     });
 });
+
+// Добавление товара в избранное
+router.post('/favorites/add', (req, res) => {
+    const { productID } = req.body;
+    const customerID = req.session.userId; // Идентификатор пользователя из сессии
+
+    // Проверка, есть ли идентификатор пользователя и товара
+    if (!customerID || !productID) {
+        return res.status(400).send('Invalid request');
+    }
+
+    // Добавление товара в избранное
+    connection.addToFavorites(productID, customerID, (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Error adding to favorites');
+        }
+
+        // Обновляем массив избранных товаров в сессии
+        if (!req.session.favorites) {
+            req.session.favorites = [];
+        }
+        req.session.favorites.push(productID); // Добавляем новый товар в массив
+
+        res.status(200).send('Added to favorites');
+    });
+});
+
+// Удаление товара из избранного
+router.post('/favorites/remove', (req, res) => {
+    const { productID } = req.body;
+    const customerID = req.session.userId; // Идентификатор пользователя из сессии
+
+    // Проверка, есть ли идентификатор пользователя и товара
+    if (!customerID || !productID) {
+        return res.status(400).send('Invalid request');
+    }
+
+    // Удаление товара из избранного
+    connection.removeFromFavorites(productID, customerID, (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Error removing from favorites');
+        }
+
+        // Обновляем массив избранных товаров в сессии
+        if (req.session.favorites) {
+            req.session.favorites = req.session.favorites.filter(id => id !== productID); // Удаляем товар из массива
+        }
+
+        res.status(200).send('Removed from favorites');
+    });
+});
+
 
 //Страница аккаунта
 router.get('/acc_page', (req, res) => {

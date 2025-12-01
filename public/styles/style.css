@@ -10,9 +10,19 @@
     transform: translateY(-5px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
+.card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card img {
+    height: 200px;
+}
+
+.card-body {
+    padding: 20px;
+}
 .bordered_1{
     border-radius: 1.2vw;
-    
 }
 .bordered_top{
     border-radius: 1.2vw 1.2vw 0 0;
@@ -51,7 +61,7 @@ body{
     overflow: hidden;
 }
 .profile-header {
-    background:  rgb(253, 211, 160);
+    background-image: linear-gradient(45deg ,#fefeff, #ffffff)  ;
     height: 150px;
     border-radius: 15px;
 }
@@ -64,7 +74,7 @@ body{
     background-color: #fff !important;
 }
 .profile-sidebar {
-    background:  rgb(253, 211, 160);
+    background-image: linear-gradient(#6060ff, #7a7aff)  
 }
 .nav-btn{
     margin-right: 5px;
@@ -85,17 +95,9 @@ body{
     border: 3px solid transparent;
 }
 .avatar.selected .profile-pic {
-    border: 3px solid rgb(255, 196, 123) !important;
+    border: 3px solid #6060ff !important;
 }
-.border-r{
-    border-right: 2px solid rgb(255, 196, 123);
-}
-.border-b{
-    border-bottom: 2px solid rgb(255, 196, 123);
-}
-.border-t{
-    border-top: 2px solid rgb(255, 196, 123);
-}
+
 
 .offcanvas-body a, .LogRegBtn a { color: rgb(3, 3, 3); }
 .offcanvas-body a:link, .LogRegBtn a:link { text-decoration: none; }
@@ -142,34 +144,34 @@ body{
     border: 0 !important;
 }
 .CanvaHeader{
-    background: url("/images/CanvaHeader.png");
-}
-.p{
-    color: bisque;
+    /* background: url("/images/CanvaHeader.png"); */
+    background-image: linear-gradient(#6060ff, #7a7aff)   
 }
 .header_bg{
-    background: url("/images/header_background.png");
-    background-position: 50% 100%;
+    /* background: url("/images/header_background.png"); */
+    /* background-position: 50% 100%; */
+    background-image: linear-gradient(#6060ff, #7a7aff)   
 }
 .footer_bg{
-    background: url("/images/footer_background.png");
-    background-position: top;
+    /* background: url("/images/footer_background.png"); */
+    /* background-position: top; */
+    background-image: linear-gradient(#5c5c5c, #3a3a3a)                    
 }
 .CanvaThumbnail{
-    background: url("/images/CanvaThumbnail.png");
-    background-size: cover;
+    background-color: #D5DEFF;
 }
 .CanvaBody{
-    background: url("/images/CanvaBody.png") !important;
+    background-color: #D5DEFF;
 }
 .CardBody{
-    background-color: rgb(253, 211, 160);
+    background-color: #ffffff;
 }
 body{
     background: url("/images/background.png");
     background-repeat: repeat;
     background-position: 50% 0;
-  }
+}
+p,
 nav h1, 
 nav h2, 
 nav h3, 
@@ -182,45 +184,16 @@ nav h6,
 .offcanvas h4,
 .offcanvas h5,
 .offcanvas h6{
-    color: bisque;
+    color: #161616
 }
 .def-bg-settings{
-    background-color: bisque;
+    background-color: #e9e9ff;
     margin-top: -68px;
     padding-top: 70px;
     margin-bottom: -70px;
     padding-bottom: 70px;
     height: 100%;
-}
-.ButtonXsBG{
-    background: url("/images/ButtonBG/ButtonXsBG.png");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    color: bisque;
-}
-.ButtonSmBG{
-    background: url("/images/ButtonBG/ButtonSmBG.png");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    color: bisque;
-}
-.ButtonMdBG{
-    background: url("/images/ButtonBG/ButtonMdBG.png");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    color: bisque;
-}
-.ButtonLgBG{
-    background: url("/images/ButtonBG/ButtonLgBG.png");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    color: bisque;
-}
-.ButtonXlBG{
-    background: url("/images/ButtonBG/ButtonXlBG.png");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    color: bisque;
+    min-height: 800px;
 }
 .btn-txt{
     padding-left: 18px !important;
@@ -243,4 +216,10 @@ hr{
     height: 20px;
     text-align: center;
     padding: 5px;
+}
+@media (max-width: 768px) {
+    .col-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
 }

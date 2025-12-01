@@ -44,3 +44,33 @@ async function clearInput(inputId, button) {
 document.getElementById('confirmDelete').addEventListener('click', function () {
     document.getElementById('deleteForm').submit(); // Отправляем форму
 });
+
+function toggleFavorite(event, productID) {
+    const heartIcon = document.getElementById(`heart-${productID}`);
+    const isFavorited = heartIcon.classList.contains('fas'); // Проверяем, закрашено ли сердце
+
+    const url = isFavorited ? '/favorites/remove' : '/favorites/add';
+    const method = 'POST';
+
+    // Отправка AJAX запроса
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productID: productID }),
+    })
+    .then(response => {
+        if (response.ok) {
+            // Обновляем интерфейс
+            heartIcon.classList.toggle('fas'); // Переключение закрашенного
+            heartIcon.classList.toggle('far'); // Переключение пустого
+            heartIcon.title = isFavorited ? 'Add to favorites' : 'Remove from favorites'; // Switch title
+        } else {
+            console.error('Error updating favorites');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}

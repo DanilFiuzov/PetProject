@@ -8,32 +8,24 @@
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">     
         </ul> 
       </div>
-    </div>
-  </nav>
-  <% if (session.userId) { %>
-    <div class="p-0 m-0 AccBtn text-decoration-none" style="display: flex; flex-direction: column; justify-content: flex-end;">
-      <div class="w-100" style="height: 39px; vertical-align: middle; text-align: center;">
-        <button class='' type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"><img class="h-100 p-1" src="/images/avatar.png" alt="Button Images"></button>
-      </div>
-    </div>
+  <% if (session.userId) { %> 
+        <button class='btn' type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
+          <img src="/images/list.png" alt="" width="40px">
+        </button>
     <% } else { %>
-      <div class="p-0 m-0 LogRegBtn text-decoration-none" style="display: flex; flex-direction: column; justify-content: flex-end;">
-        <a href="/login">
-          <div class="w-100 p" style="height: 39px; margin-top: auto; vertical-align: middle; text-align: center;padding-top: 2px;">
-            <p style="font-size: 21px;">
+        <a class="btn" href="/login">
+            <p style="font-size: 21px; margin-bottom: 0;">
               <b>Log In</b>
             </p>
-          </div>
         </a>
-        <a href="/register">
-          <div class="w-100 p" style="height: 39px; margin-top: 16px; margin-bottom: 5px; vertical-align: middle; text-align: center; padding-top: 2px;">
-            <p style="font-size: 21px;">
+        <a class="btn" href="/register">
+            <p style="font-size: 21px; margin-bottom: 0;">
               <b>Sign Up</b>
             </p>
-          </div> 
         </a>
-      </div>
+
   <% } %>  
+</nav>
   
 
   <div class="container">
@@ -51,9 +43,9 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
           </div>
           <div class="w-100 CanvaThumbnail" style="padding: 40px;height: 300px;">
-            <img src="<%- session.userThumbnail %>" alt="" class="rounded-circle profile-pic tr-mask" style="width: 220px;height: 220px; margin: 0px; border: 0 !important; background-color: transparent !important;">
+            <img src="<%- session.userThumbnail %>" alt="" class="rounded-circle profile-pic tr-mask" style="width: 220px;height: 220px; margin: 0px; border: 0 !important; background-color: white !important;">
           </div>
-          <div class="offcanvas-body CanvaBody p-0" style="border-radius: 5px 5px;">
+          <div class="offcanvas-body CanvaBody p-0">
             <a href="/acc_page" class="text-decoration-none">
               <div class="w-100 p-2 d-flex" style="height: 59px;">
                 <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
@@ -61,16 +53,6 @@
                 </div>
                 <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
                   <h3>Account</h3>
-                </div>
-              </div>
-            </a>
-            <a href="/achievements" class="text-decoration-none">
-              <div class="w-100 p-2 d-flex" style="height: 59px;">
-                <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
-                  <img src="/images/Mini_ach_img.png">
-                </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3>****</h3>
                 </div>
               </div>
             </a>

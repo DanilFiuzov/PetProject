@@ -57,6 +57,30 @@ function GetProducts(callback){
     connection.query(query,callback)
 }
 
+// Функция для добавления товара в избранное
+function addToFavorites(productID, customerID, callback) {
+    const query = 'INSERT INTO favorites (productID, customerID) VALUES (?, ?)';
+    connection.query(query, [productID, customerID], (err, results) => {
+        callback(err, results);
+    });
+}
+
+// Функция для удаления товара из избранного
+function removeFromFavorites(productID, customerID, callback) {
+    const query = 'DELETE FROM favorites WHERE productID = ? AND customerID = ?';
+    connection.query(query, [productID, customerID], (err, results) => {
+        callback(err, results);
+    });
+}
+
+// Функция для получения списка избранных товаров пользователя
+function getFavoritesByCustomerID(customerID, callback) {
+    const query = 'SELECT productID FROM favorites WHERE customerID = ?';
+    connection.query(query, [customerID], (err, results) => {
+        callback(err, results);
+    });
+}
+
 // function AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, callback){
 //     const query = `INSERT INTO games (customerID, gameTitle, gameDescription, gameImage, cssFile, jsFile, routeFile, viewFile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 //     connection.query(query, [session_id, title, description, imagePath , cssFilePath, jsFilePath, routeFilePath, viewFilePath], callback)
@@ -134,6 +158,9 @@ module.exports = {
     UpdateAvatar,
     UpdateName,
     GetProducts,
+    addToFavorites,
+    removeFromFavorites,
+    getFavoritesByCustomerID,
     // AddGame,
     // DeleteGame,
     // UpdateGame,

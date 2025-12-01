@@ -1,19 +1,3 @@
-DROP TABLE IF EXISTS `achievements`;
-CREATE TABLE `achievements` (
-  `achivementID` int NOT NULL AUTO_INCREMENT,
-  `customerID` int NOT NULL,
-  `achievement_type` varchar(255) NOT NULL,
-  `count` int DEFAULT '0',
-  `achieved` tinyint(1) DEFAULT '0',
-  `Name` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`achivementID`),
-  UNIQUE KEY `unique_achievement` (`customerID`,`achievement_type`),
-  KEY `customerID` (`customerID`),
-  CONSTRAINT `achievements_ibfk_1` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`)
-) 
-
-INSERT INTO `achievements` VALUES (210,2,'wins',1,1,'Побед 1');
-
 DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
   `categorieName` varchar(100) NOT NULL,
@@ -50,14 +34,27 @@ CREATE TABLE `customers` (
 
 INSERT INTO `customers` VALUES ('User','danil228lol12@mail.ru',2,'/images/Avatars/Thumbnail_2.png','$2b$10$MxZIE6UteU3wcmvjUspqU.7z2roSy2MwJuJONN92jQsjh0nYlX8im','Разработчик'),('PUPA','sbiktobirov@gmail.com',3,'/images/Avatars/Thumbnail_1.jpg','$2b$10$jd.ShLukC7NVDyftFeEcLOmhvvZ.h71bbV8Py54pLHKGmr/QL8qZ.','Дефолтный чел'),('test','test@mail.ru',13,'/images/Avatars/Thumbnail_2.png','$2b$10$3adq0qU2ERtfS9UGam5dbO/E6AZtofnqR3BpHO4he1dKj86p/804.','Разработчик');
 
+DROP TABLE IF EXISTS `favorites`;
+CREATE TABLE `favorites` (
+  `favoritesID` int NOT NULL AUTO_INCREMENT,
+  `productID` int NOT NULL,
+  `customerID` int NOT NULL,
+  PRIMARY KEY (`favoritesID`,`customerID`,`productID`),
+  KEY `favorites_products_FK` (`productID`),
+  KEY `favorites_customers_FK` (`customerID`),
+  CONSTRAINT `favorites_customers_FK` FOREIGN KEY (`customerID`) REFERENCES `customers` (`customerID`),
+  CONSTRAINT `favorites_products_FK` FOREIGN KEY (`productID`) REFERENCES `products` (`productID`)
+)
+
 DROP TABLE IF EXISTS `products`;
 CREATE TABLE `products` (
   `productID` int NOT NULL AUTO_INCREMENT,
   `productDescription` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `productTitle` varchar(100) NOT NULL,
   `productThumbnail` varchar(100) NOT NULL,
+  `productPrice` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `productRating` int NOT NULL DEFAULT '5',
   PRIMARY KEY (`productID`)
-)
+) 
 
-INSERT INTO `products` VALUES (8,'dumbbells 2kg','Dumbbells Xs','dumbbells2kg.jpg'),(9,'dumbbells 5kg','dumbbells Sm','dumbbells5kg.jpg');
-
+INSERT INTO `products` VALUES (8,'dumbbells 2kg','Dumbbells Xs','dumbbells2kg.jpg','4.99',5),(9,'dumbbells 5kg','dumbbells Sm','dumbbells5kg.jpg','9.99',4);
