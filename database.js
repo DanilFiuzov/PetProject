@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: 'root',
+//     database: 'GameCenter'
+// });
+
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'root',
+    password: '',
     database: 'GameCenter'
 });
-
-// const connection = mysql.createConnection({
-//     host: '192.168.88.188',
-//     user: 'student2',
-//     password: 'n8z6qv',
-//     database: 'gamecenter'
-// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -55,6 +55,26 @@ function UpdateName(name_value, session_id, callback){
 function GetProducts(callback){
     const query = `SELECT * FROM products`
     connection.query(query,callback)
+}
+//Добавление товара в корзину
+function addToCart(customerID, productID, callback) {
+    const query = 'INSERT INTO shopping_cart (customerID, productID) VALUES (?, ?)';
+    connection.query(query, [customerID, productID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        callback(null, results);
+    });
+}
+// Извлечение товаров из корзины
+function getCartByCustomerID(customerID, callback) {
+    const query = 'SELECT productID FROM shopping_cart WHERE customerID = ?';
+    connection.query(query, [customerID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        callback(null, results);
+    });
 }
 
 // Функция для добавления товара в избранное
@@ -161,6 +181,8 @@ module.exports = {
     addToFavorites,
     removeFromFavorites,
     getFavoritesByCustomerID,
+    addToCart,
+    getCartByCustomerID
     // AddGame,
     // DeleteGame,
     // UpdateGame,

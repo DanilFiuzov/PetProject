@@ -73,7 +73,7 @@ const loadAvatars = () => {
 // Загружаем аватарки при запуске сервера
 loadAvatars();
 
-//Главная страница
+// Главная страница
 router.get('/', (req, res) => {
     // Получаем все продукты из базы данных
     connection.GetProducts((err, products) => {
@@ -92,9 +92,17 @@ router.get('/', (req, res) => {
 
                 // Обновляем массив избранных товаров в сессии
                 req.session.favorites = favorites.map(item => item.productID); // Сохраняем только productID
-
-                // Отправляем данные на рендеринг
-                res.render('layout', { body: 'products', products: products, session: req.session });
+                
+                // Обновляем массив товаров в корзине из базы данных
+                connection.getCartByCustomerID(req.session.userId, (err, cartItems) => {
+                    if (err) {
+                        console.error(err);
+                        return res.status(500).send('Ошибка при получении товаров из корзины');
+                    }
+                    req.session.cart = cartItems.map(item => item.productID); // Сохраняем только productID
+                    // Отправляем данные на рендеринг
+                    res.render('layout', { body: 'products', products: products, session: req.session });
+                });
             });
         } else {
             // Если пользователь не вошел, просто передаем все продукты
@@ -560,12 +568,21 @@ router.post('/login', (req, res) => {
                 req.session.userEmail = user.customerEmail;
                 req.session.userName = user.customerName;
 
-                // Получение избранных товаров после входа
+                // Получение избранных товаров и товаров в корзине после входа
                 connection.getFavoritesByCustomerID(user.customerID, (err, favorites) => {
                     if (err) {
                         console.error(err);
                     } else {
                         req.session.favorites = favorites.map(item => item.productID); // Сохраним в сессии
+                    }
+                });
+
+                // Получаем товары из корзины
+                connection.getCartByCustomerID(user.customerID, (err, cartItems) => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        req.session.cart = cartItems.map(item => item.productID); // Сохраняем только productID
                     }
                     res.redirect('/');
                 });
@@ -575,6 +592,33 @@ router.post('/login', (req, res) => {
         } else {
             return res.render('layout', { error: 'In correct user', body: 'login' });
         }
+    });
+});
+
+// Добавление товара в корзину
+router.post('/cart/add', (req, res) => {
+    const { productID } = req.body;
+    const customerID = req.session.userId;
+
+    // Проверка на наличие идентификатора пользователя
+    if (!customerID) {
+        return res.redirect('/login'); // Перенаправление на страницу входа
+    }
+
+    // Добавляем товар в корзину
+    connection.addToCart(customerID, productID, (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Ошибка при добавлении товара в корзину');
+        }
+
+        // Обновляем массив избранных товаров в сессии, если необходимо
+        // Можно добавить код для обновления избранных здесь, если требуется
+      
+        req.session.cart = req.session.cart || [];
+        req.session.cart.push(productID);  // Сохраняем productID в сессии для проверки
+
+        res.redirect('/'); // Перенаправление обратно на главную страницу
     });
 });
 

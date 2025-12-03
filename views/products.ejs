@@ -30,16 +30,19 @@
                             <div class="d-flex justify-content-end align-items-center">
                                 <% if (session.userId) { %> 
                                     <button class="btn btn-link" type="button" title="Add to favorites" onclick="toggleFavorite(event, '<%= product.productID %>')">
-                                        <i class="fa-heart <%= session.favorites && session.favorites.includes(product.productID) ? 'fas' : 'far' %>" id="heart-<%= product.productID %>"></i> <!-- Иконка сердца -->
+                                        <i class="fa-heart <%= session.favorites && session.favorites.includes(product.productID) ? 'fas' : 'far' %>" id="heart-<%= product.productID %>"></i>
                                     </button>
+                                    <form action="/cart/add" method="post" class="ms-2"> <!-- Кнопка "Купить" -->
+                                        <input type="hidden" name="productID" value="<%= product.productID %>">
+                                        <button class="btn btn-primary" type="submit" style="height: 40px; padding-left: 20px; padding-right: 20px;">
+                                            <b>Buy</b>
+                                        </button>
+                                    </form>
                                 <% } else { %>
-
+                                    <a href="/login" class="btn btn-primary" style="height: 40px; padding-left: 20px; padding-right: 20px;">
+                                        <b>Login to Buy</b>
+                                    </a>
                                 <% } %>  
-                                <form action="/product/<%= product.productID %>" method="get" class="ms-2"> <!-- Кнопка "Купить" с отступом -->
-                                    <button class="btn btn-primary" type="submit" style="height: 40px; padding-left: 20px; padding-right: 20px;"> <!-- Повышаем высоту кнопки -->
-                                        <b>Buy</b>
-                                    </button>
-                                </form>
                             </div>
                         </div>
                     </div>
