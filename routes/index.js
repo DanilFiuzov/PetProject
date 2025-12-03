@@ -573,7 +573,7 @@ router.post('/login', (req, res) => {
                     if (err) {
                         console.error(err);
                     } else {
-                        req.session.favorites = favorites.map(item => item.productID); // Сохраним в сессии
+                        req.session.favorites = favorites.map(item => item.productID); // Сохраняем в сессии
                     }
                 });
 
@@ -582,7 +582,11 @@ router.post('/login', (req, res) => {
                     if (err) {
                         console.error(err);
                     } else {
-                        req.session.cart = cartItems.map(item => item.productID); // Сохраняем только productID
+                        // Сохраняем информацию о товарах в корзине (productID и sc_count)
+                        req.session.cart = {};
+                        cartItems.forEach(item => {
+                            req.session.cart[item.productID] = item.sc_count; // Сохраняем productID и количество в сессии
+                        });
                     }
                     res.redirect('/');
                 });
@@ -600,25 +604,124 @@ router.post('/cart/add', (req, res) => {
     const { productID } = req.body;
     const customerID = req.session.userId;
 
-    // Проверка на наличие идентификатора пользователя
     if (!customerID) {
         return res.redirect('/login'); // Перенаправление на страницу входа
     }
 
-    // Добавляем товар в корзину
-    connection.addToCart(customerID, productID, (err) => {
+    // Проверяем, существует ли товар в корзине
+    if (req.session.cart && req.session.cart[productID]) {
+        // Если товар уже есть в корзине, увеличиваем его количество
+        req.session.cart[productID].sc_count += 1; // Увеличиваем количество
+
+        // Обновляем корзину в базе данных
+        connection.updateCartItem(customerID, productID, 'increase', (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Ошибка при обновлении товара в корзине');
+            }
+        });
+    } else {
+        // Если товар добавляется впервые, добавляем его в сессию и в базу данных
+        req.session.cart = req.session.cart || {};
+        req.session.cart[productID] = { sc_count: 1 };  // Устанавливаем количество на 1
+
+        // Добавляем товар в базу данных
+        connection.addToCart(customerID, productID, (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Ошибка при добавлении товара в корзину');
+            }
+        });
+    }
+
+    // Обновляем количество товаров в сессии для отображения в меню
+    req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => total + item.sc_count, 0);
+
+    res.redirect('/'); // Перенаправление обратно на главную страницу
+});
+
+// Изменение количества товара в корзине
+router.post('/cart/update', (req, res) => {
+    const { productID, action } = req.body; // action может принимать значения 'increase' или 'decrease'
+    const customerID = req.session.userId;
+
+    if (!customerID) {
+        return res.redirect('/login'); // Перенаправление на страницу входа
+    }
+
+    if (action === 'increase') {
+        // Увеличиваем количество
+        connection.updateCartItem(customerID, productID, 'increase', (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Ошибка при увеличении количества товара в корзине');
+            }
+        });
+    } else if (action === 'decrease') {
+        // Уменьшаем количество
+        connection.updateCartItem(customerID, productID, 'decrease', (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Ошибка при уменьшении количества товара в корзине');
+            }
+        });
+    }
+
+    res.redirect('/cart/' + customerID); // Перенаправление обратно на страницу корзины
+});
+
+// Удаление товара из корзины
+router.post('/cart/remove', (req, res) => {
+    const { productID } = req.body;
+    const customerID = req.session.userId;
+
+    if (!customerID) {
+        return res.redirect('/login'); // Перенаправление на страницу входа
+    }
+
+    connection.removeFromCart(customerID, productID, (err) => {
         if (err) {
             console.error(err);
-            return res.status(500).send('Ошибка при добавлении товара в корзину');
+            return res.status(500).send('Ошибка при удалении товара из корзины');
+        }
+    });
+
+    res.redirect('/cart/' + customerID); // Перенаправление обратно на страницу корзины
+});
+
+// Корзина пользователя
+router.get('/cart/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    if (!req.session.userId) {
+        return res.redirect('/login'); // Перенаправление на страницу авторизации
+    }
+
+    connection.getCartByCustomerID(userId, (err, cartItems) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Ошибка при получении товаров из корзины');
         }
 
-        // Обновляем массив избранных товаров в сессии, если необходимо
-        // Можно добавить код для обновления избранных здесь, если требуется
-      
-        req.session.cart = req.session.cart || [];
-        req.session.cart.push(productID);  // Сохраняем productID в сессии для проверки
+        const productMap = {};
+        const productDetailsPromises = cartItems.map(item => {
+            return new Promise((resolve, reject) => {
+                connection.getProductByID(item.productID, (err, product) => {
+                    if (err) return reject(err);
+                    product.sc_count = item.sc_count; // Добавляем количество в информацию о продукте
+                    productMap[product.productID] = product; // Используем его для группировки
+                    resolve();
+                });
+            });
+        });
 
-        res.redirect('/'); // Перенаправление обратно на главную страницу
+        Promise.all(productDetailsPromises).then(() => {
+            const products = Object.values(productMap); // Получаем массив с уникальными товарами
+            res.render('layout', { body: 'cart', products: products, session: req.session });
+        }).catch(err => {
+            console.error(err);
+            res.status(500).send('Ошибка при получении данных о продуктах');
+        });
     });
 });
 

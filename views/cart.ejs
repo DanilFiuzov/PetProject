@@ -1,0 +1,56 @@
+<div class="container def-bg-settings">
+    <div class="container mt-5">
+        <h1>Your Cart</h1>
+        <hr>
+        <% if (products.length === 0) { %>
+            <p>Your cart is empty!</p>
+        <% } else { %>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% let totalPrice = 0; %>
+                    <% products.forEach(product => { %>
+                        <% const itemTotal = product.productPrice * product.sc_count; %>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="/images/products/<%= product.productThumbnail %>" alt="<%= product.productTitle %>" style="width: 50px; height: auto; margin-right: 10px;" />
+                                    <span><%= product.productTitle %></span>
+                                </div>
+                            </td>
+                            <td>$<%= typeof product.productPrice === 'number' ? product.productPrice.toFixed(2) : '0.00' %></td>
+                            <td>
+                                <form action="/cart/update" method="post" style="display:inline;">
+                                    <input type="hidden" name="productID" value="<%= product.productID %>">
+                                    <button type="submit" name="action" value="decrease" class="btn btn-secondary btn-sm">-</button>
+                                    <span><%= product.sc_count %></span>
+                                    <button type="submit" name="action" value="increase" class="btn btn-secondary btn-sm">+</button>
+                                </form>
+                            </td>
+                            <td>$<%= itemTotal.toFixed(2) %></td>
+                            <td>
+                                <form action="/cart/remove" method="post" style="display:inline;">
+                                    <input type="hidden" name="productID" value="<%= product.productID %>">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-times"></i> <!-- Иконка удаления -->
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <% totalPrice += itemTotal; %>
+                    <% }) %>
+                </tbody>
+            </table>
+            <h3>Total: $<%= totalPrice.toFixed(2) %></h3>
+        <% } %>
+        <a href="/" class="btn btn-primary mt-3">Continue Shopping</a>
+    </div>
+</div>

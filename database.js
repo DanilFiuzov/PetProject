@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'root',
     database: 'GameCenter'
 });
+
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
+//     database: 'GameCenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -56,9 +56,11 @@ function GetProducts(callback){
     const query = `SELECT * FROM products`
     connection.query(query,callback)
 }
-//Добавление товара в корзину
+
 function addToCart(customerID, productID, callback) {
-    const query = 'INSERT INTO shopping_cart (customerID, productID) VALUES (?, ?)';
+    const query = `INSERT INTO shopping_cart (customerID, productID, sc_count) 
+                   VALUES (?, ?, 1) 
+                   ON DUPLICATE KEY UPDATE sc_count = sc_count + 1`;
     connection.query(query, [customerID, productID], (error, results) => {
         if (error) {
             return callback(error);
@@ -66,10 +68,57 @@ function addToCart(customerID, productID, callback) {
         callback(null, results);
     });
 }
-// Извлечение товаров из корзины
+
+function updateCartItem(customerID, productID, action, callback) {
+    const query = (action === 'increase') ?
+        'UPDATE shopping_cart SET sc_count = sc_count + 1 WHERE customerID = ? AND productID = ?' :
+        'UPDATE shopping_cart SET sc_count = sc_count - 1 WHERE customerID = ? AND productID = ? AND sc_count > 0';
+
+    connection.query(query, [customerID, productID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+
+        // Если количество стало 0, удаляем товар
+        if (action === 'decrease' && results.affectedRows > 0 && results.changedRows > 0) {
+            const selectiveDeleteQuery = 'DELETE FROM shopping_cart WHERE customerID = ? AND productID = ? AND sc_count = 0';
+            connection.query(selectiveDeleteQuery, [customerID, productID], (error) => {
+                if (error) {
+                    return callback(error);
+                }
+            });
+        }
+
+        callback(null, results);
+    });
+}
+
 function getCartByCustomerID(customerID, callback) {
-    const query = 'SELECT productID FROM shopping_cart WHERE customerID = ?';
+    const query = 'SELECT productID, sc_count FROM shopping_cart WHERE customerID = ?';
     connection.query(query, [customerID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        callback(null, results);
+    });
+}
+
+function getProductByID(productID, callback) {
+    const query = 'SELECT productID, productThumbnail, productTitle, productPrice, productRating FROM products WHERE productID = ?';
+    connection.query(query, [productID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        if (results.length > 0) {
+            results[0].productPrice = parseFloat(results[0].productPrice); // Преобразуем в число
+        }
+        callback(null, results[0]);
+    });
+}
+
+function removeFromCart(customerID, productID, callback) {
+    const query = 'DELETE FROM shopping_cart WHERE customerID = ? AND productID = ?';
+    connection.query(query, [customerID, productID], (error, results) => {
         if (error) {
             return callback(error);
         }
@@ -182,7 +231,10 @@ module.exports = {
     removeFromFavorites,
     getFavoritesByCustomerID,
     addToCart,
-    getCartByCustomerID
+    getCartByCustomerID,
+    getProductByID,
+    removeFromCart,
+    updateCartItem
     // AddGame,
     // DeleteGame,
     // UpdateGame,
