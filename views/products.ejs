@@ -4,48 +4,47 @@
         <div class="col-12">
             <div class="card cards shadow-sm bordered_1 border-0 CardBody" style="height: 200px; margin-top: 8px;">
                 <div class="row g-0">
-                    <div class="col-md-2">
-                        <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded-start" alt="<%= product.productTitle %>">
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card-body">
-                            <h5 class="card-title"><%= product.productTitle %></h5>
-                            <p class="card-text text-muted"><%= product.productDescription %></p>
-                            <div class="d-flex justify-content-between mt-4">
-                                <span class="badge bg-secondary"><%= product.category %></span>
-                                <span class="text-warning">
-                                    <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
-                                        <i class="fas fa-star"></i>
-                                    <% } %>
-                                    <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
-                                        <i class="far fa-star"></i>
-                                    <% } %>
-                                </span>
+                    <a href="/product/<%= product.productID %>" class="text-decoration-none">
+                        <div class="col-md-2">
+                            <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded-start" alt="<%= product.productTitle %>">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title"><%= product.productTitle %></h5>
+                                <p class="card-text text-muted"><%= product.productDescription %></p>
+                                <div class="d-flex justify-content-between mt-4">
+                                    <span class="badge bg-secondary"><%= product.category %></span>
+                                    <span class="text-warning">
+                                        <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
+                                            <i class="fas fa-star"></i>
+                                        <% } %>
+                                        <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
+                                            <i class="far fa-star"></i>
+                                        <% } %>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-2 d-flex flex-column align-items-end" style="padding: 20px;"> 
-                        <div class="d-flex flex-column align-items-end">
-                            <h6 class="mb-2 font-weight-bold text-end" style="font-size: 20px;">$<%= product.productPrice %></h6>
-                            <div class="d-flex justify-content-end align-items-center">
-                                <% if (session.userId) { %> 
-                                    <button class="btn btn-link" type="button" title="Add to favorites" onclick="toggleFavorite(event, '<%= product.productID %>')">
-                                        <i class="fa-heart <%= session.favorites && session.favorites.includes(product.productID) ? 'fas' : 'far' %>" id="heart-<%= product.productID %>"></i>
-                                    </button>
-                                    <form action="/cart/add" method="post" class="ms-2"> <!-- Кнопка "Купить" -->
-                                        <input type="hidden" name="productID" value="<%= product.productID %>">
-                                        <button class="btn btn-primary" type="submit" style="height: 40px; padding-left: 20px; padding-right: 20px;">
+                        <div class="col-md-2 d-flex flex-column align-items-end" style="padding: 20px;"> 
+                            <div class="d-flex flex-column align-items-end">
+                                <h6 class="mb-2 font-weight-bold text-end" style="font-size: 20px;">$<%= product.productPrice %></h6>
+                                <div class="d-flex justify-content-end align-items-center">
+                                    <% if (session.userId) { %> 
+                                        <button class="btn btn-link" type="button" title="Add to favorites" onclick="toggleFavorite(event, '<%= product.productID %>')">
+                                            <i class="fa-heart <%= session.favorites && session.favorites.includes(product.productID) ? 'fas' : 'far' %>" id="heart-<%= product.productID %>"></i>
+                                        </button>
+                                        <button class="btn btn-primary ms-2" type="button" onclick="addToCart('<%= product.productID %>')" style="height: 40px; padding-left: 20px; padding-right: 20px;">
                                             <b>Buy</b>
                                         </button>
-                                    </form>
-                                <% } else { %>
-                                    <a href="/login" class="btn btn-primary" style="height: 40px; padding-left: 20px; padding-right: 20px;">
-                                        <b>Login to Buy</b>
-                                    </a>
-                                <% } %>  
+                                    <% } else { %>
+                                        <a href="/login" class="btn btn-primary" style="height: 40px; padding-left: 20px; padding-right: 20px;">
+                                            <b>Login to Buy</b>
+                                        </a>
+                                    <% } %>  
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>            
             </div>
         </div>

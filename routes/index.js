@@ -2,45 +2,9 @@ const express = require('express');
 const router = express.Router();
 const connection = require('../database');
 const bcrypt = require('bcrypt');
-const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 
-
-// Настройка multer для загрузки файлов
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const userDir = `uploads/${req.session.userId}`;
-        fs.mkdirSync(userDir, { recursive: true });
-        fs.mkdirSync(`uploads/${req.session.userId}/images`, { recursive: true });
-        fs.mkdirSync(`uploads/${req.session.userId}/styles`, { recursive: true });
-        fs.mkdirSync(`uploads/${req.session.userId}/routes`, { recursive: true }); 
-        fs.mkdirSync(`uploads/${req.session.userId}/scripts`, { recursive: true });
-        fs.mkdirSync(`uploads/${req.session.userId}/views`, { recursive: true });
-
-        let uploadPath = userDir; // По умолчанию — корневая папка
-        if (file.mimetype.startsWith('image/')) {
-            uploadPath = `${userDir}/images`;
-        } 
-        else if (file.originalname.endsWith('.css') || file.mimetype.includes('css')) {
-            uploadPath = `${userDir}/styles`;
-        } 
-        else if (file.originalname === 'route.js') {
-            uploadPath = `${userDir}/routes`;
-        }
-        else if (file.originalname.endsWith('.js') || file.mimetype.includes('javascript')) {
-            uploadPath = `${userDir}/scripts`;
-        } 
-        else if (file.originalname.endsWith('.ejs') || file.mimetype.includes('ejs')) {
-            uploadPath = `${userDir}/views`;
-        }
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname); // Используем оригинальное имя файла
-    }
-});
-const upload = multer({ storage });
 
 // Глобальный массив для хранения аватарок
 let avatars = [];
@@ -69,7 +33,6 @@ const loadAvatars = () => {
         }));
     });
 };
-
 // Загружаем аватарки при запуске сервера
 loadAvatars();
 
@@ -722,6 +685,24 @@ router.get('/cart/:userId', (req, res) => {
             console.error(err);
             res.status(500).send('Ошибка при получении данных о продуктах');
         });
+    });
+});
+
+// Маршрут для страницы товара
+router.get('/product/:id', (req, res) => {
+    const productID = req.params.id;
+
+    connection.getProductByID(productID, (err, product) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Ошибка при получении товара');
+        }
+        
+        if (!product) {
+            return res.status(404).send('Товар не найден');
+        }
+
+        res.render('product', { product: product, session: req.session }); // Отправляем данные на страницу товара
     });
 });
 

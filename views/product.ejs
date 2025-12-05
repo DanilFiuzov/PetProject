@@ -1,0 +1,32 @@
+<div class="container def-bg-settings">
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6">
+                <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded" alt="<%= product.productTitle %>">
+            </div>
+            <div class="col-md-6">
+                <h1><%= product.productTitle %></h1>
+                <h4 class="text-warning">$<%= product.productPrice %></h4>
+                <div class="rating">
+                    <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
+                        <i class="fas fa-star"></i>
+                    <% } %>
+                    <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
+                        <i class="far fa-star"></i>
+                    <% } %>
+                </div>
+                <p class="mt-3"><%= product.productDescription %></p>
+
+                <% if (session.userId) { %>
+                    <form action="/cart/add" method="post" class="mt-4">
+                        <input type="hidden" name="productID" value="<%= product.productID %>">
+                        <button class="btn btn-primary" type="submit">Add to Cart</button>
+                    </form>
+                <% } else { %>
+                    <a href="/login" class="btn btn-primary">Login to Buy</a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+sd

@@ -28,7 +28,6 @@ CREATE TABLE `customers` (
   `customerID` int NOT NULL AUTO_INCREMENT,
   `customerThumbnail` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '/images/Avatars/Thumbnail_1.jpg',
   `customerPassword` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `customerRank` varchar(100) DEFAULT 'Дефолтный чел',
   PRIMARY KEY (`customerID`)
 ) 
 
