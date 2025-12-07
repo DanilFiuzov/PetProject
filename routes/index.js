@@ -37,9 +37,10 @@ loadAvatars();
 
 // Главная страница
 router.get('/', (req, res) => {
-    // Получаем все продукты из базы данных
-    connection.GetProducts((err, products) => {
+    // Получаем все продукты с категориями
+    connection.getProductsWithCategories((err, products) => {
         if (err) {
+            console.error(err);
             return res.status(500).send('Ошибка при получении списка продуктов');
         }
 
@@ -61,14 +62,35 @@ router.get('/', (req, res) => {
                         console.error(err);
                         return res.status(500).send('Ошибка при получении товаров из корзины');
                     }
-                    req.session.cart = cartItems.map(item => item.productID); // Сохраняем только productID
+                    
+                    // Инициализация корзины в сессии как пустого объекта
+                    req.session.cart = {};
+                    
+                    // Заполняем корзину данными о товарах
+                    cartItems.forEach(item => {
+                        req.session.cart[item.productID] = { sc_count: item.sc_count }; // Сохраняем productID и количество
+                    });
+
+                    // Обновляем общее количество товаров в корзине
+                    req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
+                        return total + (item.sc_count || 0); // Теперь item является объектом с sc_count
+                    }, 0);
+
                     // Отправляем данные на рендеринг
-                    res.render('layout', { body: 'products', products: products, session: req.session });
+                    res.render('layout', { 
+                        body: 'products', 
+                        products: products, 
+                        session: req.session 
+                    });
                 });
             });
         } else {
             // Если пользователь не вошел, просто передаем все продукты
-            res.render('layout', { body: 'products', products: products, session: req.session });
+            res.render('layout', { 
+                body: 'products', 
+                products: products, 
+                session: req.session 
+            });
         }
     });
 });
@@ -139,12 +161,13 @@ router.post('/login', (req, res) => {
             const user = results[0];
             const isMatch = bcrypt.compareSync(password, user.customerPassword);
             if (isMatch) {
+                // Сохраняем данные пользователя в сессию
                 req.session.userId = user.customerID;
                 req.session.userThumbnail = user.customerThumbnail;
                 req.session.userEmail = user.customerEmail;
                 req.session.userName = user.customerName;
 
-                // Получение избранных товаров и товаров в корзине после входа
+                // Загружаем избранные товары
                 connection.getFavoritesByCustomerID(user.customerID, (err, favorites) => {
                     if (err) {
                         console.error(err);
@@ -153,18 +176,17 @@ router.post('/login', (req, res) => {
                     }
                 });
 
-                // Получаем товары из корзины
+                // Загружаем корзину
                 connection.getCartByCustomerID(user.customerID, (err, cartItems) => {
                     if (err) {
                         console.error(err);
                     } else {
-                        // Сохраняем информацию о товарах в корзине (productID и sc_count)
-                        req.session.cart = {};
+                        req.session.cart = {}; // Сбрасываем текущую корзину
                         cartItems.forEach(item => {
-                            req.session.cart[item.productID] = item.sc_count; // Сохраняем productID и количество в сессии
+                            req.session.cart[item.productID] = { sc_count: item.sc_count }; // Сохраняем productID и количество в сессии
                         });
                     }
-                    res.redirect('/');
+                    res.redirect('/'); // Перенаправляем на главную страницу
                 });
             } else {
                 return res.render('layout', { error: 'Неверный пароль!', body: 'login' });
@@ -177,8 +199,8 @@ router.post('/login', (req, res) => {
 
 // Добавление товара в корзину
 router.post('/cart/add', (req, res) => {
-    const { productID } = req.body;
-    const customerID = req.session.userId;
+    const { productID } = req.body; // Извлекаем productID из тела запроса
+    const customerID = req.session.userId; // Извлекаем идентификатор пользователя из сессии
 
     // Проверка, авторизован ли пользователь
     if (!customerID) {
@@ -188,27 +210,26 @@ router.post('/cart/add', (req, res) => {
     // Инициализация корзины, если её ещё нет
     req.session.cart = req.session.cart || {};
 
-    // Проверяем, существует ли товар в корзине
+    // Проверка существования товара в корзине и обновление
     if (req.session.cart[productID]) {
-        // Увеличиваем количество
-        req.session.cart[productID].sc_count = (req.session.cart[productID].sc_count || 0) + 1;
+        req.session.cart[productID].sc_count += 1; // Увеличиваем количество товара в сессии
 
-        // Обновляем корзину в базе данных
+        // Обновляем на сервере
         connection.updateCartItem(customerID, productID, 'increase', (err) => {
             if (err) {
                 console.error(err);
                 return res.status(500).json({ success: false, message: 'Ошибка при обновлении товара в корзине' });
             }
 
-            // Обновляем количество товаров в сессии
+            // Обновляем общее количество товаров в корзине
             req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
-                return total + (item && item.sc_count ? item.sc_count : 0); // Убедитесь, что item не null и имеет sc_count
+                return total + (item.sc_count || 0); // Суммируем количество товаров
             }, 0);
-            return res.json({ success: true, cartCount: req.session.cartCount });
+            return res.json({ success: true, cartCount: req.session.cartCount }); // Отправляем ответ
         });
     } else {
         // Если товар добавляется впервые
-        req.session.cart[productID] = { sc_count: 1 };  // Устанавливаем количество на 1
+        req.session.cart[productID] = { sc_count: 1 }; // Добавляем товар с количеством 1
 
         // Добавляем товар в базу данных
         connection.addToCart(customerID, productID, (err) => {
@@ -216,17 +237,15 @@ router.post('/cart/add', (req, res) => {
                 console.error(err);
                 return res.status(500).json({ success: false, message: 'Ошибка при добавлении товара в корзину' });
             }
-            
-            // Обновляем количество товаров в сессии
+
+            // Обновляем общее количество товаров в корзине
             req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
-                return total + (item && item.sc_count ? item.sc_count : 0); // Убедитесь, что item не null и имеет sc_count
+                return total + (item.sc_count || 0); // Суммируем количество товаров
             }, 0);
-            return res.json({ success: true, cartCount: req.session.cartCount });
+            return res.json({ success: true, cartCount: req.session.cartCount }); // Отправляем ответ
         });
     }
 });
-
-
 
 // Изменение количества товара в корзине
 router.post('/cart/update', (req, res) => {
@@ -313,24 +332,6 @@ router.get('/cart/:userId', (req, res) => {
     });
 });
 
-// Маршрут для страницы товара
-router.get('/product/:id', (req, res) => {
-    const productID = req.params.id;
-
-    connection.getProductByID(productID, (err, product) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Ошибка при получении товара');
-        }
-        
-        if (!product) {
-            return res.status(404).send('Товар не найден');
-        }
-
-        res.render('layout', { product: product, session: req.session, body: 'product' }); // Отправляем данные на страницу товара
-    });
-});
-
 // Добавление товара в избранное
 router.post('/favorites/add', (req, res) => {
     const { productID } = req.body;
@@ -397,8 +398,39 @@ router.get('/favorites', (req, res) => {
             // Обновляем массив избранных товаров в сессии
             req.session.favorites = favorites.map(item => item.productID);
 
-            // Выводим избранные товары
-            res.render('layout', { products: favorites, body: 'favorites' });
+            // Получаем категории для избранных товаров
+            const productIDs = favorites.map(item => item.productID);
+            
+            if (productIDs.length > 0) {
+                connection.getCategoriesForProducts(productIDs, (err, categoriesMap) => {
+                    if (err) {
+                        console.error('Error getting categories:', err);
+                        categoriesMap = {};
+                    }
+                    
+                    // Добавляем категории к каждому товару
+                    const productsWithCategories = favorites.map(product => ({
+                        ...product,
+                        category: categoriesMap[product.productID] && categoriesMap[product.productID].length > 0 
+                            ? categoriesMap[product.productID][0] 
+                            : 'Uncategorized'
+                    }));
+
+                    // Выводим избранные товары
+                    res.render('layout', { 
+                        products: productsWithCategories, 
+                        body: 'favorites',
+                        session: req.session 
+                    });
+                });
+            } else {
+                // Нет избранных товаров
+                res.render('layout', { 
+                    products: [], 
+                    body: 'favorites',
+                    session: req.session 
+                });
+            }
         });
     } else {
         res.redirect('/login');
@@ -497,6 +529,154 @@ router.post('/upload', async (req, res) => {
             res.redirect('/acc_page')
         }
     })
+});
+
+// Получение отзывов для продукта
+router.get('/api/reviews/:productID', (req, res) => {
+    const { productID } = req.params;
+    
+    connection.getProductReviews(productID, (err, reviews) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+        
+        connection.getReviewStats(productID, (errStats, stats) => {
+            if (errStats) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+            
+            res.json({ reviews, stats });
+        });
+    });
+});
+
+// Проверка, оставлял ли пользователь отзыв
+router.get('/api/reviews/:productID/check', (req, res) => {
+    const { productID } = req.params;
+    const customerID = req.session.userId; // userId в сессии = customerID в БД
+    
+    if (!customerID) {
+        return res.json({ hasReviewed: false });
+    }
+    
+    connection.hasUserReviewed(productID, customerID, (err, hasReviewed) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ hasReviewed });
+    });
+});
+
+// Добавление нового отзыва
+router.post('/api/reviews', (req, res) => {
+    const { productID, rating, comment } = req.body;
+    const customerID = req.session.userId; // userId в сессии = customerID в БД
+    
+    if (!customerID) {
+        return res.status(401).json({ error: 'Not authorized' });
+    }
+    
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Invalid rating' });
+    }
+    
+    if (!comment || comment.trim().length < 10) {
+        return res.status(400).json({ error: 'Comment must be at least 10 characters' });
+    }
+    
+    connection.addReview(productID, customerID, rating, comment.trim(), (err) => {
+        if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ error: 'You have already reviewed this product' });
+            }
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ success: true });
+    });
+});
+
+// Обновление маршрута для страницы товара - передаем информацию об отзывах
+router.get('/product/:id', (req, res) => {
+    const productId = req.params.id;
+    
+    connection.getProductByID(productId, (err, product) => {
+        if (err || !product) {
+            return res.status(404).send('Product not found');
+        }
+        
+        // Получаем категорию товара
+        const categoryQuery = `
+            SELECT c.categorieName 
+            FROM categories c
+            JOIN categoriesandproducts cp ON c.categorieID = cp.categorieID
+            WHERE cp.productID = ?
+            LIMIT 1
+        `;
+        
+        connection.connection.query(categoryQuery, [productId], (categoryErr, categoryResults) => {
+            const category = categoryResults.length > 0 ? categoryResults[0].categorieName : 'Uncategorized';
+            
+            // Получаем отзывы
+            connection.getProductReviews(productId, (reviewsErr, reviews) => {
+                if (reviewsErr) reviews = [];
+                
+                // Получаем статистику
+                connection.getReviewStats(productId, (statsErr, stats) => {
+                    const statsMap = {
+                        5: { count: 0, percentage: 0 },
+                        4: { count: 0, percentage: 0 },
+                        3: { count: 0, percentage: 0 },
+                        2: { count: 0, percentage: 0 },
+                        1: { count: 0, percentage: 0 }
+                    };
+                    
+                    if (!statsErr && stats) {
+                        stats.forEach(stat => {
+                            statsMap[stat.rating] = stat;
+                        });
+                    }
+                    
+                    // Проверяем, оставлял ли пользователь отзыв
+                    if (req.session.userId) {
+                        connection.hasUserReviewed(productId, req.session.userId, (checkErr, result) => {
+                            if (checkErr) {
+                                console.error('Error checking review:', checkErr);
+                                result = false;
+                            }
+                            
+                            // Рендерим страницу с данными
+                            res.render('layout', {  // ИЗМЕНИТЬ С 'product' НА 'layout'
+                                product: {
+                                    ...product,
+                                    category,
+                                    productRating: product.productRating || 0
+                                },
+                                reviews,
+                                reviewStats: statsMap,
+                                hasReviewed: result || false, // Передаем hasReviewed
+                                session: req.session,
+                                body: 'product'  // ДОБАВИТЬ ЭТУ СТРОКУ
+                            });
+                        });
+                    } else {
+                        // Пользователь не авторизован
+                        res.render('layout', {  // ИЗМЕНИТЬ С 'product' НА 'layout'
+                            product: {
+                                ...product,
+                                category,
+                                productRating: product.productRating || 0
+                            },
+                            reviews,
+                            reviewStats: statsMap,
+                            hasReviewed: false, // Всегда false для неавторизованных
+                            session: req.session,
+                            body: 'product'  // ДОБАВИТЬ ЭТУ СТРОКУ
+                        });
+                    }
+                });
+            });
+        });
+    });
 });
 
 module.exports = router;

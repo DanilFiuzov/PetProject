@@ -1,57 +1,339 @@
 <div class="container def-bg-settings">
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-4">
-                <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded" alt="<%= product.productTitle %>">
-            </div>
-            <div class="col-md-8">
-                <h1><%= product.productTitle %></h1>
-                <h4><%= product.productPrice %>₽</h4>
-                <div class="rating">
-                    <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
-                        <i class="fas fa-star text-warning"></i>
-                    <% } %>
-                    <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
-                        <i class="far fa-star text-warning"></i>
-                    <% } %>
-                </div>
-                <div class="d-flex mt-1">
-                    Производитель: <p class="card-text text-muted">&nbsp;<%= product.productManufacturer %></p>                                      
-                </div>
+   <!-- Добавьте эти скрытые поля для передачи данных в JavaScript -->
+    <input type="hidden" id="productId" value="<%= product.productID %>">
+    <input type="hidden" id="userId" value="<%= session && session.userId ? session.userId : '' %>">
+    <input type="hidden" id="hasReviewed" value="<%= hasReviewed %>">
+    
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb" class="mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Главная</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Каталог</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><%= product.productTitle %></li>
+        </ol>
+    </nav>
 
-                <% if (session.userId) { %>
-                    <form action="/cart/add" method="post" class="mt-4">
-                        <input type="hidden" name="productID" value="<%= product.productID %>">
-                        <button class="btn btn-primary" type="submit">Купить</button>
-                    </form>
+    <!-- Основная информация о товаре -->
+    <div class="row g-4 mt-2">
+        <!-- Изображение товара -->
+        <div class="col-lg-5">
+            <div class="product-image-container rounded-3 p-4 mb-4">
+                <img src="/images/products/<%= product.productThumbnail %>" 
+                     class="img-fluid rounded-3" 
+                     alt="<%= product.productTitle %>"
+                     style="max-height: 400px; object-fit: contain;">
+            </div>
+            
+            <!-- Действия с товаром -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h3 class="text-primary fw-bold mb-0"><%= product.productPrice %>₽</h3>
+                            <small class="text-muted">В наличии</small>
+                        </div>
+                        <% if (session && session.userId) { %>
+                            <button class="btn btn-link text-muted p-0" 
+                                    onclick="toggleFavorite(event, '<%= product.productID %>')"
+                                    title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
+                                <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %>" 
+                                   style="font-size: 1.5rem;"></i>
+                            </button>
+                        <% } %>
+                    </div>
+                    
+                    <% if (session && session.userId) { %>
+                        <button class="btn btn-primary w-100 py-3 mb-3" 
+                                onclick="addToCart('<%= product.productID %>')">
+                            <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
+                        </button>
+                    <% } else { %>
+                        <a href="/login" class="btn btn-primary w-100 py-3 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
+                        </a>
+                    <% } %>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-secondary">
+                            <i class="fas fa-share-alt me-2"></i>Поделиться
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Описание товара -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <!-- Заголовок и категории -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h1 class="h2 fw-bold mb-0"><%= product.productTitle %></h1>
+                        <div class="categories-container">
+                            <% if (product.categories && product.categories.length > 0) { %>
+                                <% product.categories.forEach((cat) => { %>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 me-1 mb-1"
+                                          style="font-size: 0.85rem; padding: 0.35rem 0.7rem;">
+                                        <%= cat %>
+                                    </span>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <!-- Рейтинг и производитель -->
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="rating me-3">
+                            <% for (let j = 0; j < 5; j++) { %>
+                                <span class="star-wrapper" style="font-size: 1.2rem;">
+                                    <i class="far fa-star empty-star"></i>
+                                    <% if (product.productRating > j) { %>
+                                        <%
+                                            let width = 100;
+                                            if (product.productRating - j < 1) {
+                                                width = (product.productRating - j) * 100;
+                                            }
+                                        %>
+                                        <span class="filled-star" style="width: <%= width %>%">
+                                            <i class="fas fa-star"></i>
+                                        </span>
+                                    <% } %>
+                                </span>
+                            <% } %>
+                        </div>
+                        <span class="text-muted me-3"><%= product.productRating ? product.productRating.toFixed(1) : '0.0' %></span>
+                        <span class="text-muted">•</span>
+                        <div class="ms-3">
+                            <span class="text-muted">Производитель:</span>
+                            <span class="fw-medium ms-1"><%= product.productManufacturer %></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Описание -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-align-left text-primary me-2"></i>Описание
+                        </h5>
+                        <p class="card-text" style="line-height: 1.6;"><%= product.productDescription %></p>
+                    </div>
+                    
+                    <!-- Характеристики -->
+                    <div class="accordion mb-4" id="productAccordion">
+                        <div class="accordion-item border-0">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-3" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#featuresCollapse"
+                                        aria-expanded="false" 
+                                        aria-controls="featuresCollapse"
+                                        style="background-color: #f8f9fa;">
+                                    <i class="fas fa-list text-primary me-2"></i>Характеристики
+                                </button>
+                            </h2>
+                            <div id="featuresCollapse" class="accordion-collapse collapse" data-bs-parent="#productAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                                <span class="text-muted">Производитель</span>
+                                                <span class="fw-medium"><%= product.productManufacturer %></span>
+                                            </div>
+                                            <% if (product.categories && product.categories.length > 0) { %>
+                                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                                    <span class="text-muted">Категории</span>
+                                                    <span class="fw-medium"><%= product.categories.join(', ') %></span>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <!-- Можно добавить больше характеристик позже -->
+                                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                                <span class="text-muted">Вес</span>
+                                                <span class="fw-medium">Уточняется</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                                <span class="text-muted">Материал</span>
+                                                <span class="fw-medium">Уточняется</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Отзывы -->
+<div class="mt-5">
+    <h2 class="mb-4">
+        <i class="fas fa-comments text-primary me-2"></i>Отзывы покупателей
+    </h2>
+    
+    <div class="row g-4">
+        <!-- Статистика отзывов -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-4 fw-bold text-primary mb-1">
+                            <%= product.productRating ? product.productRating.toFixed(1) : '0.0' %>
+                        </div>
+                        <!-- ЗДЕСЬ: Обновляем отображение звезд для дробных значений -->
+                        <div class="rating justify-content-center mb-2">
+                            <% for (let j = 0; j < 5; j++) { %>
+                                <span class="star-wrapper position-relative" style="font-size: 1.5rem; display: inline-block;">
+                                    <i class="far fa-star text-muted"></i>
+                                    <% if (product.productRating > j) { %>
+                                        <%
+                                            let width = 100;
+                                            if (product.productRating - j < 1) {
+                                                width = (product.productRating - j) * 100;
+                                            }
+                                        %>
+                                        <span class="position-absolute top-0 start-0 overflow-hidden" style="width: <%= width %>%">
+                                            <i class="fas fa-star text-warning"></i>
+                                        </span>
+                                    <% } %>
+                                </span>
+                            <% } %>
+                        </div>
+                        <p class="text-muted mb-0">На основе <%= reviews.length %> отзывов</p>
+                    </div>
+                    
+                    <div class="review-stats">
+                        <% [5, 4, 3, 2, 1].forEach((star) => { %>
+                            <%
+                                const starStat = reviewStats[star];
+                                const percentage = starStat ? starStat.percentage : 0;
+                                const count = starStat ? starStat.count : 0;
+                            %>
+                            <div class="d-flex align-items-center mb-2">
+                                <small class="text-muted me-2" style="width: 60px;"><%= star %> звезд</small>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div id="progress-<%= star %>" class="progress-bar bg-warning" style="width: <%= percentage %>%"></div>
+                                </div>
+                                <small id="count-<%= star %>" class="text-muted ms-2" style="width: 30px;"><%= count %></small>
+                            </div>
+                        <% }) %>
+                    </div>
+                    
+                    <% if (session && session.userId) { %>
+                        <button id="add-review-btn" 
+                                class="btn btn-primary w-100 mt-4"
+                                onclick="openReviewModal()"
+                                <%= hasReviewed ? 'disabled' : '' %>>
+                            <i class="fas fa-plus me-2"></i>
+                            <%= hasReviewed ? 'Вы уже оставили отзыв' : 'Оставить отзыв' %>
+                        </button>
+                    <% } else if (!session || !session.userId) { %>
+                        <a href="/login" class="btn btn-outline-primary w-100 mt-4">
+                            <i class="fas fa-sign-in-alt me-2"></i>Войти, чтобы оставить отзыв
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Список отзывов -->
+        <div class="col-lg-8">
+            <div id="reviews-container">
+                <% if (reviews.length === 0) { %>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="far fa-comment-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Пока нет отзывов</h5>
+                            <p class="text-muted">Будьте первым, кто поделится своим мнением об этом товаре</p>
+                            <% if (session && session.userId && !hasReviewed) { %>
+                                <button class="btn btn-primary mt-2" onclick="openReviewModal()">
+                                    <i class="fas fa-plus me-2"></i>Написать отзыв
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
                 <% } else { %>
-                    <div class="mt-4"> 
-                        <a href="/login" class="btn btn-primary">Авторизоваться</a>
+                    <div class="reviews-list">
+                        <% reviews.forEach((review) => { %>
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <img src="<%= review.customerThumbnail || '/images/Avatars/default-avatar.png' %>" 
+                                                 alt="<%= review.customerName %>" 
+                                                 class="rounded-circle me-3" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0"><%= review.customerName %></h6>
+                                                <small class="text-muted">
+                                                    <%= new Date(review.created_at).toLocaleDateString('ru-RU') %>
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="review-star-rating">
+                                            <% for (let j = 0; j < 5; j++) { %>
+                                                <% if (review.rating > j) { %>
+                                                    <i class="fas fa-star text-warning" style="color: #ffc107 !important; -webkit-text-fill-color: #ffc107 !important; fill: #ffc107 !important;"></i>
+                                                <% } else { %>
+                                                    <i class="far fa-star text-muted" style="color: #dee2e6 !important; -webkit-text-fill-color: #dee2e6 !important; fill: #dee2e6 !important;"></i>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0" style="line-height: 1.5;"><%= review.comment %></p>
+                                </div>
+                            </div>
+                        <% }) %>
                     </div>
                 <% } %>
             </div>
         </div>
+    </div>
+</div>
 
-        <hr>
-        <div class="section">
-            <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="toggleVisibility('description')">
-                <h5>Описание</h5>
-                <i class="fas fa-chevron-up" id="description-icon"></i>
-            </div>
-            <div id="description" class="mt-2">  <!-- Развернуто по умолчанию -->
-                <p class="card-text"><%= product.productDescription %></p>
+    <!-- Модальное окно для отзыва -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title">Оставить отзыв</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label">Оценка</label>
+                        <div class="d-flex mb-2" id="starRating">
+                            <% for(let i = 1; i <= 5; i++) { %>
+                                <i class="fas fa-star fa-2x text-muted me-1" 
+                                   style="cursor: pointer;"
+                                   data-rating="<%= i %>"
+                                   onmouseover="hoverStars(<%= i %>)"
+                                   onmouseout="resetStars()"
+                                   onclick="setRating(<%= i %>)"></i>
+                            <% } %>
+                        </div>
+                        <div id="rating-error" class="form-text text-danger d-none">Пожалуйста, выберите оценку</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reviewComment" class="form-label">Ваш отзыв</label>
+                        <textarea class="form-control" 
+                                  id="reviewComment" 
+                                  rows="4" 
+                                  placeholder="Расскажите о вашем опыте использования товара..."
+                                  oninput="document.getElementById('comment-error').classList.add('d-none')"></textarea>
+                        <div id="comment-error" class="form-text text-danger d-none">
+                            Отзыв должен содержать не менее 10 символов
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="submitReview()">Отправить отзыв</button>
+                </div>
             </div>
         </div>
-        <hr>
-        <div class="section">
-            <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="toggleVisibility('features')">
-                <h5>Характеристики</h5>
-                <i class="fas fa-chevron-down" id="features-icon"></i>
-            </div>
-            <div id="features" class="collapse mt-2">  <!-- Изначально скрыто -->
-                <p class="card-text">Здесь появятся характеристики продукта.</p>
-            </div>
-        </div>
-        <hr>
     </div>
 </div>
