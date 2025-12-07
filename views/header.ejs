@@ -51,7 +51,7 @@
                 <img src="/images/User_02.svg" width="43px">
               </div>
               <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                <h3>Account</h3>
+                <h3>Аккаунт</h3>
               </div>
             </div>
           </a>
@@ -63,9 +63,22 @@
                   <img src="/images/shopping-cart.png" width="43px">
                 </div>
                 <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3>Cart</h3>
+                  <h3>Корзина</h3>
                 </div>
               </div>
+            </a>
+          <% } %>
+
+          <% if (session.userId) { %> 
+            <a href="/favorites" class="text-decoration-none">
+                <div class="w-100 p-2 d-flex align-items-center" style="height: 59px;">
+                    <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
+                        <i class="fa fa-heart far" style="font-size: 43px; color: rgb(255, 255, 255);"></i> 
+                    </div>
+                    <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
+                        <h3>Избранное</h3> 
+                    </div>
+                </div>
             </a>
           <% } %>
 
@@ -75,7 +88,7 @@
                 <img src="/images/Log_Out.svg" width="43px">
               </div>
               <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                <h3>Logout</h3>
+                <h3>Выйти</h3>
               </div>
             </div>
           </a>

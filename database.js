@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'root',
     database: 'GameCenter'
 });
+
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
+//     database: 'GameCenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -44,13 +44,6 @@ function UpdateName(name_value, session_id, callback){
     const query = `UPDATE customers SET customerName = (?) where customerID = (?)`
     connection.query(query, [name_value,session_id],callback)
 }
-
-
-//Игры
-// function GetDeveloperGames( session_id, callback ){
-//     const query = `SELECT * FROM games WHERE customerID = (?)`
-//     connection.query(query, [session_id], callback)
-// }
 
 function GetProducts(callback){
     const query = `SELECT * FROM products`
@@ -104,7 +97,7 @@ function getCartByCustomerID(customerID, callback) {
 }
 
 function getProductByID(productID, callback) {
-    const query = 'SELECT productID, productThumbnail, productTitle, productPrice, productRating FROM products WHERE productID = ?';
+    const query = 'SELECT * FROM products WHERE productID = ?';
     connection.query(query, [productID], (error, results) => {
         if (error) {
             return callback(error);
@@ -113,6 +106,32 @@ function getProductByID(productID, callback) {
             results[0].productPrice = parseFloat(results[0].productPrice); // Преобразуем в число
         }
         callback(null, results[0]);
+    });
+}
+
+function getProductsByIDs(productIDs, callback) {
+    const products = [];
+    let remaining = productIDs.length;
+
+    if (remaining === 0) {
+        return callback(null, products); // Если массив пустой, сразу возвращаем пустой массив
+    }
+
+    productIDs.forEach(productID => {
+        getProductByID(productID, (err, product) => {
+            if (err) {
+                return callback(err); // В случае ошибки вызываем коллбек с ошибкой
+            }
+            if (product) {
+                products.push(product); // Добавляем продукт в массив
+            }
+            remaining--;
+
+            // Если все запросы завершены, вызываем коллбек с результатами
+            if (remaining === 0) {
+                callback(null, products);
+            }
+        });
     });
 }
 
@@ -144,81 +163,19 @@ function removeFromFavorites(productID, customerID, callback) {
 
 // Функция для получения списка избранных товаров пользователя
 function getFavoritesByCustomerID(customerID, callback) {
-    const query = 'SELECT productID FROM favorites WHERE customerID = ?';
+    const query = `
+        SELECT p.productID, p.productThumbnail, p.productTitle, p.productPrice, p.productDescription, p.productRating, p.productManufacturer
+        FROM favorites f
+        JOIN products p ON f.productID = p.productID
+        WHERE f.customerID = ?
+    `;
+
     connection.query(query, [customerID], (err, results) => {
         callback(err, results);
     });
 }
 
-// function AddGame(session_id, title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, callback){
-//     const query = `INSERT INTO games (customerID, gameTitle, gameDescription, gameImage, cssFile, jsFile, routeFile, viewFile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-//     connection.query(query, [session_id, title, description, imagePath , cssFilePath, jsFilePath, routeFilePath, viewFilePath], callback)
-// }
-
-// function DeleteGame(gameId ,session_id, callback){
-//     const query = `DELETE FROM games WHERE gameID = (?) AND customerID = (?)`
-//     connection.query(query, [gameId, session_id], callback)
-// }
-
-// function UpdateGame(title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id, callback){
-//     const query = `update games set gameTitle = ?, gameDescription = ?, gameImage = ?, cssFile = ?, jsFile = ?, routeFile = ?, viewFile = ? where customerID = ?`
-//     connection.query(query, [title, description, imagePath, cssFilePath, jsFilePath, routeFilePath, viewFilePath, session_id],callback)
-// }
-
-// function DeleteGameData(data ,gameId, callback){
-//     const query = `update games set ?? = null where gameID = ?`
-//     connection.query(query, [data, gameId],callback)
-// }
-
-// function SelectGame(gameId ,callback){
-//     const query = `SELECT * from games WHERE gameID = (?)`
-//     connection.query(query , [gameId], callback)
-// }
-
-// function CountGames(session_id,callback){
-//     const query = `SELECT * FROM games WHERE customerID = ?`
-//     connection.query(query,[session_id],callback)
-// }
-
-// function SelectWinLoss(session_id,gameId,callback){
-//     const query = "select * from winandloss where customerID = (?) and gameID = (?)"
-//     connection.query(query,[session_id,gameId],callback)
-// }
-
-// function AddEmpty(session_id,gameId,callback){
-//     const query = "insert into winandloss (customerID,gameID) values (?,?)"
-//     connection.query(query, [session_id,gameId],callback)
-// }
-
-//Достижеия
-// function SelectAchievements(userId, callback){
-//     const query = ` SELECT achievement_type, count, achieved FROM achievements WHERE customerID = ?`
-//     connection.query(query, [userId], callback)
-// }
-
-// function SelectOneAchievement(userId, callback) {
-//     const query = `SELECT wins, losses FROM winandloss WHERE customerID = ?`;
-//     connection.query(query, [userId], callback);
-// }
-
-// function InsertAchievement(userId, achievement_type, newCount, achievement_name ,callback){
-//     const query = `INSERT INTO achievements (customerID, achievement_type, count, achieved, Name)
-//                    VALUES (?, ?, ?, true, ?) 
-//                    ON DUPLICATE KEY UPDATE count = ?, achieved = true`;
-//     connection.query(query, [userId, achievement_type, newCount, achievement_name, newCount], callback);
-// }
-
-// function UpdateAchievement(newCount, userId, achievement_type, callback){
-//     const query = `UPDATE achievements SET count = ? WHERE customerID = ? AND achievement_type = ?`;
-//     connection.query(query, [newCount, userId, achievement_type], callback);
-// }
-
-// function UpdateWinRate(added_wins,added_losses,added_score,added_draws,gameId, userId, callback){
-//     const query =  `Update winandloss SET wins = wins + ?, losses = losses + ?, score = score + ?, draws = draws + ? where gameID = ? AND customerID = ?`
-//     connection.query(query,[added_wins,added_losses,added_score,added_draws,gameId,userId],callback)
-// }
-
-
+//Экспорт
 module.exports = { 
     connection, 
     createUser, 
@@ -232,21 +189,8 @@ module.exports = {
     getFavoritesByCustomerID,
     addToCart,
     getCartByCustomerID,
-    getProductByID,
     removeFromCart,
-    updateCartItem
-    // AddGame,
-    // DeleteGame,
-    // UpdateGame,
-    // SelectGame,
-    // DeleteGameData,
-    // GetDeveloperGames,
-    // CountGames,
-    // SelectWinLoss,
-    // AddEmpty,
-    // SelectAchievements,
-    // SelectOneAchievement,
-    // InsertAchievement,
-    // UpdateAchievement,
-    // UpdateWinRate
+    updateCartItem,
+    getProductsByIDs,
+    getProductByID
  };

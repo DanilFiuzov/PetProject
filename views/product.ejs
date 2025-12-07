@@ -1,32 +1,57 @@
 <div class="container def-bg-settings">
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded" alt="<%= product.productTitle %>">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <h1><%= product.productTitle %></h1>
-                <h4 class="text-warning">$<%= product.productPrice %></h4>
+                <h4><%= product.productPrice %>₽</h4>
                 <div class="rating">
                     <% for (let j = 0; j < Math.floor(product.productRating); j++) { %>
-                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star text-warning"></i>
                     <% } %>
                     <% for (let j = Math.floor(product.productRating); j < 5; j++) { %>
-                        <i class="far fa-star"></i>
+                        <i class="far fa-star text-warning"></i>
                     <% } %>
                 </div>
-                <p class="mt-3"><%= product.productDescription %></p>
+                <div class="d-flex mt-1">
+                    Производитель: <p class="card-text text-muted">&nbsp;<%= product.productManufacturer %></p>                                      
+                </div>
 
                 <% if (session.userId) { %>
                     <form action="/cart/add" method="post" class="mt-4">
                         <input type="hidden" name="productID" value="<%= product.productID %>">
-                        <button class="btn btn-primary" type="submit">Add to Cart</button>
+                        <button class="btn btn-primary" type="submit">Купить</button>
                     </form>
                 <% } else { %>
-                    <a href="/login" class="btn btn-primary">Login to Buy</a>
+                    <div class="mt-4"> 
+                        <a href="/login" class="btn btn-primary">Авторизоваться</a>
+                    </div>
                 <% } %>
             </div>
         </div>
+
+        <hr>
+        <div class="section">
+            <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="toggleVisibility('description')">
+                <h5>Описание</h5>
+                <i class="fas fa-chevron-up" id="description-icon"></i>
+            </div>
+            <div id="description" class="mt-2">  <!-- Развернуто по умолчанию -->
+                <p class="card-text"><%= product.productDescription %></p>
+            </div>
+        </div>
+        <hr>
+        <div class="section">
+            <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="toggleVisibility('features')">
+                <h5>Характеристики</h5>
+                <i class="fas fa-chevron-down" id="features-icon"></i>
+            </div>
+            <div id="features" class="collapse mt-2">  <!-- Изначально скрыто -->
+                <p class="card-text">Здесь появятся характеристики продукта.</p>
+            </div>
+        </div>
+        <hr>
     </div>
 </div>
-sd

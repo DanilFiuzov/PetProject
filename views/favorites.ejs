@@ -1,12 +1,12 @@
 <div class="container def-bg-settings"> 
-    <h1 class="text-center mt-4 mb-4">Каталог</h1>  <!-- Заголовок для страницы каталога -->
+    <h1 class="text-center mt-4 mb-4">Избранное</h1>  <!-- Заголовок для страницы избранного -->
     <div class="row" style="margin-bottom: 20px;">
         <% products.forEach((product) => { %>
         <div class="col-12">
             <div class="card cards shadow-sm bordered_1 border-0 CardBody" style="height: 200px; margin-top: 8px;">
                 <div class="row g-0">
                     <div class="col-md-2">
-                        <a href="/product/<%= product.productID %>" class="text-decoration-none">
+                        <a href="/product/<%= product.productID %>" class="text-decoration-none" style="color: black;">
                             <img src="/images/products/<%= product.productThumbnail %>" class="img-fluid rounded-start" alt="<%= product.productTitle %>">
                         </a>
                     </div>
@@ -28,24 +28,23 @@
                                 <div class="d-flex mt-1">
                                     Производитель: <p class="card-text text-muted"> &nbsp;<%= product.productManufacturer %></p>                                      
                                 </div>
-                                                              
                             </div>
                         </a>
                     </div>
                     <div class="col-md-2 d-flex flex-column align-items-end" style="padding: 20px;"> 
                         <div class="d-flex flex-column align-items-end">
-                            <h6 class="mb-2 font-weight-bold text-end" style="font-size: 20px;"><%= product.productPrice %>₽</h6>
+                            <h6 class="mb-2 font-weight-bold text-end" style="font-size: 20px;">$<%= product.productPrice %></h6>
                             <div class="d-flex justify-content-end align-items-center">
                                 <% if (session.userId) { %> 
-                                    <button class="btn btn-link" type="button" title="Add to favorites" onclick="toggleFavorite(event, '<%= product.productID %>')">
-                                        <i class="fa-heart <%= session.favorites && session.favorites.includes(product.productID) ? 'fas' : 'far' %>" id="heart-<%= product.productID %>"></i>
+                                    <button class="btn btn-link" type="button" title="Remove from favorites" onclick="toggleFavorite(event, '<%= product.productID %>')">
+                                        <i class="fa-heart fas" id="heart-<%= product.productID %>"></i> <!-- Закрашенное сердце для избранного -->
                                     </button>
                                     <button class="btn btn-primary ms-2" type="button" onclick="addToCart('<%= product.productID %>')" style="height: 40px; padding-left: 20px; padding-right: 20px;">
-                                        <b>Купить</b>
+                                        <b>Buy</b>
                                     </button>
                                 <% } else { %>
                                     <a href="/login" class="btn btn-primary" style="height: 40px; padding-left: 20px; padding-right: 20px;">
-                                        <b>Авторизоваться</b>
+                                        <b>Login to Buy</b>
                                     </a>
                                 <% } %>  
                             </div>

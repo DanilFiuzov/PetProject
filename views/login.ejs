@@ -1,17 +1,17 @@
 <div class="container def-bg-settings" style="width: 600px;">
   <div style="width: 100%; height: 800px;padding:50px; padding-top: 5vw;">
-    <h3>Login</h3>
+    <h3>Авторизация</h3>
     <form action="/login" method="POST">
       <div class="form-group mb-3">
         <label>Email</label>
-        <input type="text" class="form-control" placeholder="Your email" name="email">
+        <input type="text" class="form-control" placeholder="Ваша почта" name="email">
       </div>
       <div class="form-group mb-3">
-        <label>Password</label>
-        <input type="password" class="form-control" placeholder='Your passowrd' name="password">
+        <label>Пароль</label>
+        <input type="password" class="form-control" placeholder='Ваш пароль' name="password">
       </div>
       <div class="d-grid mt-3">
-        <button type="submit" class="btn btn-primary form-control">Log In</button>
+        <button type="submit" class="btn btn-primary form-control">Войти</button>
       </div>
     </form>
     <% if (typeof error !== 'undefined') { %>

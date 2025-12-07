@@ -14,37 +14,7 @@ avatarLabels.forEach(label => {
     });
 });
 
-// //Удаление файлов
-// async function clearInput(inputId, button) {
-//     // Скрываем инпут
-//     document.getElementById(inputId).style.display = 'block';
-
-//     // Отображаем информацию о файлах
-//     const InfoDiv = document.getElementById(inputId+"2");
-//     InfoDiv.style.display = 'none'; // Показываем блок с информацией
-
-//     // Опционально - можно скрыть кнопку
-//     button.style.display = 'none';
-
-//       // Выполнение POST запроса
-//       try {
-//         const lastSegment = window.location.pathname.split('/').pop();
-//         const response = await fetch(`/delete_data/${inputId}_${lastSegment}`, {
-//             method: 'POST'
-//         });
-
-//         if (!response.ok) {
-//             throw new Error('Сеть ответа не в порядке');
-//         }
-//     } catch (error) {
-//         console.error('Ошибка при выполнении запроса:', error);
-//     } 
-// }
-
-// document.getElementById('confirmDelete').addEventListener('click', function () {
-//     document.getElementById('deleteForm').submit(); // Отправляем форму
-// });
-
+//Избранное
 function toggleFavorite(event, productID) {
     const heartIcon = document.getElementById(`heart-${productID}`);
     const isFavorited = heartIcon.classList.contains('fas'); // Проверяем, закрашено ли сердце
@@ -74,3 +44,52 @@ function toggleFavorite(event, productID) {
         console.error('Error:', error);
     });
 }
+
+//Добавление в корзину
+function addToCart(productID) {
+    fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ productID: productID })
+    })
+    .then(response => {
+        // Вывести статус и текст ответа для отладки
+        console.log('Response status:', response.status);
+        return response.text(); // Получение ответа как текст
+    })
+    .then(text => {
+        try {
+            const data = JSON.parse(text); // Пытаемся преобразовать текст в JSON
+            if (data.success) {
+
+            } else {
+                alert('Не удалось добавить товар в корзину. Попробуйте еще раз.');
+            }
+        } catch (error) {
+            console.error('Ошибка обработки JSON:', error);
+            alert('Не удалось добавить товар в корзину. Пожалуйста, проверьте консоль для получения дополнительной информации.');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при добавлении товара в корзину. Попробуйте еще раз.');
+    });
+}
+
+//Разворачиваемые пункты
+  function toggleVisibility(sectionId) {
+        const section = document.getElementById(sectionId);
+        const icon = sectionId === 'description' ? document.getElementById('description-icon') : document.getElementById('features-icon');
+
+        if (section.classList.contains('collapse')) {
+            section.classList.remove('collapse');
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            section.classList.add('collapse');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+    }

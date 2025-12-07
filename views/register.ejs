@@ -1,25 +1,25 @@
 <div class="container def-bg-settings" style="width: 600px;">
     <div style="width: 100%; height: 800px;padding:50px; padding-top: 5vw;">
-        <h3>Registration</h3>
+        <h3>Регистрация</h3>
         <form action="/register" method="POST" name>
             <div class="form-group mb-3">
-                <label>Nickname</label>
-                <input type="text" class="form-control" placeholder="Come up with your nickname" name="username">
+                <label>Псевдоним</label>
+                <input type="text" class="form-control" placeholder="Введите псевдоним" name="username">
             </div>
             <div class="form-group mb-3">
                 <label>Email</label>
-                <input type="text" class="form-control" placeholder="Your email" name="email">
+                <input type="text" class="form-control" placeholder="Введите email" name="email">
             </div>
             <div class="form-group mb-3">
-                <label>Password</label>
-                <input type="password" class="form-control" placeholder="Your password" name="password">
+                <label>Пароль</label>
+                <input type="password" class="form-control" placeholder="Придумайте пароль" name="password">
             </div>
             <div class="form-group mb-3">
-                <label>Password</label>
-                <input type="password" class="form-control" placeholder="Repeat password" name="confirmpassword">
+                <label>Подтверждение пароля</label>
+                <input type="password" class="form-control" placeholder="Повторите пароль" name="confirmpassword">
             </div>
             <div class="d-grid mt-3">
-                <button type="submit" class="btn btn-primary form-control">Sign Up</button>
+                <button type="submit" class="btn btn-primary form-control">Регистрация</button>
             </div>
         </form>
         <% if (typeof error !== 'undefined') { %>
