@@ -1,0 +1,201 @@
+<div class="container def-bg-settings long-form-page py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- Хлебные крошки -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/products" class="text-decoration-none">Админ-панель</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Добавить товар</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-lg rounded-3">
+                <div class="card-header CanvaHeader py-3 border-0">
+                    <h3 class="mb-0 text-white">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Добавление нового товара
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form id="addProductForm" enctype="multipart/form-data">
+                        <!-- Основная информация -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Основная информация
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Название товара *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="productTitle" 
+                                           required 
+                                           placeholder="Например: Гантель Demix 5кг">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Производитель *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="productManufacturer" 
+                                           required 
+                                           placeholder="Например: Demix">
+                                </div>
+                                
+                                <div class="col-12 mb-3">
+                                    <label class="form-label fw-semibold">Описание товара *</label>
+                                    <textarea class="form-control" 
+                                              name="productDescription" 
+                                              rows="4" 
+                                              required 
+                                              placeholder="Подробное описание товара..."></textarea>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Цена (руб) *</label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               name="productPrice" 
+                                               min="1" 
+                                               step="0.01" 
+                                               required 
+                                               placeholder="Например: 1999.99">
+                                        <span class="input-group-text">₽</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Изображение товара -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-image me-2"></i>
+                                Изображение товара
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Изображение товара *</label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       name="productImage" 
+                                       accept="image/jpeg,image/jpg,image/png" 
+                                       required>
+                                <div class="form-text">Поддерживаемые форматы: JPG, PNG. Максимальный размер: 5MB</div>
+                            </div>
+                            
+                            <div class="image-preview-container text-center mt-3" style="display: none;">
+                                <div class="border rounded p-3 bg-light d-inline-block">
+                                    <img id="imagePreview" 
+                                         src="#" 
+                                         alt="Предпросмотр" 
+                                         class="img-fluid rounded" 
+                                         style="max-height: 200px;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Категории -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-tags me-2"></i>
+                                Категории товара
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Выберите категории *</label>
+                                <div class="categories-checkbox">
+                                    <!-- ПРАВКА: Используем переданные категории из сервера -->
+                                    <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                                        <% categories.forEach((category, index) => { %>
+                                            <div class="form-check form-check-inline me-4 mb-2">
+                                                <input class="form-check-input" 
+                                                       type="checkbox" 
+                                                       name="categories[]" 
+                                                       value="<%= category.categorieName %>" 
+                                                       id="category<%= category.categorieID %>">
+                                                <label class="form-check-label" for="category<%= category.categorieID %>">
+                                                    <%= category.categorieName %>
+                                                </label>
+                                            </div>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <p class="text-muted">Категории не найдены</p>
+                                    <% } %>
+                                </div>
+                                <div class="form-text">Можно выбрать несколько категорий</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Характеристики товара -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-list-alt me-2"></i>
+                                    Характеристики товара
+                                </span>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        id="addFeatureBtn">
+                                    <i class="fas fa-plus me-1"></i>Добавить характеристику
+                                </button>
+                            </h5>
+                            
+                            <div id="featuresContainer">
+                                <!-- Динамически добавляемые поля -->
+                                <div class="feature-item mb-3 border rounded p-3 bg-light">
+                                    <div class="row g-2">
+                                        <div class="col-md-5">
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   name="feature_keys[]" 
+                                                   placeholder="Характеристика (например: Вес)">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   name="feature_values[]" 
+                                                   placeholder="Значение (например: 5 кг)">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger w-100 remove-feature-btn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-text mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Добавьте характеристики товара. Пример: Вес = 5 кг, Материал = Чугун
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки отправки -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="/admin/products" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Назад
+                            </a>
+                            
+                            <button type="submit" 
+                                    class="btn btn-primary px-4" 
+                                    id="submitBtn">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Добавить товар
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Уведомления -->
+            <div id="notificationContainer" class="mt-4"></div>
+        </div>
+    </div>
+</div>

@@ -36,6 +36,16 @@
             <h4 class="d-flex" style="margin: -12px 0 0 12px !important;">
               <b>
                 <%- session.userName %>
+                <% if (session.userRank === 'admin') { %>
+                  <span class="badge admin-badge ms-1" style="
+                    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+                    color: white;
+                    font-size: 0.6rem;
+                    padding: 0.15rem 0.4rem;
+                    vertical-align: middle;
+                    margin-top: -2px;
+                  ">ADMIN</span>
+                <% } %>
               </b>
             </h4>
           </span>
@@ -45,50 +55,91 @@
           <img src="<%- session.userThumbnail %>" alt="" class="rounded-circle profile-pic tr-mask" style="width: 220px;height: 220px; margin: 0px; border: 0 !important; background-color: white !important;">
         </div>
         <div class="offcanvas-body CanvaBody p-0">
+          <!-- Аккаунт -->
           <a href="/acc_page" class="text-decoration-none">
-            <div class="w-100 p-2 d-flex" style="height: 59px;">
-              <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
-                <img src="/images/User_02.svg" width="43px">
+            <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
+              <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
+                <i class="fas fa-user-circle" style="font-size: 43px; color: var(--primary-color);"></i>
               </div>
               <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                <h3>Аккаунт</h3>
+                <h3 style="color: var(--primary-color);">Аккаунт</h3>
               </div>
             </div>
           </a>
 
+          <!-- Корзина -->
           <% if (session.userId) { %> 
             <a href="/cart/<%= session.userId %>" class="text-decoration-none">
-              <div class="w-100 p-2 d-flex align-items-center" style="height: 59px;">
+              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
                 <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                  <img src="/images/shopping-cart.png" width="43px">
+                  <i class="fas fa-shopping-cart" style="font-size: 43px; color: var(--primary-color);"></i>
+                  <% if (session.cartCount && session.cartCount > 0) { %>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65em; padding: 4px 6px;">
+                      <%= session.cartCount %>
+                    </span>
+                  <% } %>
                 </div>
                 <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3>Корзина</h3>
+                  <h3 style="color: var(--primary-color);">Корзина</h3>
                 </div>
               </div>
             </a>
           <% } %>
 
+          <!-- Избранное -->
           <% if (session.userId) { %> 
             <a href="/favorites" class="text-decoration-none">
-                <div class="w-100 p-2 d-flex align-items-center" style="height: 59px;">
-                    <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                        <i class="fa fa-heart far" style="font-size: 43px; color: rgb(255, 255, 255);"></i> 
-                    </div>
-                    <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                        <h3>Избранное</h3> 
-                    </div>
+              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
+                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <i class="fas fa-heart" style="font-size: 43px; color: var(--primary-color);"></i>
+                  <% if (session.favorites && session.favorites.length > 0) { %>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65em; padding: 4px 6px;">
+                      <%= session.favorites.length %>
+                    </span>
+                  <% } %>
                 </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
+                  <h3 style="color: var(--primary-color);">Избранное</h3>
+                </div>
+              </div>
             </a>
           <% } %>
 
+          <!-- Пункты меню для администратора -->
+          <% if (session.userRank === 'admin') { %>
+            <!-- Добавить товар -->
+            <a href="/admin/add-product" class="text-decoration-none">
+              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.1); border-left: 4px solid var(--primary-color);">
+                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <i class="fas fa-plus-circle" style="font-size: 43px; color: var(--primary-color);"></i>
+                </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
+                  <h3 style="color: var(--primary-color);">Добавить товар</h3>
+                </div>
+              </div>
+            </a>
+            
+            <!-- Управление товарами -->
+            <a href="/admin/products" class="text-decoration-none">
+              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.1); border-left: 4px solid var(--primary-color);">
+                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
+                  <i class="fas fa-boxes" style="font-size: 43px; color: var(--primary-color);"></i>
+                </div>
+                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
+                  <h3 style="color: var(--primary-color);">Управление</h3>
+                </div>
+              </div>
+            </a>
+          <% } %>
+
+          <!-- Выйти -->
           <a href="/logout" class="text-decoration-none">
-            <div class="w-100 p-2 d-flex" style="height: 59px;">
-              <div class="m-0 p-0 h-100 d-inline-block" style="width: 43px; vertical-align: middle; text-align: center;">
-                <img src="/images/Log_Out.svg" width="43px">
+            <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
+              <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
+                <i class="fas fa-sign-out-alt" style="font-size: 43px; color: var(--primary-color);"></i>
               </div>
               <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                <h3>Выйти</h3>
+                <h3 style="color: var(--primary-color);">Выйти</h3>
               </div>
             </div>
           </a>
@@ -97,4 +148,3 @@
     </div>
   </div>
 </div>
-  

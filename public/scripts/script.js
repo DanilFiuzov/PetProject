@@ -394,4 +394,430 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Проверяем, находимся ли мы на странице редактирования товара
+    const editProductForm = document.getElementById('editProductForm');
+    if (editProductForm) {
+        initEditProductForm();
+    }
+    
+    // Проверяем, находимся ли мы на странице добавления товара
+    const addProductForm = document.getElementById('addProductForm');
+    if (addProductForm) {
+        initAddProductForm();
+    }
+});
+
+// Функции для страницы добавления товара
+function initAddProductForm() {
+    const addFeatureBtn = document.getElementById('addFeatureBtn');
+    const featuresContainer = document.getElementById('featuresContainer');
+    const productImageInput = document.querySelector('input[name="productImage"]');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewContainer = document.querySelector('.image-preview-container');
+    const addProductForm = document.getElementById('addProductForm');
+    
+    if (addFeatureBtn && featuresContainer) {
+        addFeatureBtn.addEventListener('click', function() {
+            const featureItem = document.createElement('div');
+            featureItem.className = 'feature-item mb-3 border rounded p-3 bg-light';
+            featureItem.innerHTML = `
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" 
+                               class="form-control" 
+                               name="feature_keys[]" 
+                               placeholder="Характеристика (например: Вес)"
+                               required>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" 
+                               class="form-control" 
+                               name="feature_values[]" 
+                               placeholder="Значение (например: 5 кг)"
+                               required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" 
+                                class="btn btn-outline-danger w-100 remove-feature-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            featuresContainer.appendChild(featureItem);
+            
+            // Добавляем обработчик для кнопки удаления
+            const removeBtn = featureItem.querySelector('.remove-feature-btn');
+            removeBtn.addEventListener('click', function() {
+                if (featuresContainer.children.length > 1) {
+                    featureItem.remove();
+                } else {
+                    // Не удаляем последнее поле, но очищаем его
+                    const inputs = featureItem.querySelectorAll('input');
+                    inputs.forEach(input => input.value = '');
+                }
+            });
+        });
+        
+        // Добавляем обработчики для существующих кнопок удаления
+        document.querySelectorAll('.remove-feature-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (featuresContainer.children.length > 1) {
+                    this.closest('.feature-item').remove();
+                } else {
+                    const featureItem = this.closest('.feature-item');
+                    const inputs = featureItem.querySelectorAll('input');
+                    inputs.forEach(input => input.value = '');
+                }
+            });
+        });
+    }
+    
+    // Предпросмотр изображения
+    if (productImageInput && imagePreview) {
+        productImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    if (imagePreviewContainer) {
+                        imagePreviewContainer.style.display = 'block';
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Обработка формы добавления товара
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Показываем индикатор загрузки
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Добавление...';
+            submitBtn.disabled = true;
+            
+            // Создаем FormData для отправки файлов
+            const formData = new FormData(this);
+            
+            fetch('/admin/add-product', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Успешное добавление
+                    showNotification(data.message, 'success');
+                    
+                    // Очистка формы через 2 секунды
+                    setTimeout(() => {
+                        addProductForm.reset();
+                        if (imagePreviewContainer) {
+                            imagePreviewContainer.style.display = 'none';
+                        }
+                        
+                        // Удаляем все поля характеристик кроме первого
+                        const featureItems = featuresContainer.querySelectorAll('.feature-item');
+                        featureItems.forEach((item, index) => {
+                            if (index > 0) {
+                                item.remove();
+                            } else {
+                                // Очищаем первое поле
+                                const inputs = item.querySelectorAll('input');
+                                inputs.forEach(input => input.value = '');
+                            }
+                        });
+                        
+                        // Восстанавливаем кнопку
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                        
+                        // Перенаправление на страницу товара через 3 секунды
+                        setTimeout(() => {
+                            window.location.href = `/product/${data.productID}`;
+                        }, 3000);
+                    }, 2000);
+                } else {
+                    // Ошибка
+                    showNotification(data.message || 'Ошибка при добавлении товара', 'error');
+                    
+                    // Восстанавливаем кнопку
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Произошла ошибка при отправке формы', 'error');
+                
+                // Восстанавливаем кнопку
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+}
+
+// Функции для страницы редактирования товара
+function initEditProductForm() {
+    // Переключение отображения поля для нового изображения
+    const keepCurrentImageCheckbox = document.getElementById('keepCurrentImage');
+    const newImageField = document.getElementById('newImageField');
+    const productImageInput = document.querySelector('input[name="productImage"]');
+
+    if (keepCurrentImageCheckbox && newImageField) {
+        keepCurrentImageCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                newImageField.style.display = 'none';
+                // Очищаем значение файла при скрытии поля
+                if (productImageInput) {
+                    productImageInput.value = '';
+                    // Также скрываем превью
+                    const preview = document.getElementById('newImagePreview');
+                    if (preview) {
+                        preview.style.display = 'none';
+                    }
+                }
+            } else {
+                newImageField.style.display = 'block';
+                const preview = document.getElementById('newImagePreview');
+                if (preview) {
+                    preview.style.display = 'block';
+                }
+            }
+        });
+}
+
+    // Предпросмотр нового изображения
+    if (productImageInput) {
+        productImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // Показываем превью нового изображения
+                    const existingPreview = document.getElementById('newImagePreview');
+                    if (existingPreview) {
+                        existingPreview.src = e.target.result;
+                    } else {
+                        const preview = document.createElement('img');
+                        preview.id = 'newImagePreview';
+                        preview.className = 'img-fluid rounded mt-2';
+                        preview.style.maxHeight = '200px';
+                        preview.src = e.target.result;
+                        preview.alt = 'Новое изображение';
+                        
+                        // Добавляем превью после поля загрузки
+                        productImageInput.parentNode.appendChild(preview);
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Добавление новой характеристики
+    const addFeatureBtn = document.getElementById('addFeatureBtn');
+    const featuresContainer = document.getElementById('featuresContainer');
+    
+    if (addFeatureBtn && featuresContainer) {
+        addFeatureBtn.addEventListener('click', function() {
+            const featureItem = document.createElement('div');
+            featureItem.className = 'feature-item mb-3 border rounded p-3 bg-light';
+            featureItem.innerHTML = `
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" 
+                            class="form-control" 
+                            name="feature_keys[]" 
+                            placeholder="Характеристика (например: Вес)">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" 
+                            class="form-control" 
+                            name="feature_values[]" 
+                            placeholder="Значение (например: 5 кг)">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" 
+                                class="btn btn-outline-danger w-100 remove-feature-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            featuresContainer.appendChild(featureItem);
+            
+            // Добавляем обработчик для кнопки удаления
+            const removeBtn = featureItem.querySelector('.remove-feature-btn');
+            removeBtn.addEventListener('click', function() {
+                featureItem.remove();
+            });
+        });
+
+        // Удаление характеристики (для существующих кнопок)
+        document.querySelectorAll('.remove-feature-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Проверяем, не последний ли это элемент
+                if (featuresContainer.children.length > 1) {
+                    this.closest('.feature-item').remove();
+                } else {
+                    // Если последний, просто очищаем поля
+                    const inputs = this.closest('.feature-item').querySelectorAll('input');
+                    inputs.forEach(input => input.value = '');
+                }
+            });
+        });
+    }
+
+   // Отправка формы редактирования
+    if (editProductForm) {
+       editProductForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Создаем FormData и проверяем содержимое:
+        const formData = new FormData(this);
+        console.log('=== FormData содержимое ===');
+        
+        // Выводим все поля:
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        
+        // Проверяем конкретно категории:
+        const categories = formData.getAll('categories[]');
+        console.log('Категории в FormData:', categories);
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
+            submitBtn.disabled = true;
+            
+            // УДАЛЯЕМ ПОЛЕ ФАЙЛА, если отмечен чекбокс сохранения текущего изображения
+            const keepCurrentImageCheckbox = document.getElementById('keepCurrentImage');
+            const productImageInput = document.querySelector('input[name="productImage"]');
+            
+            // Клонируем форму для безопасного удаления полей
+            const formClone = new FormData(editProductForm);
+            
+            // Если отмечен чекбокс, удаляем поле файла
+            if (keepCurrentImageCheckbox && keepCurrentImageCheckbox.checked && productImageInput) {
+                // Удаляем файл из FormData
+                formClone.delete('productImage');
+                
+                // Также удаляем превью если оно есть
+                const preview = document.getElementById('newImagePreview');
+                if (preview) {
+                    preview.remove();
+                }
+            }
+            
+            console.log('=== FormData содержимое ===');
+            for (let pair of formClone.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            fetch('/admin/update-product', {
+                method: 'POST',
+                body: formClone
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Товар успешно обновлен!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/products';
+                    }, 1500);
+                } else {
+                    showNotification(data.message || 'Ошибка при обновлении товара', 'danger');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка сети или сервера', 'danger');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+
+    // Удаление товара
+    const deleteProductBtn = document.getElementById('deleteProductBtn');
+    
+    if (deleteProductBtn) {
+        deleteProductBtn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            
+            if (confirm('Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить.')) {
+                fetch(`/admin/delete-product/${productId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        setTimeout(() => {
+                            window.location.href = '/admin/products';
+                        }, 1500);
+                    } else {
+                        showNotification(data.message || 'Ошибка при удалении товара', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Ошибка сети или сервера', 'danger');
+                });
+            }
+        });
+    }
+}
+
+// Функция для валидации форм (общая)
+function validateForm(form) {
+    let isValid = true;
+    
+    // Проверяем обязательные поля
+    const requiredFields = form.querySelectorAll('[required]');
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('is-invalid');
+            
+            // Добавляем сообщение об ошибке
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = 'Это поле обязательно для заполнения';
+            field.parentNode.appendChild(errorDiv);
+        } else {
+            field.classList.remove('is-invalid');
+            const existingError = field.parentNode.querySelector('.invalid-feedback');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+    });
+    
+    return isValid;
+}
+
+// Очистка ошибок при вводе
+document.addEventListener('input', function(e) {
+    if (e.target.hasAttribute('required')) {
+        e.target.classList.remove('is-invalid');
+        const errorDiv = e.target.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
 });

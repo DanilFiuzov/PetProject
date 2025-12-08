@@ -1,0 +1,298 @@
+<div class="container def-bg-settings long-form-page py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- Хлебные крошки -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/products" class="text-decoration-none">Админ-панель</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Редактировать товар</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-lg rounded-3">
+                <div class="card-header CanvaHeader py-3 border-0">
+                    <h3 class="mb-0 text-white">
+                        <i class="fas fa-edit me-2"></i>
+                        Редактирование товара
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form id="editProductForm" enctype="multipart/form-data">
+                        <!-- Скрытое поле для ID товара -->
+                        <input type="hidden" name="productID" value="<%= product.productID %>">
+                        
+                        <!-- Основная информация -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Основная информация
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Название товара *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="productTitle" 
+                                           value="<%= product.productTitle %>"
+                                           required 
+                                           placeholder="Например: Гантель Demix 5кг">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Производитель *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="productManufacturer" 
+                                           value="<%= product.productManufacturer %>"
+                                           required 
+                                           placeholder="Например: Demix">
+                                </div>
+                                
+                                <div class="col-12 mb-3">
+                                    <label class="form-label fw-semibold">Описание товара *</label>
+                                    <textarea class="form-control" 
+                                              name="productDescription" 
+                                              rows="4" 
+                                              required 
+                                              placeholder="Подробное описание товара..."><%= product.productDescription %></textarea>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Цена (руб) *</label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               name="productPrice" 
+                                               min="1" 
+                                               step="0.01" 
+                                               value="<%= product.productPrice %>"
+                                               required 
+                                               placeholder="Например: 1999.99">
+                                        <span class="input-group-text">₽</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Текущий рейтинг</label>
+                                    <div class="d-flex align-items-center border rounded p-3 bg-light">
+                                        <div class="rating me-3">
+                                            <% for (let j = 0; j < 5; j++) { %>
+                                                <span class="star-wrapper" style="font-size: 1.2rem;">
+                                                    <i class="far fa-star empty-star"></i>
+                                                    <% if (product.productRating > j) { %>
+                                                        <%
+                                                            let width = 100;
+                                                            if (product.productRating - j < 1) {
+                                                                width = (product.productRating - j) * 100;
+                                                            }
+                                                        %>
+                                                        <span class="filled-star" style="width: <%= width %>%">
+                                                            <i class="fas fa-star"></i>
+                                                        </span>
+                                                    <% } %>
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                        <div>
+                                            <strong class="text-primary"><%= product.productRating ? product.productRating.toFixed(1) : '0.0' %></strong>
+                                            <div class="text-muted small">из 5 на основе отзывов</div>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Рейтинг рассчитывается автоматически на основе отзывов пользователей
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Изображение товара -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-image me-2"></i>
+                                Изображение товара
+                            </h5>
+                            
+                            <!-- Текущее изображение -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Текущее изображение</label>
+                                <div class="border rounded p-3 bg-light text-center">
+                                    <% if (product.productThumbnail) { %>
+                                        <img src="/images/products/<%= product.productThumbnail %>" 
+                                             alt="<%= product.productTitle %>" 
+                                             class="img-fluid rounded" 
+                                             style="max-height: 200px;">
+                                        <p class="mt-2 text-muted">
+                                            <small>Текущее изображение</small>
+                                        </p>
+                                    <% } else { %>
+                                        <p class="text-muted">Нет изображения</p>
+                                    <% } %>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="keepCurrentImage" 
+                                       id="keepCurrentImage" 
+                                       checked>
+                                <label class="form-check-label" for="keepCurrentImage">
+                                    Оставить текущее изображение
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3" id="newImageField" style="display: none;">
+                                <label class="form-label fw-semibold">Новое изображение товара</label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       name="productImage" 
+                                       accept=".jpg,.jpeg,.png">
+                                <div class="form-text">Оставьте пустым, чтобы использовать текущее изображение</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Категории -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-tags me-2"></i>
+                                Категории товара
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Выберите категории *</label>
+                                <div class="categories-checkbox">
+                                    <% 
+                                        const allCategories = ['Гантели', 'Гири', 'Блины', 'Фитнес'];
+                                        // Используем другое имя переменной, чтобы избежать конфликта
+                                        const productCategories = currentCategories || [];
+                                    %>
+                                    <% allCategories.forEach((category, index) => { %>
+                                        <div class="form-check form-check-inline me-4 mb-2">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   name="categories[]" 
+                                                   value="<%= category %>" 
+                                                   id="category<%= index + 1 %>"
+                                                   <%= productCategories.includes(category) ? 'checked' : '' %>>
+                                            <label class="form-check-label" for="category<%= index + 1 %>">
+                                                <%= category %>
+                                            </label>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                                <div class="form-text">Можно выбрать несколько категорий</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Характеристики товара -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-list-alt me-2"></i>
+                                    Характеристики товара
+                                </span>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        id="addFeatureBtn">
+                                    <i class="fas fa-plus me-1"></i>Добавить характеристику
+                                </button>
+                            </h5>
+                            
+                            <div id="featuresContainer">
+                                <!-- Существующие характеристики -->
+                                <% if (features && features.length > 0) { %>
+                                    <% features.forEach((feature, index) => { %>
+                                        <div class="feature-item mb-3 border rounded p-3 bg-light">
+                                            <div class="row g-2">
+                                                <div class="col-md-5">
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           name="feature_keys[]" 
+                                                           value="<%= feature.key %>"
+                                                           placeholder="Характеристика (например: Вес)">
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           name="feature_values[]" 
+                                                           value="<%= feature.value %>"
+                                                           placeholder="Значение (например: 5 кг)">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="button" 
+                                                            class="btn btn-outline-danger w-100 remove-feature-btn">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <!-- Если характеристик нет, показываем одно пустое поле -->
+                                    <div class="feature-item mb-3 border rounded p-3 bg-light">
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       name="feature_keys[]" 
+                                                       placeholder="Характеристика (например: Вес)">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       name="feature_values[]" 
+                                                       placeholder="Значение (например: 5 кг)">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger w-100 remove-feature-btn">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                            
+                            <div class="form-text mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Добавьте характеристики товара. Пример: Вес = 5 кг, Материал = Чугун
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки отправки -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="/admin/products" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Назад
+                            </a>
+                            
+                            <div>
+                                <button type="button" 
+                                        class="btn btn-danger me-2" 
+                                        id="deleteProductBtn"
+                                        data-product-id="<%= product.productID %>">
+                                    <i class="fas fa-trash me-2"></i>
+                                    Удалить товар
+                                </button>
+                                
+                                <button type="submit" 
+                                        class="btn btn-primary px-4" 
+                                        id="submitBtn">
+                                    <i class="fas fa-save me-2"></i>
+                                    Сохранить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Уведомления -->
+            <div id="notificationContainer" class="mt-4"></div>
+        </div>
+    </div>
+</div>

@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'root',
     database: 'GameCenter'
 });
+
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
+//     database: 'GameCenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -125,12 +125,21 @@ function getProductByID(productID, callback) {
     const query = 'SELECT * FROM products WHERE productID = ?';
     connection.query(query, [productID], (error, results) => {
         if (error) {
-            return callback(error);
+            console.error('Ошибка получения товара:', error);
+            return callback(error, null);
         }
-        if (results.length > 0) {
-            results[0].productPrice = parseFloat(results[0].productPrice); // Преобразуем в число
+        
+        if (results.length === 0) {
+            console.log('Товар не найден, ID:', productID);
+            return callback(null, null);
         }
-        callback(null, results[0]);
+        
+        const product = results[0];
+        if (product.productPrice) {
+            product.productPrice = parseFloat(product.productPrice);
+        }
+        
+        callback(null, product);
     });
 }
 
@@ -309,40 +318,35 @@ function getCategoriesForProducts(productIDs, callback) {
 // Функция для получения всех продуктов с категориями
 function getProductsWithCategories(callback) {
     const query = `
-        SELECT p.*, c.categorieName 
+        SELECT 
+            p.productID,
+            p.productTitle,
+            p.productThumbnail,
+            p.productPrice,
+            p.productDescription,
+            p.productManufacturer,
+            p.productRating,
+            GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list
         FROM products p
         LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
         LEFT JOIN categories c ON cp.categorieID = c.categorieID
+        GROUP BY p.productID
         ORDER BY p.productID
     `;
     
     connection.query(query, (err, results) => {
         if (err) return callback(err);
         
-        // Группируем продукты и их категории
-        const productsMap = {};
-        results.forEach(row => {
-            if (!productsMap[row.productID]) {
-                productsMap[row.productID] = {
-                    productID: row.productID,
-                    productTitle: row.productTitle,
-                    productThumbnail: row.productThumbnail,
-                    productPrice: row.productPrice,
-                    productDescription: row.productDescription,
-                    productManufacturer: row.productManufacturer,
-                    productRating: row.productRating || 0,
-                    categories: []
-                };
-            }
-            if (row.categorieName) {
-                productsMap[row.productID].categories.push(row.categorieName);
-            }
-        });
-        
-        // Преобразуем в массив и добавляем поле category (первая категория)
-        const products = Object.values(productsMap).map(product => ({
-            ...product,
-            category: product.categories.length > 0 ? product.categories[0] : 'Uncategorized'
+        const products = results.map(row => ({
+            productID: row.productID,
+            productTitle: row.productTitle,
+            productThumbnail: row.productThumbnail,
+            productPrice: row.productPrice,
+            productDescription: row.productDescription,
+            productManufacturer: row.productManufacturer,
+            productRating: row.productRating || 0,
+            categories: row.categories_list ? row.categories_list.split(', ') : [],
+            category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized'
         }));
         
         callback(null, products);
@@ -363,9 +367,302 @@ function getProductsByCategory(categoryID, callback) {
     connection.query(query, [categoryID], callback);
 }
 
+// Функция для получения ранга пользователя
+function getUserRank(customerID, callback) {
+    const query = 'SELECT customerRank FROM customers WHERE customerID = ?';
+    connection.query(query, [customerID], callback);
+}
+
+// Функция для добавления товара с характеристиками
+function addProductWithFeatures(productData, categories, features, callback) {
+    // Начинаем транзакцию
+    connection.beginTransaction((err) => {
+        if (err) return callback(err);
+        
+        // 1. Добавляем товар
+        const productQuery = `
+            INSERT INTO products (productTitle, productManufacturer, productDescription, productPrice, productThumbnail) 
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        
+        connection.query(productQuery, [
+            productData.productTitle,
+            productData.productManufacturer,
+            productData.productDescription,
+            productData.productPrice,
+            productData.productThumbnail
+        ], (err, result) => {
+            if (err) {
+                return connection.rollback(() => callback(err));
+            }
+            
+            const productID = result.insertId;
+            const promises = [];
+            
+            // 2. Добавляем категории если есть
+            if (categories && categories.length > 0) {
+                categories.forEach(categoryName => {
+                    promises.push(new Promise((resolve, reject) => {
+                        // Находим ID категории по имени
+                        const findCategoryQuery = 'SELECT categorieID FROM categories WHERE categorieName = ?';
+                        connection.query(findCategoryQuery, [categoryName], (err, results) => {
+                            if (err) return reject(err);
+                            
+                            if (results.length > 0) {
+                                const categorieID = results[0].categorieID;
+                                // Связываем товар с категорией
+                                const linkQuery = 'INSERT INTO categoriesandproducts (categorieID, productID) VALUES (?, ?)';
+                                connection.query(linkQuery, [categorieID, productID], (err) => {
+                                    if (err) reject(err);
+                                    else resolve();
+                                });
+                            } else {
+                                // Если категории нет, создаем её
+                                const insertCategoryQuery = 'INSERT INTO categories (categorieName) VALUES (?)';
+                                connection.query(insertCategoryQuery, [categoryName], (err, catResult) => {
+                                    if (err) return reject(err);
+                                    
+                                    const categorieID = catResult.insertId;
+                                    const linkQuery = 'INSERT INTO categoriesandproducts (categorieID, productID) VALUES (?, ?)';
+                                    connection.query(linkQuery, [categorieID, productID], (err) => {
+                                        if (err) reject(err);
+                                        else resolve();
+                                    });
+                                });
+                            }
+                        });
+                    }));
+                });
+            }
+            
+            // 3. Добавляем характеристики если есть
+            if (features && features.length > 0) {
+                features.forEach(feature => {
+                    promises.push(new Promise((resolve, reject) => {
+                        const featureQuery = `
+                            INSERT INTO product_features (productID, feature_key, feature_value) 
+                            VALUES (?, ?, ?)
+                        `;
+                        connection.query(featureQuery, [productID, feature.key, feature.value], (err) => {
+                            if (err) reject(err);
+                            else resolve();
+                        });
+                    }));
+                });
+            }
+            
+            // Ждем завершения всех операций
+            if (promises.length > 0) {
+                Promise.all(promises)
+                    .then(() => {
+                        connection.commit((err) => {
+                            if (err) {
+                                return connection.rollback(() => callback(err));
+                            }
+                            callback(null, productID);
+                        });
+                    })
+                    .catch(err => {
+                        connection.rollback(() => callback(err));
+                    });
+            } else {
+                // Нет ни категорий, ни характеристик
+                connection.commit((err) => {
+                    if (err) {
+                        return connection.rollback(() => callback(err));
+                    }
+                    callback(null, productID);
+                });
+            }
+        });
+    });
+}
+
+// Функция для получения характеристик товара
+function getProductFeatures(productID, callback) {
+    console.log('Вызов getProductFeatures для productID:', productID);
+    
+    const query = 'SELECT * FROM product_features WHERE productID = ? ORDER BY featureID';
+    connection.query(query, [productID], (error, results) => {
+        if (error) {
+            console.error('Ошибка получения характеристик:', error);
+            return callback(error, []);
+        }
+        
+        console.log('Результаты характеристик:', results);
+        
+        // Преобразуем результаты в нужный формат
+        const features = results.map(row => ({
+            key: row.feature_key,
+            value: row.feature_value,
+            featureID: row.featureID
+        }));
+        
+        callback(null, features);
+    });
+}
+
+// Функция для обновления характеристик товара
+function updateProductFeatures(productID, features, callback) {
+    // Удаляем старые характеристики
+    const deleteQuery = 'DELETE FROM product_features WHERE productID = ?';
+    connection.query(deleteQuery, [productID], (err) => {
+        if (err) return callback(err);
+        
+        // Добавляем новые характеристики
+        if (features && features.length > 0) {
+            const featurePromises = features.map(feature => {
+                return new Promise((resolve, reject) => {
+                    const insertQuery = `
+                        INSERT INTO product_features (productID, feature_key, feature_value) 
+                        VALUES (?, ?, ?)
+                    `;
+                    connection.query(insertQuery, [productID, feature.key, feature.value], (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            });
+            
+            Promise.all(featurePromises)
+                .then(() => callback(null))
+                .catch(callback);
+        } else {
+            callback(null);
+        }
+    });
+}
+
+// Функция для обновления товара (без изменения рейтинга)
+function updateProduct(productID, productData, categories, features, callback) {
+    console.log('=== updateProduct вызвана ===');
+    console.log('productID:', productID);
+    console.log('categories для обновления:', categories);
+    console.log('features для обновления:', features);
+    
+    connection.beginTransaction((err) => {
+        if (err) {
+            console.error('Ошибка начала транзакции:', err);
+            return callback(err);
+        }
+        
+        // 1. Обновляем товар (исключаем productRating из обновления)
+        const { productRating, ...updateData } = productData;
+        
+        const updateProductQuery = `
+            UPDATE products 
+            SET productTitle = ?, 
+                productManufacturer = ?, 
+                productDescription = ?, 
+                productPrice = ?, 
+                productThumbnail = COALESCE(?, productThumbnail)
+            WHERE productID = ?
+        `;
+        
+        connection.query(updateProductQuery, [
+            updateData.productTitle,
+            updateData.productManufacturer,
+            updateData.productDescription,
+            updateData.productPrice,
+            updateData.productThumbnail, // Может быть null
+            productID
+        ], (err, result) => {
+            if (err) {
+                return connection.rollback(() => callback(err));
+            }
+            
+            // 2. Удаляем старые категории и добавляем новые
+            const deleteCategoriesQuery = 'DELETE FROM categoriesandproducts WHERE productID = ?';
+            connection.query(deleteCategoriesQuery, [productID], (err, result) => {
+                if (err) {
+                    console.error('Ошибка удаления старых категорий:', err);
+                    return connection.rollback(() => callback(err));
+                }
+                
+                console.log('Удалено старых связей с категориями:', result.affectedRows);
+                
+                if (categories && categories.length > 0) {
+                    const categoryPromises = categories.map(categoryName => {
+                        return new Promise((resolve, reject) => {
+                            // Находим или создаем категорию
+                            const findCategoryQuery = 'SELECT categorieID FROM categories WHERE categorieName = ?';
+                            connection.query(findCategoryQuery, [categoryName], (err, results) => {
+                                if (err) return reject(err);
+                                
+                                let categorieID;
+                                if (results.length > 0) {
+                                    categorieID = results[0].categorieID;
+                                    resolve({ categorieID, productID });
+                                } else {
+                                    // Создаем новую категорию
+                                    const insertCategoryQuery = 'INSERT INTO categories (categorieName) VALUES (?)';
+                                    connection.query(insertCategoryQuery, [categoryName], (err, catResult) => {
+                                        if (err) return reject(err);
+                                        categorieID = catResult.insertId;
+                                        resolve({ categorieID, productID });
+                                    });
+                                }
+                            });
+                        }).then(({ categorieID, productID }) => {
+                            return new Promise((resolve, reject) => {
+                                const linkQuery = 'INSERT INTO categoriesandproducts (categorieID, productID) VALUES (?, ?)';
+                                connection.query(linkQuery, [categorieID, productID], (err) => {
+                                    if (err) reject(err);
+                                    else resolve();
+                                });
+                            });
+                        });
+                    });
+                    
+                    // 3. Обновляем характеристики
+                    Promise.all(categoryPromises)
+                        .then(() => {
+                            // Используем существующую функцию updateProductFeatures
+                            updateProductFeatures(productID, features, (err) => {
+                                if (err) {
+                                    return connection.rollback(() => callback(err));
+                                }
+                                
+                                connection.commit((err) => {
+                                    if (err) {
+                                        return connection.rollback(() => callback(err));
+                                    }
+                                    callback(null, productID);
+                                });
+                            });
+                        })
+                        .catch(err => {
+                            connection.rollback(() => callback(err));
+                        });
+                } else {
+                    // Нет категорий
+                    updateProductFeatures(productID, features, (err) => {
+                        if (err) {
+                            return connection.rollback(() => callback(err));
+                        }
+                        
+                        connection.commit((err) => {
+                            if (err) {
+                                return connection.rollback(() => callback(err));
+                            }
+                            callback(null, productID);
+                        });
+                    });
+                }
+            });
+        });
+    });
+}
+
+
 //Экспорт
 module.exports = { 
     connection, 
+    updateProduct,
+    getUserRank,
+    addProductWithFeatures,
+    getProductFeatures,
+    updateProductFeatures,
     createUser, 
     findUserByUsername, 
     AccPageRender,

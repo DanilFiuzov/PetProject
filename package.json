@@ -14,12 +14,12 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
+    "formidable": "^3.5.4",
     "fs": "^0.0.1-security",
     "multer": "^1.4.5-lts.2",
     "mysql2": "^3.14.0",
     "path": "^0.12.7"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PUP04ka2014/CursWork_ISIP_42213.git"

@@ -1,7 +1,46 @@
-<div class="container def-bg-settings"> 
-    <h1 class="text-center mt-4 mb-5">Каталог товаров</h1>
+<div class="container def-bg-settings">
+    <h1 class="text-center mt-4 mb-4">Каталог товаров</h1>
     
-    <div class="row g-4">
+    <!-- Панель поиска и фильтров -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form method="GET" action="/" class="d-flex">
+                <div class="input-group">
+                    <input type="text" 
+                           class="form-control" 
+                           name="search" 
+                           placeholder="Поиск товаров..." 
+                           value="<%= searchQuery || '' %>">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <!-- Сортировка (добавить позже) -->
+        </div>
+    </div>
+    
+    <!-- Информация о результатах -->
+    <% if (searchQuery) { %>
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Найдено товаров: <strong><%= totalProducts || 0 %></strong>
+            <% if (searchQuery) { %>по запросу: "<strong><%= searchQuery %></strong>"<% } %>
+        </div>
+    <% } %>
+    
+    <!-- Каталог товаров -->
+    <% if (products.length === 0) { %>
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Товары не найдены</h4>
+            <p class="text-muted">Попробуйте изменить поисковый запрос</p>
+            <a href="/" class="btn btn-outline-primary">Сбросить поиск</a>
+        </div>
+    <% } else { %>
+<div class="row g-4">
         <% products.forEach((product) => { %>
         <div class="col-12">
             <div class="card cards shadow-sm border-0 CardBody" style="border-radius: 12px; overflow: hidden;">
@@ -146,4 +185,52 @@
         </div>
         <% }) %>
     </div>
+    <% } %>
+    
+    <!-- Пагинация -->
+    <% if (totalPages > 1) { %>
+        <nav aria-label="Навигация по страницам" class="mt-5">
+            <ul class="pagination justify-content-center">
+                <!-- Кнопка "Назад" -->
+                <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
+                    <a class="page-link" 
+                       href="/?page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                
+                <!-- Страницы -->
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                            <a class="page-link" 
+                               href="/?page=<%= i %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">
+                                <%= i %>
+                            </a>
+                        </li>
+                    <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    <% } %>
+                <% } %>
+                
+                <!-- Кнопка "Вперед" -->
+                <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
+                    <a class="page-link" 
+                       href="/?page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- Информация о странице -->
+        <div class="text-center text-muted mt-2">
+            Страница <%= currentPage %> из <%= totalPages %> | 
+            Товары <%= (currentPage - 1) * limit + 1 %> - 
+            <%= Math.min(currentPage * limit, totalProducts) %> из <%= totalProducts %>
+        </div>
+    <% } %>
 </div>
+
