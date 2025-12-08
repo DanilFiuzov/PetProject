@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'GameCenter'
-});
-
 // const connection = mysql.createConnection({
 //     host: 'localhost',
 //     user: 'root',
-//     password: '',
+//     password: 'root',
 //     database: 'GameCenter'
 // });
+
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'GameCenter'
+});
 
 //Аккаунт
 connection.connect((err) => {
