@@ -1308,4 +1308,5 @@ router.get('/admin/products', checkAdmin, (req, res) => {
         });
     });
 });
+
 module.exports = router;
