@@ -1,202 +1,181 @@
+<!-- Хлебные крошки -->
+<nav aria-label="breadcrumb" class="breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb bg-light p-3 rounded-3">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/products" class="text-decoration-none text-primary">Каталог</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page"><%= product.productTitle %></li>
+        </ol>
+    </div>
+</nav>
+
 <div class="container def-bg-settings">
-    <!-- Добавьте эти скрытые поля для передачи данных в JavaScript -->
+    <!-- Скрытые поля -->
     <input type="hidden" id="productId" value="<%= product.productID %>">
     <input type="hidden" id="userId" value="<%= session && session.userId ? session.userId : '' %>">
     <input type="hidden" id="hasReviewed" value="<%= hasReviewed %>">
-    
-    <!-- Хлебные крошки -->
-    <nav aria-label="breadcrumb" class="mt-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Главная</a></li>
-            <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Каталог</a></li>
-            <li class="breadcrumb-item active" aria-current="page"><%= product.productTitle %></li>
-        </ol>
-    </nav>
 
-    <!-- Основная информация о товаре -->
-    <div class="row g-4 mt-2">
+    <!-- Основная информация -->
+    <div class="row g-5">
         <!-- Изображение товара -->
-        <div class="col-lg-5">
-            <div class="product-image-container rounded-3 p-4 mb-4">
-                <img src="/images/products/<%= product.productThumbnail %>" 
-                     class="img-fluid rounded-3" 
-                     alt="<%= product.productTitle %>"
-                     style="max-height: 400px; object-fit: contain;">
-            </div>
-            
-            <!-- Действия с товаром -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h3 class="text-primary fw-bold mb-0"><%= product.productPrice.toFixed(2) %>₽</h3>
-                            <small class="text-muted">В наличии</small>
+        <div class="col-lg-4">
+            <div class="position-relative">
+                <div class="product-image-container rounded-4 overflow-hidden shadow-lg mb-4">
+                    <img src="/images/products/<%= product.productThumbnail %>" 
+                         class="img-fluid w-100" 
+                         alt="<%= product.productTitle %>"
+                         style="max-height: 500px; object-fit: contain;">
+                </div>
+                
+                <!-- Бейдж скидки -->
+                <% if (product.isDiscounted) { %>
+                    <div class="position-absolute top-0 start-0 m-4">
+                        <div class="discount-badge-modern">
+                            <i class="fas fa-bolt"></i>
+                            <span>-<%= product.discountPercentage %>%</span>
                         </div>
-                        <% if (session && session.userId) { %>
-                            <button class="btn btn-link text-muted p-0" 
-                                    onclick="toggleFavorite(event, '<%= product.productID %>')"
-                                    title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
-                                <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %>" 
-                                   style="font-size: 1.5rem;"></i>
-                            </button>
-                        <% } %>
                     </div>
-                    
+                <% } %>
+                
+                <!-- Кнопки действий на изображении -->
+                <div class="position-absolute top-0 end-0 m-4 d-flex flex-column gap-2">
                     <% if (session && session.userId) { %>
-                        <button class="btn btn-primary w-100 py-3 mb-3" 
-                                onclick="addToCart('<%= product.productID %>')">
-                            <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
+                        <button class="btn btn-light rounded-circle p-3 shadow-lg" 
+                                onclick="toggleFavorite(event, '<%= product.productID %>')"
+                                title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
+                            <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %> fa-lg"></i>
                         </button>
-                    <% } else { %>
-                        <a href="/login" class="btn btn-primary w-100 py-3 mb-3">
-                            <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
-                        </a>
                     <% } %>
                     
-                    <!-- Кнопка редактирования для администратора -->
                     <% if (session && session.userRank === 'admin') { %>
-                        <div class="d-grid gap-2">
-                            <a href="/admin/edit-product/<%= product.productID %>" 
-                               class="btn btn-warning w-100 py-2">
-                                <i class="fas fa-edit me-2"></i>Редактировать товар
-                            </a>
-                        </div>
-                    <% } else { %>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-secondary">
-                                <i class="fas fa-share-alt me-2"></i>Поделиться
-                            </button>
-                        </div>
+                        <a href="/admin/edit-product/<%= product.productID %>" 
+                           class="btn btn-warning rounded-circle p-3 shadow-lg"
+                           title="Редактировать товар">
+                            <i class="fas fa-edit fa-lg"></i>
+                        </a>
                     <% } %>
                 </div>
             </div>
         </div>
-        
-        <!-- Описание товара -->
-        <div class="col-lg-7">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body">
+
+        <!-- Информация о товаре -->
+        <div class="col-lg-8">
+            <!-- Основная информация -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
                     <!-- Заголовок и категории -->
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h1 class="h2 fw-bold mb-0"><%= product.productTitle %></h1>
-                        <div class="categories-container">
+                    <div class="mb-4">
+                        <h1 class="h2 fw-bold mb-3"><%= product.productTitle %></h1>
+                        
+                        <!-- Категории -->
+                        <div class="categories-container mb-4">
                             <% if (product.categories && product.categories.length > 0) { %>
                                 <% product.categories.forEach((cat) => { %>
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 me-1 mb-1"
-                                          style="font-size: 0.85rem; padding: 0.35rem 0.7rem;">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 me-2 mb-2 px-3 py-2">
                                         <%= cat %>
                                     </span>
                                 <% }) %>
                             <% } %>
                         </div>
-                    </div>
-                    
-                    <!-- Рейтинг и производитель -->
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="rating me-3">
-                            <% 
-                                const rating = product.productRating || 0;
-                                for (let j = 0; j < 5; j++) { 
-                            %>
-                                <span class="star-wrapper" style="font-size: 1.2rem; position: relative; display: inline-block;">
-                                    <i class="far fa-star empty-star text-muted"></i>
-                                    <% if (rating > j) { %>
-                                        <%
-                                            let width = 100;
-                                            if (rating - j < 1) {
-                                                width = (rating - j) * 100;
-                                            }
-                                        %>
-                                        <span class="filled-star" style="position: absolute; top: 0; left: 0; width: <%= width %>%; overflow: hidden; color: #ffc107;">
-                                            <i class="fas fa-star text-warning"></i>
-                                        </span>
-                                    <% } %>
-                                </span>
-                            <% } %>
-                        </div>
-                        <span class="text-muted me-3"><%= rating.toFixed(1) %></span>
-                        <span class="text-muted">•</span>
-                        <div class="ms-3">
-                            <span class="text-muted">Производитель:</span>
-                            <span class="fw-medium ms-1"><%= product.productManufacturer %></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Описание -->
-                    <div class="mb-4">
-                        <h5 class="mb-3">
-                            <i class="fas fa-align-left text-primary me-2"></i>Описание
-                        </h5>
-                        <p class="card-text" style="line-height: 1.6;"><%= product.productDescription %></p>
-                    </div>
-                    
-                    <!-- Характеристики -->
-                    <div class="accordion mb-4" id="productAccordion">
-                        <div class="accordion-item border-0">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed py-3" 
-                                        type="button" 
-                                        data-bs-toggle="collapse" 
-                                        data-bs-target="#featuresCollapse"
-                                        aria-expanded="false" 
-                                        aria-controls="featuresCollapse"
-                                        style="background-color: #f8f9fa;">
-                                    <i class="fas fa-list text-primary me-2"></i>
-                                    Характеристики 
-                                    <% if (features && features.length > 0) { %>
-                                        <span class="badge bg-primary ms-2"><%= features.length %></span>
-                                    <% } %>
-                                </button>
-                            </h2>
-                            <div id="featuresCollapse" class="accordion-collapse collapse" data-bs-parent="#productAccordion">
-                                <div class="accordion-body">
-                                    <div class="row">
-                                        <% if (features && features.length > 0) { %>
-                                            <% features.forEach((feature) => { %>
-                                                <div class="col-md-6">
-                                                    <div class="d-flex justify-content-between py-2 border-bottom">
-                                                        <span class="text-muted"><%= feature.key %></span>
-                                                        <span class="fw-medium text-end"><%= feature.value %></span>
-                                                    </div>
-                                                </div>
-                                            <% }) %>
-                                        <% } else { %>
-                                            <div class="col-12">
-                                                <p class="text-muted text-center py-3">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    Характеристики для этого товара пока не добавлены
-                                                </p>
-                                                <% if (session && session.userRank === 'admin') { %>
-                                                    <div class="text-center">
-                                                        <a href="/admin/edit-product/<%= product.productID %>" 
-                                                           class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-plus me-1"></i>Добавить характеристики
-                                                        </a>
-                                                    </div>
-                                                <% } %>
-                                            </div>
+                        
+                        <!-- Рейтинг и производитель -->
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="rating me-3">
+                                <% 
+                                    const rating = product.productRating || 0;
+                                    for (let j = 0; j < 5; j++) { 
+                                %>
+                                    <span class="star-wrapper position-relative" style="font-size: 1.5rem;">
+                                        <i class="far fa-star text-muted"></i>
+                                        <% if (rating > j) { %>
+                                            <%
+                                                let width = 100;
+                                                if (rating - j < 1) {
+                                                    width = (rating - j) * 100;
+                                                }
+                                            %>
+                                            <span class="position-absolute top-0 start-0 overflow-hidden" style="width: <%= width %>%">
+                                                <i class="fas fa-star text-warning"></i>
+                                            </span>
                                         <% } %>
-                                        
-                                        <!-- Основная информация как характеристики -->
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between py-2 border-bottom">
-                                                <span class="text-muted">Производитель</span>
-                                                <span class="fw-medium"><%= product.productManufacturer %></span>
-                                            </div>
-                                            <% if (product.categories && product.categories.length > 0) { %>
-                                                <div class="d-flex justify-content-between py-2 border-bottom">
-                                                    <span class="text-muted">Категории</span>
-                                                    <span class="fw-medium"><%= product.categories.join(', ') %></span>
-                                                </div>
-                                            <% } %>
-                                            <div class="d-flex justify-content-between py-2 border-bottom">
-                                                <span class="text-muted">Цена</span>
-                                                <span class="fw-medium"><%= product.productPrice.toFixed(2) %>₽</span>
-                                            </div>
-                                        </div>
+                                    </span>
+                                <% } %>
+                            </div>
+                            <span class="fw-bold text-primary me-3"><%= rating.toFixed(1) %></span>
+                            <div class="vr"></div>
+                            <div class="ms-3">
+                                <span class="text-muted">Производитель:</span>
+                                <span class="fw-bold ms-1"><%= product.productManufacturer %></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Цена -->
+                    <div class="mb-5">
+                        <% if (product.isDiscounted) { %>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="original-price-modern me-4">
+                                    <%= parseFloat(product.originalPrice).toFixed(2) %>₽
+                                </span>
+                                <span class="discount-price-modern">
+                                    <%= parseFloat(product.discountedPrice).toFixed(2) %>₽
+                                </span>
+                            </div>
+                            <div class="savings-badge-modern">
+                                <i class="fas fa-piggy-bank"></i>
+                                Экономия <%= (parseFloat(product.originalPrice) - parseFloat(product.discountedPrice)).toFixed(2) %>₽
+                            </div>
+                            
+                            <% if (product.priceInfo.endDate) { %>
+                                <div class="mt-3">
+                                    <div id="timer-<%= product.productID %>" 
+                                        data-end-date="<%= product.priceInfo.endDate %>"
+                                        class="text-danger fw-medium">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span class="timer-text">
+                                            <!-- Текст будет заменен JavaScript -->
+                                            Загрузка...
+                                        </span>
                                     </div>
                                 </div>
+                            <% } %>
+                        <% } else { %>
+                            <div class="mb-3">
+                                <span class="hero-carousel-price-normal">
+                                    <%= parseFloat(product.productPrice).toFixed(2) %>₽
+                                </span>
                             </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Кнопки покупки -->
+                    <div class="d-grid gap-3">
+                        <% if (session && session.userId) { %>
+                            <button class="btn btn-primary btn-lg py-3 fw-bold" 
+                                    onclick="addToCart('<%= product.productID %>')">
+                                <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
+                            </button>
+                        <% } else { %>
+                            <a href="/login" class="btn btn-primary btn-lg py-3 fw-bold">
+                                <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
+                            </a>
+                        <% } %>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary flex-grow-1 py-3">
+                                <i class="fas fa-share-alt me-2"></i>Поделиться
+                            </button>
+                            <button class="btn btn-outline-primary py-3" 
+                                    onclick="printPage()"
+                                    title="Распечатать">
+                                <i class="fas fa-print"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -204,27 +183,75 @@
         </div>
     </div>
 
+    <!-- Описание и характеристики -->
+    <div class="row g-5 mt-3">
+        <!-- Описание -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="h4 fw-bold mb-4">
+                        <i class="fas fa-align-left text-primary me-2"></i>Описание товара
+                    </h3>
+                    <div class="product-description" style="line-height: 1.8;">
+                        <%= product.productDescription.replace(/\n/g, '<br>') %>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Характеристики -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="h4 fw-bold mb-4">
+                        <i class="fas fa-list text-primary me-2"></i>Характеристики
+                    </h3>
+                    
+                    <% if (features && features.length > 0) { %>
+                        <div class="specifications">
+                            <% features.forEach((feature) => { %>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted"><%= feature.key %></span>
+                                    <span class="fw-bold text-end"><%= feature.value %></span>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Характеристики не указаны</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Отзывы -->
     <div class="mt-5">
-        <h2 class="mb-4">
-            <i class="fas fa-comments text-primary me-2"></i>Отзывы покупателей
-        </h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3 fw-bold">
+                <i class="fas fa-comments text-primary me-2"></i>Отзывы покупателей
+            </h2>
+            <% if (reviews.length > 0) { %>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2">
+                    <%= reviews.length %> отзывов
+                </span>
+            <% } %>
+        </div>
         
         <div class="row g-4">
-            <!-- Статистика отзывов -->
+            <!-- Статистика -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
                         <div class="text-center mb-4">
-                            <div class="display-4 fw-bold text-primary mb-1">
+                            <div class="display-4 fw-bold text-primary mb-2">
                                 <%= (product.productRating || 0).toFixed(1) %>
                             </div>
-                            <div class="rating justify-content-center mb-2">
-                                <% 
-                                    const overallRating = product.productRating || 0;
-                                    for (let j = 0; j < 5; j++) { 
-                                %>
-                                    <span class="star-wrapper position-relative" style="font-size: 1.5rem; display: inline-block;">
+                            <div class="rating justify-content-center mb-3">
+                                <% for (let j = 0; j < 5; j++) { %>
+                                    <span class="star-wrapper position-relative" style="font-size: 1.5rem;">
                                         <i class="far fa-star text-muted"></i>
                                         <% if (overallRating > j) { %>
                                             <%
@@ -240,7 +267,7 @@
                                     </span>
                                 <% } %>
                             </div>
-                            <p class="text-muted mb-0">На основе <%= reviews.length %> отзывов</p>
+                            <p class="text-muted">На основе <%= reviews.length %> отзывов</p>
                         </div>
                         
                         <div class="review-stats">
@@ -251,25 +278,33 @@
                                     const count = starStat ? starStat.count : 0;
                                 %>
                                 <div class="d-flex align-items-center mb-2">
-                                    <small class="text-muted me-2" style="width: 60px;"><%= star %> звезд</small>
+                                    <small class="text-muted me-2" style="width: 60px;">
+                                        <%= star %> <i class="fas fa-star text-warning"></i>
+                                    </small>
                                     <div class="progress flex-grow-1" style="height: 8px;">
-                                        <div id="progress-<%= star %>" class="progress-bar bg-warning" style="width: <%= percentage %>%"></div>
+                                        <div id="progress-<%= star %>" 
+                                             class="progress-bar bg-warning" 
+                                             style="width: <%= percentage %>%"></div>
                                     </div>
-                                    <small id="count-<%= star %>" class="text-muted ms-2" style="width: 30px;"><%= count %></small>
+                                    <small id="count-<%= star %>" 
+                                           class="text-muted ms-2" 
+                                           style="width: 30px;">
+                                        <%= count %>
+                                    </small>
                                 </div>
                             <% }) %>
                         </div>
                         
                         <% if (session && session.userId) { %>
                             <button id="add-review-btn" 
-                                    class="btn btn-primary w-100 mt-4"
+                                    class="btn btn-primary w-100 mt-4 py-3"
                                     onclick="openReviewModal()"
                                     <%= hasReviewed ? 'disabled' : '' %>>
                                 <i class="fas fa-plus me-2"></i>
                                 <%= hasReviewed ? 'Вы уже оставили отзыв' : 'Оставить отзыв' %>
                             </button>
                         <% } else { %>
-                            <a href="/login" class="btn btn-outline-primary w-100 mt-4">
+                            <a href="/login" class="btn btn-outline-primary w-100 mt-4 py-3">
                                 <i class="fas fa-sign-in-alt me-2"></i>Войти, чтобы оставить отзыв
                             </a>
                         <% } %>
@@ -281,13 +316,13 @@
             <div class="col-lg-8">
                 <div id="reviews-container">
                     <% if (reviews.length === 0) { %>
-                        <div class="card border-0 shadow-sm">
+                        <div class="card border-0 shadow-sm rounded-4">
                             <div class="card-body text-center py-5">
-                                <i class="far fa-comment-alt fa-3x text-muted mb-3"></i>
-                                <h5 class="text-muted">Пока нет отзывов</h5>
-                                <p class="text-muted">Будьте первым, кто поделится своим мнением об этом товаре</p>
+                                <i class="far fa-comment-alt fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted mb-3">Пока нет отзывов</h5>
+                                <p class="text-muted mb-4">Будьте первым, кто поделится своим мнением об этом товаре</p>
                                 <% if (session && session.userId && !hasReviewed) { %>
-                                    <button class="btn btn-primary mt-2" onclick="openReviewModal()">
+                                    <button class="btn btn-primary px-4 py-2" onclick="openReviewModal()">
                                         <i class="fas fa-plus me-2"></i>Написать отзыв
                                     </button>
                                 <% } %>
@@ -296,17 +331,18 @@
                     <% } else { %>
                         <div class="reviews-list">
                             <% reviews.forEach((review) => { %>
-                                <div class="card border-0 shadow-sm mb-3">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div class="d-flex align-items-center">
                                                 <img src="<%= review.customerThumbnail || '/images/Avatars/default-avatar.png' %>" 
                                                      alt="<%= review.customerName %>" 
                                                      class="rounded-circle me-3" 
-                                                     style="width: 50px; height: 50px; object-fit: cover;">
+                                                     style="width: 60px; height: 60px; object-fit: cover;">
                                                 <div>
-                                                    <h6 class="mb-0"><%= review.customerName %></h6>
+                                                    <h6 class="mb-1 fw-bold"><%= review.customerName %></h6>
                                                     <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
                                                         <%= new Date(review.created_at).toLocaleDateString('ru-RU') %>
                                                     </small>
                                                 </div>
@@ -321,7 +357,7 @@
                                                 <% } %>
                                             </div>
                                         </div>
-                                        <p class="mb-0" style="line-height: 1.5;"><%= review.comment %></p>
+                                        <p class="mb-0" style="line-height: 1.6;"><%= review.comment %></p>
                                     </div>
                                 </div>
                             <% }) %>
@@ -332,47 +368,116 @@
         </div>
     </div>
 
-    <!-- Модальное окно для отзыва -->
+    <!-- Модальное окно для отзыва (остается без изменений) -->
     <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
+            <div class="modal-content border-0 shadow-lg rounded-4">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title">Оставить отзыв</h5>
+                    <h5 class="modal-title fw-bold">Оставить отзыв</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-4">
-                        <label class="form-label">Оценка</label>
+                        <label class="form-label fw-medium">Оценка</label>
                         <div class="d-flex mb-2" id="starRating">
                             <% for(let i = 1; i <= 5; i++) { %>
                                 <i class="fas fa-star fa-2x text-muted me-1" 
-                                   style="cursor: pointer;"
+                                   style="cursor: pointer; transition: all 0.2s;"
                                    data-rating="<%= i %>"
                                    onmouseover="hoverStars(<%= i %>)"
                                    onmouseout="resetStars()"
                                    onclick="setRating(<%= i %>)"></i>
                             <% } %>
                         </div>
-                        <div id="rating-error" class="form-text text-danger d-none">Пожалуйста, выберите оценку</div>
+                        <div id="rating-error" class="form-text text-danger d-none">
+                            <i class="fas fa-exclamation-circle me-1"></i>Пожалуйста, выберите оценку
+                        </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="reviewComment" class="form-label">Ваш отзыв</label>
-                        <textarea class="form-control" 
+                        <label for="reviewComment" class="form-label fw-medium">Ваш отзыв</label>
+                        <textarea class="form-control border-2" 
                                   id="reviewComment" 
-                                  rows="4" 
+                                  rows="5" 
                                   placeholder="Расскажите о вашем опыте использования товара..."
-                                  oninput="document.getElementById('comment-error').classList.add('d-none')"></textarea>
+                                  style="resize: none;"></textarea>
                         <div id="comment-error" class="form-text text-danger d-none">
+                            <i class="fas fa-exclamation-circle me-1"></i>
                             Отзыв должен содержать не менее 10 символов
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="submitReview()">Отправить отзыв</button>
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary px-4" onclick="submitReview()">Отправить отзыв</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function printPage() {
+    window.print();
+}
+</script>
+<script>
+// Функция для расчета оставшегося времени
+function calculateTimeLeft(endDateStr) {
+    if (!endDateStr) return '';
+    
+    const endDate = new Date(endDateStr);
+    const now = new Date();
+    const diffMs = endDate - now;
+    
+    // Если акция уже закончилась
+    if (diffMs <= 0) {
+        return 'Акция закончилась';
+    }
+    
+    // Рассчитываем дни и часы
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    // Форматируем результат
+    if (diffDays > 0) {
+        if (diffHours > 0) {
+            return `Осталось: ${diffDays} дн. ${diffHours} ч.`;
+        } else {
+            return `Осталось: ${diffDays} дн.`;
+        }
+    } else if (diffHours > 0) {
+        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        if (diffMinutes > 0) {
+            return `Осталось: ${diffHours} ч. ${diffMinutes} мин.`;
+        } else {
+            return `Осталось: ${diffHours} ч.`;
+        }
+    } else {
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        return `Осталось: ${diffMinutes} мин.`;
+    }
+}
+
+// Функция для обновления всех таймеров на странице
+function updateAllTimers() {
+    const timerElements = document.querySelectorAll('[id^="timer-"]');
+    timerElements.forEach(element => {
+        const endDate = element.getAttribute('data-end-date');
+        if (endDate) {
+            const timerText = element.querySelector('.timer-text');
+            if (timerText) {
+                timerText.textContent = calculateTimeLeft(endDate);
+            }
+        }
+    });
+}
+
+// Обновляем таймеры сразу при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    updateAllTimers();
+    
+    // Обновляем таймер каждую минуту
+    setInterval(updateAllTimers, 60000); // 60000 мс = 1 минута
+});
+</script>

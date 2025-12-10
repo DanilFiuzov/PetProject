@@ -16,32 +16,52 @@ avatarLabels.forEach(label => {
 
 //Избранное
 function toggleFavorite(event, productID) {
-    const heartIcon = event.target.closest('button').querySelector('i');
-    const isFavorited = heartIcon.classList.contains('fas'); // Проверяем, закрашено ли сердце
-
+    const button = event.target.closest('button');
+    if (!button) return;
+    
+    const heartIcon = button.querySelector('i');
+    const isFavorited = heartIcon.classList.contains('fas');
     const url = isFavorited ? '/favorites/remove' : '/favorites/add';
-    const method = 'POST';
 
-    // Отправка AJAX запроса
+    // Временно отключаем кнопку для предотвращения двойного клика
+    button.disabled = true;
+    
     fetch(url, {
-        method: method,
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ productID: productID }),
     })
-    .then(response => {
-        if (response.ok) {
-            // Обновляем интерфейс
-            heartIcon.classList.toggle('fas'); // Переключение закрашенного
-            heartIcon.classList.toggle('far'); // Переключение пустого
-            heartIcon.title = isFavorited ? 'Добавить в избранное' : 'Убрать из избранного'; // Switch title
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Обновляем иконку только если не было дублирования
+            if (!data.alreadyFavorited) {
+                heartIcon.classList.toggle('fas');
+                heartIcon.classList.toggle('far');
+                
+                // Обновляем title
+                button.title = isFavorited ? 'Добавить в избранное' : 'Убрать из избранного';
+                
+                // Обновляем цвет
+                if (isFavorited) {
+                    heartIcon.classList.remove('text-danger');
+                } else {
+                    heartIcon.classList.add('text-danger');
+                }
+                
+
+            }
         } else {
-            console.error('Error updating favorites');
+            showNotification('Ошибка при обновлении избранного', 'error');
         }
+        button.disabled = false;
     })
     .catch(error => {
         console.error('Error:', error);
+        showNotification('Ошибка сети', 'error');
+        button.disabled = false;
     });
 }
 
@@ -55,24 +75,21 @@ function addToCart(productID) {
         body: JSON.stringify({ productID: productID })
     })
     .then(response => {
-        return response.json(); // Берем ответ как JSON
+        return response.json();
     })
     .then(data => {
         if (data.success) {
-            console.log('Товар добавлен в корзину:', data.cartCount);
             // Обновляем счетчик корзины если он есть на странице
             const cartCountElement = document.querySelector('.cart-count');
             if (cartCountElement) {
                 cartCountElement.textContent = data.cartCount;
             }
-            // Показываем уведомление
-            showNotification('Товар добавлен в корзину!', 'success');
+            // Убрано уведомление о добавлении в корзину
         } else {
             showNotification('Не удалось добавить товар в корзину', 'error');
         }
     })
     .catch(error => {
-        console.error('Ошибка:', error);
         showNotification('Произошла ошибка при добавлении товара в корзину', 'error');
     });
 }
@@ -334,7 +351,6 @@ function submitReview() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
         showNotification('Произошла ошибка при отправке отзыва', 'error');
     });
 }
@@ -367,6 +383,13 @@ function showNotification(message, type) {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+    initDiscountFields();
+    const isHomePage = document.querySelector('.carousel-section') !== null;
+    
+    if (isHomePage) {
+        initHomePage();
+    }
+
     // Проверяем, находимся ли мы на странице продукта
     const productIdElement = document.getElementById('productId');
     
@@ -410,6 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Функции для страницы добавления товара
 function initAddProductForm() {
+    initDiscountFields();
     const addFeatureBtn = document.getElementById('addFeatureBtn');
     const featuresContainer = document.getElementById('featuresContainer');
     const productImageInput = document.querySelector('input[name="productImage"]');
@@ -556,7 +580,6 @@ function initAddProductForm() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showNotification('Произошла ошибка при отправке формы', 'error');
                 
                 // Восстанавливаем кнопку
@@ -570,6 +593,7 @@ function initAddProductForm() {
 // Функции для страницы редактирования товара
 function initEditProductForm() {
     // Переключение отображения поля для нового изображения
+    initDiscountFields();
     const keepCurrentImageCheckbox = document.getElementById('keepCurrentImage');
     const newImageField = document.getElementById('newImageField');
     const productImageInput = document.querySelector('input[name="productImage"]');
@@ -688,16 +712,13 @@ function initEditProductForm() {
         
         // Создаем FormData и проверяем содержимое:
         const formData = new FormData(this);
-        console.log('=== FormData содержимое ===');
         
         // Выводим все поля:
         for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
         }
         
         // Проверяем конкретно категории:
         const categories = formData.getAll('categories[]');
-        console.log('Категории в FormData:', categories);
             
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
@@ -723,9 +744,7 @@ function initEditProductForm() {
                 }
             }
             
-            console.log('=== FormData содержимое ===');
             for (let pair of formClone.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
             }
             fetch('/admin/update-product', {
                 method: 'POST',
@@ -745,7 +764,6 @@ function initEditProductForm() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showNotification('Ошибка сети или сервера', 'danger');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -775,7 +793,6 @@ function initEditProductForm() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     showNotification('Ошибка сети или сервера', 'danger');
                 });
             }
@@ -783,7 +800,7 @@ function initEditProductForm() {
     }
 }
 
-// Функция для валидации форм (общая)
+//Функция для валидации форм
 function validateForm(form) {
     let isValid = true;
     
@@ -808,9 +825,23 @@ function validateForm(form) {
         }
     });
     
+    // Проверяем скидку
+    const saleCheckbox = form.querySelector('#is_on_sale');
+    if (saleCheckbox && saleCheckbox.checked) {
+        const discountPercentage = form.querySelector('input[name="discount_percentage"]');
+        if (discountPercentage && (!discountPercentage.value || discountPercentage.value <= 0)) {
+            isValid = false;
+            discountPercentage.classList.add('is-invalid');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = 'Укажите процент скидки (от 1 до 99)';
+            discountPercentage.parentNode.appendChild(errorDiv);
+        }
+    }
+    
     return isValid;
 }
-
 // Очистка ошибок при вводе
 document.addEventListener('input', function(e) {
     if (e.target.hasAttribute('required')) {
@@ -821,3 +852,242 @@ document.addEventListener('input', function(e) {
         }
     }
 });
+
+// Инициализация главной страницы
+function initHomePage() {
+    // Автоматическое переключение карусели
+    const carousel = document.getElementById('mainCarousel');
+    if (carousel) {
+        const carouselInstance = new bootstrap.Carousel(carousel, {
+            interval: 4000,
+            ride: 'carousel',
+            wrap: true
+        });
+        
+        // Добавляем индикатор текущего слайда
+        carousel.addEventListener('slide.bs.carousel', function(event) {
+            const slides = carousel.querySelectorAll('.carousel-item');
+            const captions = carousel.querySelectorAll('.carousel-caption');
+            
+            // Анимация для заголовков
+            captions.forEach(caption => {
+                caption.style.animation = 'slideInRight 0.5s ease-out';
+            });
+            
+            // Обновляем активные индикаторы
+            const indicators = carousel.querySelectorAll('.carousel-indicators button');
+            indicators.forEach((indicator, index) => {
+                if (index === event.to) {
+                    indicator.classList.add('active');
+                    indicator.setAttribute('aria-current', 'true');
+                } else {
+                    indicator.classList.remove('active');
+                    indicator.removeAttribute('aria-current');
+                }
+            });
+        });
+    }
+    
+    // Добавляем эффекты при наведении на карточки
+    const cards = document.querySelectorAll('.category-card, .product-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = this.classList.contains('category-card') 
+                ? 'translateY(-10px)' 
+                : 'translateY(-8px)';
+            this.style.boxShadow = '0 20px 40px rgba(96, 96, 255, 0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        });
+    });
+    
+    // Анимация при загрузке страницы
+    setTimeout(() => {
+        const sections = document.querySelectorAll('.categories-section, .popular-section');
+        sections.forEach((section, index) => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+            section.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    }, 100);
+}
+
+// Управление полями скидки
+document.addEventListener('DOMContentLoaded', function() {
+    const saleCheckbox = document.getElementById('is_on_sale');
+    const discountFields = document.getElementById('discountFields');
+    
+    if (saleCheckbox && discountFields) {
+        // Показ/скрытие полей скидки
+        saleCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                discountFields.style.display = 'block';
+                
+                // Установка дат по умолчанию
+                const now = new Date();
+                const startDate = document.getElementById('discount_start_date');
+                const endDate = document.getElementById('discount_end_date');
+                
+                if (startDate && !startDate.value) {
+                    startDate.value = now.toISOString().slice(0, 16);
+                }
+                
+                if (endDate && !endDate.value) {
+                    const weekLater = new Date(now);
+                    weekLater.setDate(weekLater.getDate() + 7);
+                    endDate.value = weekLater.toISOString().slice(0, 16);
+                }
+            } else {
+                discountFields.style.display = 'none';
+            }
+        });
+        
+        // Валидация дат скидки
+        const startDateInput = document.getElementById('discount_start_date');
+        const endDateInput = document.getElementById('discount_end_date');
+        
+        if (startDateInput && endDateInput) {
+            endDateInput.addEventListener('change', function() {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(this.value);
+                
+                if (endDate < startDate) {
+                    alert('Дата окончания не может быть раньше даты начала!');
+                    this.value = '';
+                }
+            });
+        }
+    }
+});
+
+// Функция для форматирования даты
+function formatDiscountDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+// Функция для отображения таймера скидки
+function updateDiscountTimer(productId, endDate) {
+    if (!endDate) return;
+    
+    const timerElement = document.getElementById(`timer-${productId}`);
+    if (!timerElement) return;
+    
+    const end = new Date(endDate);
+    const now = new Date();
+    
+    if (end <= now) {
+        timerElement.innerHTML = '<small class="text-muted">Скидка закончилась</small>';
+        return;
+    }
+    
+    const diff = end - now;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) {
+        timerElement.innerHTML = `<small class="text-danger">Осталось ${days}д ${hours}ч</small>`;
+    } else if (hours > 0) {
+        timerElement.innerHTML = `<small class="text-danger">Осталось ${hours}ч ${minutes}м</small>`;
+    } else {
+        timerElement.innerHTML = `<small class="text-danger">Осталось ${minutes}м</small>`;
+    }
+}
+
+// Обновляем все таймеры на странице
+function updateAllDiscountTimers() {
+    const timerElements = document.querySelectorAll('[id^="timer-"]');
+    timerElements.forEach(element => {
+        const productId = element.id.replace('timer-', '');
+        const endDate = element.getAttribute('data-end-date');
+        if (endDate) {
+            updateDiscountTimer(productId, endDate);
+        }
+    });
+}
+
+// Функция для управления полями скидки
+function initDiscountFields() {
+    const saleCheckbox = document.getElementById('is_on_sale');
+    const discountFields = document.getElementById('discountFields');
+    
+    if (saleCheckbox && discountFields) {
+        // Проверяем состояние чекбокса при загрузке
+        if (saleCheckbox.checked) {
+            discountFields.style.display = 'block';
+        }
+        
+        // Показ/скрытие полей скидки
+        saleCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                discountFields.style.display = 'block';
+                
+                // Установка дат по умолчанию
+                const now = new Date();
+                const startDate = document.getElementById('discount_start_date');
+                const endDate = document.getElementById('discount_end_date');
+                
+                if (startDate && !startDate.value) {
+                    // Форматируем дату для input[type="datetime-local"]
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    
+                    startDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+                
+                if (endDate && !endDate.value) {
+                    const weekLater = new Date(now);
+                    weekLater.setDate(weekLater.getDate() + 7);
+                    
+                    const year = weekLater.getFullYear();
+                    const month = String(weekLater.getMonth() + 1).padStart(2, '0');
+                    const day = String(weekLater.getDate()).padStart(2, '0');
+                    const hours = String(weekLater.getHours()).padStart(2, '0');
+                    const minutes = String(weekLater.getMinutes()).padStart(2, '0');
+                    
+                    endDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+            } else {
+                discountFields.style.display = 'none';
+            }
+        });
+        
+        // Валидация дат скидки
+        const startDateInput = document.getElementById('discount_start_date');
+        const endDateInput = document.getElementById('discount_end_date');
+        
+        if (startDateInput && endDateInput) {
+            endDateInput.addEventListener('change', function() {
+                if (startDateInput.value && this.value) {
+                    const startDate = new Date(startDateInput.value);
+                    const endDate = new Date(this.value);
+                    
+                    if (endDate < startDate) {
+                        alert('Дата окончания не может быть раньше даты начала!');
+                        this.value = '';
+                    }
+                }
+            });
+        }
+    }
+}
+
+// Обновляем таймеры каждую минуту
+setInterval(updateAllDiscountTimers, 60000);

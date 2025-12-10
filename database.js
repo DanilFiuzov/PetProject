@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
-    host: '127.0.0.1',
+    host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'root',
     database: 'GameCenter'
 });
+
+// const connection = mysql.createConnection({
+//     host: '127.0.0.1',
+//     user: 'root',
+//     password: '',
+//     database: 'GameCenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -56,25 +56,23 @@ function GetProducts(callback) {
         LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
         LEFT JOIN categories c ON cp.categorieID = c.categorieID
         GROUP BY p.productID
-        ORDER BY p.productID
+        ORDER BY p.created_at DESC, p.productID DESC
     `;
     
     connection.query(query, (err, results) => {
         if (err) return callback(err);
         
-        // Обрабатываем результаты
         const products = results.map(row => ({
             ...row,
             categories: row.categories_list ? row.categories_list.split(', ') : [],
             categories_ids: row.categories_ids ? row.categories_ids.split(',').map(id => parseInt(id)) : [],
-            // Первая категория для отображения (можно выбрать приоритетную)
-            category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized'
+            category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
+            created_at: row.created_at // добавляем дату создания
         }));
         
         callback(null, products);
     });
 }
-
 function addToCart(customerID, productID, callback) {
     const query = `INSERT INTO shopping_cart (customerID, productID, sc_count) 
                    VALUES (?, ?, 1) 
@@ -121,6 +119,38 @@ function getCartByCustomerID(customerID, callback) {
     });
 }
 
+// Функция для получения корзины с деталями товаров
+function getCartWithProducts(customerID, callback) {
+    const query = `
+        SELECT sc.*, p.* 
+        FROM shopping_cart sc
+        JOIN products p ON sc.productID = p.productID
+        WHERE sc.customerID = ?
+    `;
+    
+    connection.query(query, [customerID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        
+        // Рассчитываем скидки для каждого товара
+        const products = results.map(row => {
+            const priceInfo = calculateDiscountedPrice(row);
+            return {
+                ...row,
+                productPrice: parseFloat(row.productPrice),
+                priceInfo: priceInfo,
+                discountedPrice: priceInfo.discountedPrice.toFixed(2),
+                originalPrice: priceInfo.originalPrice.toFixed(2),
+                discountPercentage: priceInfo.discountPercentage,
+                isDiscounted: priceInfo.isDiscounted
+            };
+        });
+        
+        callback(null, products);
+    });
+}
+
 function getProductByID(productID, callback) {
     const query = 'SELECT * FROM products WHERE productID = ?';
     connection.query(query, [productID], (error, results) => {
@@ -130,7 +160,6 @@ function getProductByID(productID, callback) {
         }
         
         if (results.length === 0) {
-            console.log('Товар не найден, ID:', productID);
             return callback(null, null);
         }
         
@@ -198,17 +227,16 @@ function removeFromFavorites(productID, customerID, callback) {
 // Функция для получения списка избранных товаров пользователя
 function getFavoritesByCustomerID(customerID, callback) {
     const query = `
-        SELECT p.productID, p.productThumbnail, p.productTitle, p.productPrice, p.productDescription, p.productRating, p.productManufacturer
+        SELECT p.productID, p.productThumbnail, p.productTitle, p.productPrice, 
+               p.productDescription, p.productRating, p.productManufacturer,
+               p.created_at // добавляем поле
         FROM favorites f
         JOIN products p ON f.productID = p.productID
         WHERE f.customerID = ?
+        ORDER BY p.created_at DESC
     `;
-
-    connection.query(query, [customerID], (err, results) => {
-        callback(err, results);
-    });
+    connection.query(query, [customerID], callback);
 }
-
 // Добавление нового отзыва
 function addReview(productID, customerID, rating, comment, callback) {
     const query = 'INSERT INTO reviews (productID, customerID, rating, comment) VALUES (?, ?, ?, ?)';
@@ -326,12 +354,13 @@ function getProductsWithCategories(callback) {
             p.productDescription,
             p.productManufacturer,
             p.productRating,
+            p.created_at, // добавляем поле
             GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list
         FROM products p
         LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
         LEFT JOIN categories c ON cp.categorieID = c.categorieID
         GROUP BY p.productID
-        ORDER BY p.productID
+        ORDER BY p.created_at DESC, p.productID DESC
     `;
     
     connection.query(query, (err, results) => {
@@ -345,6 +374,7 @@ function getProductsWithCategories(callback) {
             productDescription: row.productDescription,
             productManufacturer: row.productManufacturer,
             productRating: row.productRating || 0,
+            created_at: row.created_at, // добавляем в результат
             categories: row.categories_list ? row.categories_list.split(', ') : [],
             category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized'
         }));
@@ -373,24 +403,43 @@ function getUserRank(customerID, callback) {
     connection.query(query, [customerID], callback);
 }
 
-// Функция для добавления товара с характеристиками
+// Функция для добавления товара со скидками (исправленная)
 function addProductWithFeatures(productData, categories, features, callback) {
-    // Начинаем транзакцию
     connection.beginTransaction((err) => {
         if (err) return callback(err);
         
-        // 1. Добавляем товар
+        // 1. Добавляем товар со всеми полями скидок
         const productQuery = `
-            INSERT INTO products (productTitle, productManufacturer, productDescription, productPrice, productThumbnail) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO products (
+                productTitle, 
+                productManufacturer, 
+                productDescription, 
+                productPrice, 
+                productThumbnail,
+                discount_percentage,
+                discount_start_date,
+                discount_end_date,
+                is_on_sale,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())  // NOW() для автоматической даты
         `;
         
+        // Подготавливаем значения для скидок
+        const discountPercentage = productData.discount_percentage || 0;
+        const discountStartDate = productData.discount_start_date || null;
+        const discountEndDate = productData.discount_end_date || null;
+        const isOnSale = productData.is_on_sale || 0;
+
         connection.query(productQuery, [
             productData.productTitle,
             productData.productManufacturer,
             productData.productDescription,
             productData.productPrice,
-            productData.productThumbnail
+            productData.productThumbnail,
+            discountPercentage,
+            discountStartDate,
+            discountEndDate,
+            isOnSale
         ], (err, result) => {
             if (err) {
                 return connection.rollback(() => callback(err));
@@ -451,6 +500,21 @@ function addProductWithFeatures(productData, categories, features, callback) {
                 });
             }
             
+            // 4. Обновляем discount_price если есть скидка
+            if (isOnSale && discountPercentage > 0) {
+                promises.push(new Promise((resolve, reject) => {
+                    const updatePriceQuery = `
+                        UPDATE products 
+                        SET discount_price = productPrice * (1 - ? / 100)
+                        WHERE productID = ?
+                    `;
+                    connection.query(updatePriceQuery, [discountPercentage, productID], (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                }));
+            }
+            
             // Ждем завершения всех операций
             if (promises.length > 0) {
                 Promise.all(promises)
@@ -466,7 +530,6 @@ function addProductWithFeatures(productData, categories, features, callback) {
                         connection.rollback(() => callback(err));
                     });
             } else {
-                // Нет ни категорий, ни характеристик
                 connection.commit((err) => {
                     if (err) {
                         return connection.rollback(() => callback(err));
@@ -480,7 +543,6 @@ function addProductWithFeatures(productData, categories, features, callback) {
 
 // Функция для получения характеристик товара
 function getProductFeatures(productID, callback) {
-    console.log('Вызов getProductFeatures для productID:', productID);
     
     const query = 'SELECT * FROM product_features WHERE productID = ? ORDER BY featureID';
     connection.query(query, [productID], (error, results) => {
@@ -488,8 +550,6 @@ function getProductFeatures(productID, callback) {
             console.error('Ошибка получения характеристик:', error);
             return callback(error, []);
         }
-        
-        console.log('Результаты характеристик:', results);
         
         // Преобразуем результаты в нужный формат
         const features = results.map(row => ({
@@ -533,21 +593,22 @@ function updateProductFeatures(productID, features, callback) {
     });
 }
 
-// Функция для обновления товара (без изменения рейтинга)
+// Функция для обновления товара со скидками (исправленная)
 function updateProduct(productID, productData, categories, features, callback) {
-    console.log('=== updateProduct вызвана ===');
-    console.log('productID:', productID);
-    console.log('categories для обновления:', categories);
-    console.log('features для обновления:', features);
-    
     connection.beginTransaction((err) => {
         if (err) {
             console.error('Ошибка начала транзакции:', err);
             return callback(err);
         }
         
-        // 1. Обновляем товар (исключаем productRating из обновления)
+        // 1. Обновляем товар со скидками
         const { productRating, ...updateData } = productData;
+        
+        // Определяем данные скидки
+        const discountPercentage = updateData.discount_percentage || 0;
+        const discountStartDate = updateData.discount_start_date || null;
+        const discountEndDate = updateData.discount_end_date || null;
+        const isOnSale = updateData.is_on_sale || 0;
         
         const updateProductQuery = `
             UPDATE products 
@@ -555,7 +616,15 @@ function updateProduct(productID, productData, categories, features, callback) {
                 productManufacturer = ?, 
                 productDescription = ?, 
                 productPrice = ?, 
-                productThumbnail = COALESCE(?, productThumbnail)
+                productThumbnail = COALESCE(?, productThumbnail),
+                discount_percentage = ?,
+                discount_start_date = ?,
+                discount_end_date = ?,
+                is_on_sale = ?,
+                discount_price = CASE 
+                    WHEN ? > 0 AND ? = 1 THEN productPrice * (1 - ? / 100)
+                    ELSE NULL
+                END
             WHERE productID = ?
         `;
         
@@ -564,10 +633,18 @@ function updateProduct(productID, productData, categories, features, callback) {
             updateData.productManufacturer,
             updateData.productDescription,
             updateData.productPrice,
-            updateData.productThumbnail, // Может быть null
+            updateData.productThumbnail,
+            discountPercentage,
+            discountStartDate,
+            discountEndDate,
+            isOnSale,
+            discountPercentage,
+            isOnSale,
+            discountPercentage,
             productID
         ], (err, result) => {
             if (err) {
+                console.error('Ошибка обновления товара:', err);
                 return connection.rollback(() => callback(err));
             }
             
@@ -578,8 +655,6 @@ function updateProduct(productID, productData, categories, features, callback) {
                     console.error('Ошибка удаления старых категорий:', err);
                     return connection.rollback(() => callback(err));
                 }
-                
-                console.log('Удалено старых связей с категориями:', result.affectedRows);
                 
                 if (categories && categories.length > 0) {
                     const categoryPromises = categories.map(categoryName => {
@@ -617,7 +692,6 @@ function updateProduct(productID, productData, categories, features, callback) {
                     // 3. Обновляем характеристики
                     Promise.all(categoryPromises)
                         .then(() => {
-                            // Используем существующую функцию updateProductFeatures
                             updateProductFeatures(productID, features, (err) => {
                                 if (err) {
                                     return connection.rollback(() => callback(err));
@@ -654,11 +728,173 @@ function updateProduct(productID, productData, categories, features, callback) {
     });
 }
 
+//Функция расчета скидки
+function calculateDiscountedPrice(product) {
+    // Преобразуем цены в числа с проверкой
+    const originalPrice = parseFloat(product.productPrice) || 0;
+    const discountPercentage = parseFloat(product.discount_percentage) || 0;
+    
+    // Если товар не в продаже или нет процента скидки
+    if (!product.is_on_sale || discountPercentage <= 0) {
+        return {
+            originalPrice: originalPrice,
+            discountedPrice: originalPrice,
+            discountPercentage: 0,
+            isDiscounted: false,
+            isOnSale: false
+        };
+    }
+    
+    // Проверяем сроки действия скидки
+    const now = new Date();
+    let isDiscountActive = product.is_on_sale == 1;
+    
+    // Проверяем даты если они есть
+    if (product.discount_start_date) {
+        const startDate = new Date(product.discount_start_date);
+        if (now < startDate) {
+            isDiscountActive = false;
+        }
+    }
+    
+    if (product.discount_end_date) {
+        const endDate = new Date(product.discount_end_date);
+        if (now > endDate) {
+            isDiscountActive = false;
+        }
+    }
+    
+    if (!isDiscountActive) {
+        return {
+            originalPrice: originalPrice,
+            discountedPrice: originalPrice,
+            discountPercentage: 0,
+            isDiscounted: false,
+            isOnSale: product.is_on_sale == 1
+        };
+    }
+    
+    const discountedPrice = originalPrice * (1 - discountPercentage / 100);
+    
+    return {
+        originalPrice: originalPrice,
+        discountedPrice: isNaN(discountedPrice) ? originalPrice : discountedPrice,
+        discountPercentage: discountPercentage,
+        isDiscounted: true,
+        isOnSale: true,
+        savings: originalPrice - discountedPrice,
+        endDate: product.discount_end_date
+    };
+}
+// Функция для получения товаров со скидкой
+function getDiscountedProducts(limit, callback) {
+     const query = `
+        SELECT p.*, 
+               GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list
+        FROM products p
+        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
+        LEFT JOIN categories c ON cp.categorieID = c.categorieID
+        WHERE p.is_on_sale = 1 
+        AND (p.discount_end_date IS NULL OR p.discount_end_date >= NOW())
+        AND (p.discount_start_date IS NULL OR p.discount_start_date <= NOW())
+        GROUP BY p.productID
+        ORDER BY p.discount_percentage DESC, p.created_at DESC
+        LIMIT ?
+    `;
+    
+    connection.query(query, [limit], (err, results) => {
+        if (err) return callback(err);
+        
+        const products = results.map(row => {
+            const priceInfo = calculateDiscountedPrice(row);
+            return {
+                ...row,
+                categories: row.categories_list ? row.categories_list.split(', ') : [],
+                category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
+                priceInfo: priceInfo,
+                displayPrice: priceInfo.isDiscounted ? priceInfo.discountedPrice : parseFloat(row.productPrice)
+            };
+        });
+        
+        callback(null, products);
+    });
+}
 
+// Функция для удаления товара
+function deleteProduct(productID, callback) {
+    // Удаляем характеристики
+    const deleteFeaturesQuery = 'DELETE FROM product_features WHERE productID = ?';
+    connection.query(deleteFeaturesQuery, [productID], (err) => {
+        if (err) return callback(err);
+        
+        // Удаляем категории
+        const deleteCategoriesQuery = 'DELETE FROM categoriesandproducts WHERE productID = ?';
+        connection.query(deleteCategoriesQuery, [productID], (err) => {
+            if (err) return callback(err);
+            
+            // Удаляем отзывы
+            const deleteReviewsQuery = 'DELETE FROM reviews WHERE productID = ?';
+            connection.query(deleteReviewsQuery, [productID], (err) => {
+                if (err) return callback(err);
+                
+                // Удаляем из избранного
+                const deleteFavoritesQuery = 'DELETE FROM favorites WHERE productID = ?';
+                connection.query(deleteFavoritesQuery, [productID], (err) => {
+                    if (err) return callback(err);
+                    
+                    // Удаляем из корзин
+                    const deleteCartQuery = 'DELETE FROM shopping_cart WHERE productID = ?';
+                    connection.query(deleteCartQuery, [productID], (err) => {
+                        if (err) return callback(err);
+                        
+                        // Удаляем сам товар
+                        const deleteProductQuery = 'DELETE FROM products WHERE productID = ?';
+                        connection.query(deleteProductQuery, [productID], callback);
+                    });
+                });
+            });
+        });
+    });
+}
+
+// Функция для получения избранного с деталями товаров
+function getFavoritesWithProducts(customerID, callback) {
+    const query = `
+        SELECT p.*, f.favoritesID
+        FROM favorites f
+        JOIN products p ON f.productID = p.productID
+        WHERE f.customerID = ?
+        ORDER BY f.favoritesID DESC
+    `;
+    
+    connection.query(query, [customerID], (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        
+        // Рассчитываем скидки для каждого товара
+        const products = results.map(row => {
+            const priceInfo = calculateDiscountedPrice(row);
+            return {
+                ...row,
+                productPrice: parseFloat(row.productPrice),
+                priceInfo: priceInfo,
+                discountedPrice: priceInfo.discountedPrice.toFixed(2),
+                originalPrice: priceInfo.originalPrice.toFixed(2),
+                discountPercentage: priceInfo.discountPercentage,
+                isDiscounted: priceInfo.isDiscounted
+            };
+        });
+        
+        callback(null, products);
+    });
+}
 //Экспорт
 module.exports = { 
     connection, 
     updateProduct,
+    calculateDiscountedPrice,
+    getDiscountedProducts,
     getUserRank,
     addProductWithFeatures,
     getProductFeatures,
@@ -687,5 +923,8 @@ module.exports = {
     deleteReview,
     getProductsWithCategories,
     getCategoriesForProducts,
-    getProductsByCategory
+    getProductsByCategory,
+    deleteProduct,
+    getCartWithProducts,
+    getFavoritesWithProducts
  };

@@ -74,6 +74,83 @@
                                         <span class="input-group-text">₽</span>
                                     </div>
                                 </div>
+                                <!-- Скидка -->
+                                <div class="mb-4">
+                                    <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                        <i class="fas fa-percentage me-2"></i>
+                                        Скидка и акции
+                                    </h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <input type="hidden" name="is_on_sale_hidden" value="0">
+
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" 
+                                                    type="checkbox" 
+                                                    name="is_on_sale" 
+                                                    id="is_on_sale"
+                                                    value="1"
+                                                    <%= product.is_on_sale ? 'checked' : '' %>>
+                                                <label class="form-check-label fw-semibold" for="is_on_sale">
+                                                    Включить скидку на товар
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="discountFields" style="<%= product.is_on_sale ? '' : 'display: none;' %>">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-semibold">Процент скидки</label>
+                                                <div class="input-group">
+                                                    <input type="number" 
+                                                        class="form-control" 
+                                                        name="discount_percentage" 
+                                                        min="1" 
+                                                        max="99" 
+                                                        step="1"
+                                                        value="<%= product.discount_percentage || '' %>"
+                                                        placeholder="Например: 20">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-semibold">Дата начала</label>
+                                                <input type="datetime-local" 
+                                                    class="form-control" 
+                                                    name="discount_start_date"
+                                                    id="discount_start_date"
+                                                    value="<%= product.discount_start_date ? new Date(product.discount_start_date).toISOString().slice(0,16) : '' %>">
+                                            </div>
+                                            
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-semibold">Дата окончания</label>
+                                                <input type="datetime-local" 
+                                                    class="form-control" 
+                                                    name="discount_end_date"
+                                                    id="discount_end_date"
+                                                    value="<%= product.discount_end_date ? new Date(product.discount_end_date).toISOString().slice(0,16) : '' %>">
+                                            </div>
+                                        </div>
+                                        
+                                        <% if (product.is_on_sale && product.discount_percentage) { %>
+                                            <%
+                                                const discountPrice = (product.productPrice * (1 - product.discount_percentage / 100)).toFixed(2);
+                                                const savings = (product.productPrice - discountPrice).toFixed(2);
+                                            %>
+                                            <div class="alert alert-success">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                <strong>Текущая скидка:</strong><br>
+                                                • Скидка: <strong><%= product.discount_percentage %>%</strong><br>
+                                                • Старая цена: <span class="text-decoration-line-through"><%= product.productPrice %>₽</span><br>
+                                                • Новая цена: <strong class="text-danger"><%= discountPrice %>₽</strong><br>
+                                                • Экономия: <strong><%= savings %>₽</strong>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-semibold">Текущий рейтинг</label>
