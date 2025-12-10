@@ -31,24 +31,7 @@ app.use((req, res, next) => {
 
 app.use('/', indexRouter);
 
-app.use('/game/:id', (req, res, next) => {
-    const gameId = req.params.id;
 
-    // Загружаем роутиг текущей игры
-    const gameRoutePath = `./uploads/${req.session.userId}/routes/route`
-    try {
-        const gameRouter = require(gameRoutePath);
-        app.use(`/game/${gameId}`, gameRouter); // Подключаем только маршруты активной игры
-        next(); // Переход к следующему middleware
-    } catch (error) {
-        console.error(`Ошибка при подключении маршрута для игры ${gameId}: ${error.message}`);
-        res.status(404).send('Маршрут для этой игры не найден.');
-    }
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server running on http://0.0.0.0:3000');
 });
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
