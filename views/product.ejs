@@ -46,7 +46,7 @@
                 <!-- Кнопки действий на изображении -->
                 <div class="position-absolute top-0 end-0 m-4 d-flex flex-column gap-2">
                     <% if (session && session.userId) { %>
-                        <button class="btn btn-light rounded-circle p-3 shadow-lg" 
+                        <button class="btn btn-light rounded-circle shadow-lg" 
                                 onclick="toggleFavorite(event, '<%= product.productID %>')"
                                 title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
                             <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %> fa-lg"></i>
@@ -55,7 +55,7 @@
                     
                     <% if (session && session.userRank === 'admin') { %>
                         <a href="/admin/edit-product/<%= product.productID %>" 
-                           class="btn btn-warning rounded-circle p-3 shadow-lg"
+                           class="btn btn-warning rounded-circle shadow-lg"
                            title="Редактировать товар">
                             <i class="fas fa-edit fa-lg"></i>
                         </a>

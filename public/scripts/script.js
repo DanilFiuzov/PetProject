@@ -518,19 +518,32 @@ function initAddProductForm() {
         });
     }
     
-    // Обработка формы добавления товара
     if (addProductForm) {
         addProductForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // ВАЖНО: Создаем FormData с корректной обработкой чекбокса
+            const formData = new FormData(this);
+            
+            // Убедимся, что is_on_sale имеет правильное значение
+            const saleCheckbox = document.getElementById('is_on_sale');
+            if (saleCheckbox) {
+                // Удаляем старое значение и добавляем новое
+                formData.delete('is_on_sale');
+                formData.append('is_on_sale', saleCheckbox.checked ? '1' : '0');
+            }
+            
+            // ОТЛАДКА - выводим все поля
+            console.log('=== Form Data ===');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
             
             // Показываем индикатор загрузки
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Добавление...';
             submitBtn.disabled = true;
-            
-            // Создаем FormData для отправки файлов
-            const formData = new FormData(this);
             
             fetch('/admin/add-product', {
                 method: 'POST',
@@ -539,50 +552,18 @@ function initAddProductForm() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Успешное добавление
                     showNotification(data.message, 'success');
-                    
-                    // Очистка формы через 2 секунды
                     setTimeout(() => {
-                        addProductForm.reset();
-                        if (imagePreviewContainer) {
-                            imagePreviewContainer.style.display = 'none';
-                        }
-                        
-                        // Удаляем все поля характеристик кроме первого
-                        const featureItems = featuresContainer.querySelectorAll('.feature-item');
-                        featureItems.forEach((item, index) => {
-                            if (index > 0) {
-                                item.remove();
-                            } else {
-                                // Очищаем первое поле
-                                const inputs = item.querySelectorAll('input');
-                                inputs.forEach(input => input.value = '');
-                            }
-                        });
-                        
-                        // Восстанавливаем кнопку
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                        
-                        // Перенаправление на страницу товара через 3 секунды
-                        setTimeout(() => {
-                            window.location.href = `/product/${data.productID}`;
-                        }, 3000);
+                        window.location.href = `/product/${data.productID}`;
                     }, 2000);
                 } else {
-                    // Ошибка
                     showNotification(data.message || 'Ошибка при добавлении товара', 'error');
-                    
-                    // Восстанавливаем кнопку
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
             })
             .catch(error => {
                 showNotification('Произошла ошибка при отправке формы', 'error');
-                
-                // Восстанавливаем кнопку
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             });
@@ -707,48 +688,44 @@ function initEditProductForm() {
 
    // Отправка формы редактирования
     if (editProductForm) {
-       editProductForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Создаем FormData и проверяем содержимое:
-        const formData = new FormData(this);
-        
-        // Выводим все поля:
-        for (let pair of formData.entries()) {
-        }
-        
-        // Проверяем конкретно категории:
-        const categories = formData.getAll('categories[]');
+        editProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Создаем FormData с корректной обработкой чекбокса is_on_sale
+            const formData = new FormData(this);
+            
+            // Убедимся, что is_on_sale имеет правильное значение
+            const saleCheckbox = document.getElementById('is_on_sale');
+            if (saleCheckbox) {
+                // Удаляем старое значение и добавляем новое
+                formData.delete('is_on_sale');
+                formData.append('is_on_sale', saleCheckbox.checked ? '1' : '0');
+            }
+            
+            // Обработка keepCurrentImage
+            const keepCurrentImageCheckbox = document.getElementById('keepCurrentImage');
+            if (keepCurrentImageCheckbox && keepCurrentImageCheckbox.checked) {
+                // Удаляем файл если отмечено сохранение текущего изображения
+                formData.delete('productImage');
+            }
+            
+            console.log('=== Update Form Data ===');
+            for (let [key, value] of formData.entries()) {
+                if (key === 'productImage') {
+                    console.log(`${key}: [File]`);
+                } else {
+                    console.log(`${key}: ${value}`);
+                }
+            }
             
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
             submitBtn.disabled = true;
             
-            // УДАЛЯЕМ ПОЛЕ ФАЙЛА, если отмечен чекбокс сохранения текущего изображения
-            const keepCurrentImageCheckbox = document.getElementById('keepCurrentImage');
-            const productImageInput = document.querySelector('input[name="productImage"]');
-            
-            // Клонируем форму для безопасного удаления полей
-            const formClone = new FormData(editProductForm);
-            
-            // Если отмечен чекбокс, удаляем поле файла
-            if (keepCurrentImageCheckbox && keepCurrentImageCheckbox.checked && productImageInput) {
-                // Удаляем файл из FormData
-                formClone.delete('productImage');
-                
-                // Также удаляем превью если оно есть
-                const preview = document.getElementById('newImagePreview');
-                if (preview) {
-                    preview.remove();
-                }
-            }
-            
-            for (let pair of formClone.entries()) {
-            }
             fetch('/admin/update-product', {
                 method: 'POST',
-                body: formClone
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -758,13 +735,13 @@ function initEditProductForm() {
                         window.location.href = '/admin/products';
                     }, 1500);
                 } else {
-                    showNotification(data.message || 'Ошибка при обновлении товара', 'danger');
+                    showNotification(data.message || 'Ошибка при обновлении товара', 'error');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
             })
             .catch(error => {
-                showNotification('Ошибка сети или сервера', 'danger');
+                showNotification('Ошибка сети или сервера', 'error');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             });
@@ -945,9 +922,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     weekLater.setDate(weekLater.getDate() + 7);
                     endDate.value = weekLater.toISOString().slice(0, 16);
                 }
-            } else {
-                discountFields.style.display = 'none';
-            }
+                } else {
+                        discountFields.style.display = 'none';
+                        
+                        const discountPercentage = document.querySelector('input[name="discount_percentage"]');
+                        const startDate = document.getElementById('discount_start_date');
+                        const endDate = document.getElementById('discount_end_date');
+                        
+                        if (discountPercentage) discountPercentage.value = '';
+                        if (startDate) startDate.value = '';
+                        if (endDate) endDate.value = '';
+                    }
         });
         
         // Валидация дат скидки
@@ -1020,7 +1005,6 @@ function updateAllDiscountTimers() {
     });
 }
 
-// Функция для управления полями скидки
 function initDiscountFields() {
     const saleCheckbox = document.getElementById('is_on_sale');
     const discountFields = document.getElementById('discountFields');
@@ -1029,6 +1013,8 @@ function initDiscountFields() {
         // Проверяем состояние чекбокса при загрузке
         if (saleCheckbox.checked) {
             discountFields.style.display = 'block';
+        } else {
+            discountFields.style.display = 'none';
         }
         
         // Показ/скрытие полей скидки
@@ -1088,6 +1074,106 @@ function initDiscountFields() {
         }
     }
 }
+
+// Функция для обновления фильтров
+function updateFilters() {
+    const form = document.getElementById('searchForm');
+    if (!form) return;
+    
+    const search = form.querySelector('[name="search"]')?.value || '';
+    const category = document.querySelector('[name="category"]')?.value || '';
+    const minPrice = document.querySelector('[name="minPrice"]')?.value || '';
+    const maxPrice = document.querySelector('[name="maxPrice"]')?.value || '';
+    const onSale = document.getElementById('onSale')?.checked ? 'true' : '';
+    const sort = document.querySelector('[name="sort"]')?.value || 'newest';
+    
+    const params = new URLSearchParams();
+    
+    if (search) params.set('search', search);
+    if (category) params.set('category', category);
+    if (minPrice) params.set('minPrice', minPrice);
+    if (maxPrice) params.set('maxPrice', maxPrice);
+    if (onSale) params.set('onSale', onSale);
+    if (sort && sort !== 'newest') params.set('sort', sort);
+    
+    // Сбрасываем страницу на первую при изменении фильтров
+    params.set('page', '1');
+    
+    window.location.href = `/products?${params.toString()}`;
+}
+
+// Функция для сброса фильтров
+function resetFilters() {
+    window.location.href = '/products';
+}
+
+// Валидация полей цены
+function validatePriceInput(input) {
+    if (input.value < 0) {
+        input.value = 0;
+    }
+    
+    const minPriceInput = document.querySelector('[name="minPrice"]');
+    const maxPriceInput = document.querySelector('[name="maxPrice"]');
+    
+    if (minPriceInput && maxPriceInput && minPriceInput.value && maxPriceInput.value) {
+        if (parseFloat(minPriceInput.value) > parseFloat(maxPriceInput.value)) {
+            alert('Минимальная цена не может быть больше максимальной');
+            input.value = '';
+        }
+    }
+}
+
+// Инициализация фильтров при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики для полей фильтров
+    const priceInputs = document.querySelectorAll('[name="minPrice"], [name="maxPrice"]');
+    priceInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            validatePriceInput(this);
+            // Не обновляем сразу при изменении цены, ждем подтверждения
+        });
+        
+        input.addEventListener('blur', function() {
+            if (this.value) {
+                setTimeout(() => updateFilters(), 500); // Небольшая задержка
+            }
+        });
+    });
+    
+    // Добавляем обработчик для Enter в поле поиска
+    const searchInput = document.querySelector('[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                updateFilters();
+            }
+        });
+    }
+    
+    // Добавляем обработчик для чекбокса акционных товаров
+    const onSaleCheckbox = document.getElementById('onSale');
+    if (onSaleCheckbox) {
+        onSaleCheckbox.addEventListener('change', function() {
+            setTimeout(() => updateFilters(), 100); // Небольшая задержка
+        });
+    }
+    
+    // Добавляем обработчик для выпадающих списков
+    const selects = document.querySelectorAll('select');
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            updateFilters();
+        });
+    });
+    
+    // Инициализируем тултипы для фильтров
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 
 // Обновляем таймеры каждую минуту
 setInterval(updateAllDiscountTimers, 60000);

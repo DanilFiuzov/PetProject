@@ -1,15 +1,98 @@
-<div class="container def-bg-settings">
-    <div style="height: 800px">
-        <form id="avatarForm" action="/upload" method="POST">
-            <div id="avatarContainer">
-                <% avatars.forEach(function(avatar, index) { %>
-                    <label class="avatar" data-id="<%= index %>" style="margin-top: 100px;">
-                        <input type="checkbox" name="avatar" value="<%= index %>" style="display: none;">
-                        <img class="rounded-circle profile-pic" src="<%= avatar.url %>" alt="Avatar" />
-                    </label>
-                <% }) %>
+<!-- Хлебные крошки -->
+<nav aria-label="breadcrumb" class="breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb bg-light p-3 rounded-3">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/acc_page" class="text-decoration-none text-primary">Мой аккаунт</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Выбор аватара</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="container def-bg-settings py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="text-center mb-5">
+                <div class="icon-wrapper mb-4">
+                    <div class="icon-circle bg-primary bg-opacity-10 text-primary p-4 rounded-circle d-inline-flex">
+                        <i class="fas fa-user-circle fa-3x"></i>
+                    </div>
+                </div>
+                <h1 class="h2 fw-bold mb-3">Выбор аватара</h1>
+                <p class="text-muted mb-4">Выберите изображение для вашего профиля</p>
             </div>
-            <button class="btn btn-primary" type="submit" style="float: right;">Изменить</button>
-        </form>
+
+            <!-- Галерея аватаров -->
+            <form id="avatarForm" action="/upload" method="POST">
+                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-4" id="avatarContainer">
+                    <% avatars.forEach(function(avatar, index) { %>
+                        <div class="col">
+                            <label class="avatar-selector d-block text-center" data-id="<%= index %>">
+                                <input type="radio" 
+                                       name="avatar" 
+                                       value="<%= index %>" 
+                                       class="d-none" 
+                                       <%= index === 0 ? 'checked' : '' %>>
+                                <div class="avatar-card border-3 rounded-4 p-3 transition-all">
+                                    <img class="img-fluid rounded-circle mb-2" 
+                                         src="<%= avatar.url %>" 
+                                         alt="Аватар <%= index + 1 %>"
+                                         style="width: 100px; height: 100px; object-fit: cover;">
+                                    <div class="avatar-check">
+                                        <i class="fas fa-check-circle fa-2x text-primary"></i>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                    <a href="/acc_page" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="fas fa-arrow-left me-2"></i>Назад в профиль
+                    </a>
+                    
+                    <button type="submit" class="btn btn-primary px-4 py-2">
+                        <i class="fas fa-check me-2"></i>Сохранить аватар
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarLabels = document.querySelectorAll('.avatar-selector');
+    
+    avatarLabels.forEach(label => {
+        label.addEventListener('click', () => {
+            // Снимаем выделение со всех аватаров
+            avatarLabels.forEach(l => {
+                l.querySelector('.avatar-card').classList.remove('selected');
+                l.querySelector('input[type="radio"]').checked = false;
+            });
+
+            // Выделяем текущий аватар
+            const avatarCard = label.querySelector('.avatar-card');
+            avatarCard.classList.add('selected');
+            label.querySelector('input[type="radio"]').checked = true;
+        });
+    });
+
+    // Автоматически выбираем первый аватар при загрузке
+    const firstLabel = document.querySelector('.avatar-selector');
+    if (firstLabel) {
+        const firstCard = firstLabel.querySelector('.avatar-card');
+        firstCard.classList.add('selected');
+    }
+});
+</script>

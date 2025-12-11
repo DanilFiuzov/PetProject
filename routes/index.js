@@ -119,6 +119,7 @@ router.get('/', (req, res) => {
         new Promise((resolve, reject) => {
             connection.connection.query(carouselQuery, (err, results) => {
                 if (err) {
+                    console.error('Carousel query error:', err);
                     resolve([]);
                 } else {
                     const items = results.map(row => {
@@ -145,6 +146,7 @@ router.get('/', (req, res) => {
         new Promise((resolve, reject) => {
             connection.connection.query(popularQuery, (err, results) => {
                 if (err) {
+                    console.error('Popular query error:', err);
                     resolve([]);
                 } else {
                     const items = results.map(row => {
@@ -171,6 +173,7 @@ router.get('/', (req, res) => {
         new Promise((resolve, reject) => {
             connection.connection.query(categoriesQuery, (err, results) => {
                 if (err) {
+                    console.error('Categories query error:', err);
                     resolve([]);
                 } else {
                     resolve(results);
@@ -180,6 +183,7 @@ router.get('/', (req, res) => {
         new Promise((resolve, reject) => {
             connection.connection.query(discountedQuery, (err, results) => {
                 if (err) {
+                    console.error('Discounted query error:', err);
                     resolve([]);
                 } else {
                     const items = results.map(row => {
@@ -212,19 +216,35 @@ router.get('/', (req, res) => {
         // Проверяем, вошел ли пользователь
         if (req.session.userId) {
             // Получаем избранные товары для текущего пользователя
-            connection.getFavoritesByCustomerID(req.session.userId, (err, favorites) => {
-                if (err) {
-                    favorites = [];
-                }
-                
-                req.session.favorites = favorites.map(item => item.productID);
-                
-                // Обновляем массив товаров в корзине
+            const getFavorites = new Promise((resolve, reject) => {
+                connection.getFavoritesByCustomerID(req.session.userId, (err, favorites) => {
+                    if (err) {
+                        console.error('Favorites error:', err);
+                        resolve([]);
+                    } else {
+                        resolve(favorites || []);
+                    }
+                });
+            });
+            
+            // Получаем корзину
+            const getCart = new Promise((resolve, reject) => {
                 connection.getCartByCustomerID(req.session.userId, (err, cartItems) => {
                     if (err) {
-                        cartItems = [];
+                        console.error('Cart error:', err);
+                        resolve([]);
+                    } else {
+                        resolve(cartItems || []);
                     }
+                });
+            });
+            
+            Promise.all([getFavorites, getCart])
+                .then(([favorites, cartItems]) => {
+                    // Обновляем сессию с избранными
+                    req.session.favorites = favorites.map(item => item.productID);
                     
+                    // Обновляем сессию с корзиной
                     req.session.cart = {};
                     cartItems.forEach(item => {
                         req.session.cart[item.productID] = { sc_count: item.sc_count };
@@ -234,7 +254,38 @@ router.get('/', (req, res) => {
                         return total + (item.sc_count || 0);
                     }, 0);
                     
+                    // Собираем все ID товаров для проверки избранного
+                    const allProductIds = [
+                        ...carouselItems.map(p => p.productID),
+                        ...popularProducts.map(p => p.productID),
+                        ...discountedProducts.map(p => p.productID)
+                    ];
+                    
+                    // Создаем Set для быстрой проверки
+                    const favoriteIdsSet = new Set(req.session.favorites);
+                    
+                    // Добавляем флаг isFavorite к каждому товару
+                    const markFavorites = (products) => {
+                        return products.map(product => ({
+                            ...product,
+                            isFavorite: favoriteIdsSet.has(product.productID)
+                        }));
+                    };
+                    
                     // Отправляем данные для главной страницы
+                    res.render('layout', {
+                        body: 'home',
+                        carouselItems: markFavorites(carouselItems),
+                        mainCategories: mainCategories,
+                        otherCategoriesCount: otherCategoriesCount,
+                        popularProducts: markFavorites(popularProducts),
+                        discountedProducts: markFavorites(discountedProducts),
+                        session: req.session
+                    });
+                })
+                .catch(err => {
+                    console.error('Promise error:', err);
+                    // В случае ошибки показываем страницу без избранных
                     res.render('layout', {
                         body: 'home',
                         carouselItems: carouselItems,
@@ -245,9 +296,13 @@ router.get('/', (req, res) => {
                         session: req.session
                     });
                 });
-            });
         } else {
-            // Если пользователь не вошел
+            // Если пользователь не вошел, устанавливаем пустые избранные
+            req.session.favorites = [];
+            req.session.cart = {};
+            req.session.cartCount = 0;
+            
+            // Отправляем данные для главной страницы
             res.render('layout', {
                 body: 'home',
                 carouselItems: carouselItems,
@@ -260,13 +315,18 @@ router.get('/', (req, res) => {
         }
     })
     .catch(err => {
+        console.error('Main page error:', err);
         res.status(500).send('Ошибка при загрузке главной страницы');
     });
 });
 
-// Каталог товаров с поиском и пагинацией
+// Каталог товаров с расширенным поиском и фильтрацией
 router.get('/products', (req, res) => {
     const searchQuery = req.query.search || '';
+    const category = req.query.category || '';
+    const minPrice = parseFloat(req.query.minPrice) || 0;
+    const maxPrice = parseFloat(req.query.maxPrice) || 0;
+    const onSale = req.query.onSale === 'true';
     const sort = req.query.sort || 'newest';
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
@@ -276,55 +336,111 @@ router.get('/products', (req, res) => {
     let productsQuery = `
         SELECT 
             p.*,
-            GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list
+            GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list,
+            GROUP_CONCAT(DISTINCT c.categorieID ORDER BY c.categorieID SEPARATOR ',') as categories_ids
         FROM products p
         LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
         LEFT JOIN categories c ON cp.categorieID = c.categorieID
         WHERE 1=1
     `;
     
-    let countQuery = 'SELECT COUNT(DISTINCT p.productID) as total FROM products p WHERE 1=1';
+    let countQuery = `
+        SELECT COUNT(DISTINCT p.productID) as total 
+        FROM products p
+        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
+        WHERE 1=1
+    `;
     
     const queryParams = [];
     const countParams = [];
     
+    // Поиск по названию, производителю, описанию ИЛИ категории
     if (searchQuery) {
         productsQuery += `
             AND (
                 p.productTitle LIKE ? OR 
                 p.productManufacturer LIKE ? OR 
-                p.productDescription LIKE ?
+                p.productDescription LIKE ? OR
+                EXISTS (
+                    SELECT 1 FROM categoriesandproducts cp2
+                    JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                    WHERE cp2.productID = p.productID 
+                    AND c2.categorieName LIKE ?
+                )
             )
         `;
         countQuery += `
             AND (
                 p.productTitle LIKE ? OR 
                 p.productManufacturer LIKE ? OR 
-                p.productDescription LIKE ?
+                p.productDescription LIKE ? OR
+                EXISTS (
+                    SELECT 1 FROM categoriesandproducts cp2
+                    JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                    WHERE cp2.productID = p.productID 
+                    AND c2.categorieName LIKE ?
+                )
             )
         `;
         const searchPattern = `%${searchQuery}%`;
-        queryParams.push(searchPattern, searchPattern, searchPattern);
-        countParams.push(searchPattern, searchPattern, searchPattern);
+        queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
+        countParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
     }
     
-    // Обработка фильтра акционных товаров
-    if (sort === 'sale') {
-        productsQuery += ` AND p.is_on_sale = 1`;
-        countQuery += ` AND p.is_on_sale = 1`;
+    // Фильтр по категории
+    if (category) {
+        productsQuery += `
+            AND EXISTS (
+                SELECT 1 FROM categoriesandproducts cp2
+                JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                WHERE cp2.productID = p.productID 
+                AND c2.categorieID = ?
+            )
+        `;
+        countQuery += `
+            AND EXISTS (
+                SELECT 1 FROM categoriesandproducts cp2
+                JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                WHERE cp2.productID = p.productID 
+                AND c2.categorieID = ?
+            )
+        `;
+        queryParams.push(category);
+        countParams.push(category);
+    }
+    
+    // Фильтр по цене
+    if (minPrice > 0) {
+        productsQuery += ` AND p.productPrice >= ?`;
+        countQuery += ` AND p.productPrice >= ?`;
+        queryParams.push(minPrice);
+        countParams.push(minPrice);
+    }
+    
+    if (maxPrice > 0) {
+        productsQuery += ` AND p.productPrice <= ?`;
+        countQuery += ` AND p.productPrice <= ?`;
+        queryParams.push(maxPrice);
+        countParams.push(maxPrice);
+    }
+    
+    // Фильтр акционных товаров
+    if (onSale) {
+        productsQuery += ` AND p.is_on_sale = 1 AND p.discount_percentage > 0`;
+        countQuery += ` AND p.is_on_sale = 1 AND p.discount_percentage > 0`;
     }
     
     // Добавляем сортировку
-    let orderBy = 'p.created_at DESC'; // по умолчанию сортировка по новизне
+    let orderBy = 'p.created_at DESC';
     switch(sort) {
         case 'newest':
             orderBy = 'p.created_at DESC, p.productID DESC';
             break;
         case 'price_asc':
-            orderBy = 'CAST(p.productPrice AS DECIMAL(10,2)) ASC';
+            orderBy = 'CASE WHEN p.is_on_sale = 1 AND p.discount_percentage > 0 THEN p.productPrice * (1 - p.discount_percentage/100) ELSE p.productPrice END ASC';
             break;
         case 'price_desc':
-            orderBy = 'CAST(p.productPrice AS DECIMAL(10,2)) DESC';
+            orderBy = 'CASE WHEN p.is_on_sale = 1 AND p.discount_percentage > 0 THEN p.productPrice * (1 - p.discount_percentage/100) ELSE p.productPrice END DESC';
             break;
         case 'rating':
             orderBy = 'p.productRating DESC, p.created_at DESC';
@@ -338,69 +454,71 @@ router.get('/products', (req, res) => {
         case 'discount':
             orderBy = 'p.discount_percentage DESC, p.created_at DESC';
             break;
-        case 'sale':
-            orderBy = 'p.discount_percentage DESC, p.created_at DESC, p.productID DESC';
-            break;
     }
     
     // Добавляем GROUP BY, сортировку и пагинацию
     productsQuery += ` GROUP BY p.productID ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
     
-    // Выполняем запрос на количество
-    connection.connection.query(countQuery, countParams, (err, countResult) => {
+    // Получаем список всех категорий для фильтра
+    connection.connection.query('SELECT categorieID, categorieName FROM categories ORDER BY categorieName', (err, allCategories) => {
         if (err) {
-            console.error(err);
-            return res.status(500).send('Ошибка при получении количества товаров');
+            allCategories = [];
         }
         
-        const totalProducts = countResult[0].total;
-        const totalPages = Math.ceil(totalProducts / limit);
-        
-        // Выполняем запрос на товары
-        connection.connection.query(productsQuery, queryParams, (err, results) => {
+        // Выполняем запрос на количество
+        connection.connection.query(countQuery, countParams, (err, countResult) => {
             if (err) {
                 console.error(err);
-                return res.status(500).send('Ошибка при получении списка продуктов');
+                return res.status(500).send('Ошибка при получении количества товаров');
             }
             
-            // Формируем массив продуктов с категориями и информацией о скидках
-            const products = results.map(row => {
-                const priceInfo = connection.calculateDiscountedPrice(row);
-                const originalPrice = parseFloat(row.productPrice) || 0;
-                const discountedPrice = priceInfo.isDiscounted ? priceInfo.discountedPrice : originalPrice;
-                
-                return {
-                    productID: row.productID,
-                    productTitle: row.productTitle,
-                    productThumbnail: row.productThumbnail,
-                    productPrice: originalPrice,
-                    productDescription: row.productDescription,
-                    productManufacturer: row.productManufacturer,
-                    productRating: row.productRating || 0,
-                    created_at: row.created_at,
-                    categories: row.categories_list ? row.categories_list.split(', ') : [],
-                    category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
-                    priceInfo: priceInfo,
-                    displayPrice: priceInfo.isDiscounted ? 
-                        (isNaN(discountedPrice) ? originalPrice.toFixed(2) : discountedPrice.toFixed(2)) : 
-                        originalPrice.toFixed(2),
-                    originalPrice: originalPrice.toFixed(2),
-                    discountPercentage: priceInfo.discountPercentage || 0,
-                    isDiscounted: priceInfo.isDiscounted,
-                    is_on_sale: row.is_on_sale,
-                    discount_percentage: row.discount_percentage || 0,
-                    discount_start_date: row.discount_start_date,
-                    discount_end_date: row.discount_end_date
-                };
-            });
-                        
-            const productIDs = products.map(p => p.productID);
+            const totalProducts = countResult[0].total;
+            const totalPages = Math.ceil(totalProducts / limit);
             
-            // Для авторизованных пользователей загружаем избранные товары
-            if (req.session.userId) {
-                // Получаем избранные товары для этих productIDs
-                if (productIDs.length > 0) {
+            // Выполняем запрос на товары
+            connection.connection.query(productsQuery, queryParams, (err, results) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).send('Ошибка при получении списка продуктов');
+                }
+                
+                // Формируем массив продуктов с категориями и информацией о скидках
+                const products = results.map(row => {
+                    const priceInfo = connection.calculateDiscountedPrice(row);
+                    const originalPrice = parseFloat(row.productPrice) || 0;
+                    const discountedPrice = priceInfo.isDiscounted ? priceInfo.discountedPrice : originalPrice;
+                    
+                    return {
+                        productID: row.productID,
+                        productTitle: row.productTitle,
+                        productThumbnail: row.productThumbnail,
+                        productPrice: originalPrice,
+                        productDescription: row.productDescription,
+                        productManufacturer: row.productManufacturer,
+                        productRating: row.productRating || 0,
+                        created_at: row.created_at,
+                        categories: row.categories_list ? row.categories_list.split(', ') : [],
+                        categories_ids: row.categories_ids ? row.categories_ids.split(',') : [],
+                        category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
+                        priceInfo: priceInfo,
+                        displayPrice: priceInfo.isDiscounted ? 
+                            (isNaN(discountedPrice) ? originalPrice.toFixed(2) : discountedPrice.toFixed(2)) : 
+                            originalPrice.toFixed(2),
+                        originalPrice: originalPrice.toFixed(2),
+                        discountPercentage: priceInfo.discountPercentage || 0,
+                        isDiscounted: priceInfo.isDiscounted,
+                        is_on_sale: row.is_on_sale,
+                        discount_percentage: row.discount_percentage || 0,
+                        discount_start_date: row.discount_start_date,
+                        discount_end_date: row.discount_end_date
+                    };
+                });
+                
+                const productIDs = products.map(p => p.productID);
+                
+                // Для авторизованных пользователей загружаем избранные товары
+                if (req.session.userId && productIDs.length > 0) {
                     const placeholders = productIDs.map(() => '?').join(',');
                     const favoritesQuery = `
                         SELECT productID FROM favorites 
@@ -413,10 +531,8 @@ router.get('/products', (req, res) => {
                             favoritesResults = [];
                         }
                         
-                        // Создаем Set избранных ID для быстрого поиска
                         const favoriteIdsSet = new Set(favoritesResults.map(f => f.productID));
                         
-                        // Обновляем корзину
                         connection.getCartByCustomerID(req.session.userId, (cartErr, cartItems) => {
                             if (cartErr) {
                                 cartItems = [];
@@ -431,15 +547,18 @@ router.get('/products', (req, res) => {
                                 return total + (item.sc_count || 0);
                             }, 0);
                             
-                            // Устанавливаем favorites в сессии
                             req.session.favorites = Array.from(favoriteIdsSet);
                             
-                            // Отправляем данные с пагинацией
                             res.render('layout', {
                                 body: 'products',
                                 products: products,
+                                allCategories: allCategories,
                                 session: req.session,
                                 searchQuery: searchQuery,
+                                category: category,
+                                minPrice: minPrice,
+                                maxPrice: maxPrice,
+                                onSale: onSale,
                                 sort: sort,
                                 currentPage: page,
                                 totalPages: totalPages,
@@ -449,12 +568,16 @@ router.get('/products', (req, res) => {
                         });
                     });
                 } else {
-                    // Нет товаров
                     res.render('layout', {
                         body: 'products',
                         products: products,
+                        allCategories: allCategories,
                         session: req.session,
                         searchQuery: searchQuery,
+                        category: category,
+                        minPrice: minPrice,
+                        maxPrice: maxPrice,
+                        onSale: onSale,
                         sort: sort,
                         currentPage: page,
                         totalPages: totalPages,
@@ -462,20 +585,7 @@ router.get('/products', (req, res) => {
                         limit: limit
                     });
                 }
-            } else {
-                // Пользователь не авторизован
-                res.render('layout', {
-                    body: 'products',
-                    products: products,
-                    session: req.session,
-                    searchQuery: searchQuery,
-                    sort: sort,
-                    currentPage: page,
-                    totalPages: totalPages,
-                    totalProducts: totalProducts,
-                    limit: limit
-                });
-            }
+            });
         });
     });
 });
@@ -925,6 +1035,89 @@ router.get('/logout',(req, res) =>{
     }
 })
 
+// Страница аккаунта пользователя
+router.get('/acc_page', (req, res) => {
+    const customerID = req.session.userId;
+    
+    if (!customerID) {
+        return res.redirect('/login');
+    }
+    
+    // Получаем данные пользователя
+    const getUserData = new Promise((resolve, reject) => {
+        connection.connection.query('SELECT * FROM customers WHERE customerID = ?', [customerID], (err, results) => {
+            if (err || results.length === 0) {
+                console.error('Ошибка получения данных пользователя:', err);
+                reject(err || new Error('Пользователь не найден'));
+            } else {
+                resolve(results[0]);
+            }
+        });
+    });
+    
+    // Получаем избранные товары
+    const getFavorites = new Promise((resolve, reject) => {
+        connection.getFavoritesByCustomerID(customerID, (err, favorites) => {
+            if (err) {
+                console.error('Favorites error:', err);
+                resolve([]);
+            } else {
+                resolve(favorites || []);
+            }
+        });
+    });
+    
+    // Получаем корзину
+    const getCart = new Promise((resolve, reject) => {
+        connection.getCartByCustomerID(customerID, (err, cartItems) => {
+            if (err) {
+                console.error('Cart error:', err);
+                resolve([]);
+            } else {
+                resolve(cartItems || []);
+            }
+        });
+    });
+    
+    // Выполняем все запросы
+    Promise.all([getUserData, getFavorites, getCart])
+        .then(([user, favorites, cartItems]) => {
+            // Обновляем данные в сессии
+            req.session.userId = user.customerID;
+            req.session.userThumbnail = user.customerThumbnail;
+            req.session.userEmail = user.customerEmail;
+            req.session.userName = user.customerName;
+            req.session.userRank = user.customerRank || 'user';
+            
+            // Сохраняем избранные в сессии
+            req.session.favorites = favorites.map(item => item.productID);
+            
+            // Сохраняем корзину в сессии
+            req.session.cart = {};
+            cartItems.forEach(item => {
+                req.session.cart[item.productID] = { sc_count: item.sc_count };
+            });
+            
+            // Подсчитываем количество товаров в корзине
+            req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
+                return total + (item.sc_count || 0);
+            }, 0);
+            
+            // Рендерим страницу аккаунта
+            res.render('layout', {
+                body: 'acc_page',
+                session: req.session,
+                user: user, // передаем объект пользователя
+                favoritesCount: req.session.favorites.length,
+                cartCount: req.session.cartCount
+            });
+        })
+        .catch(err => {
+            console.error('Account page error:', err);
+            res.redirect('/login');
+        });
+});
+
 //Выбор аватарки
 router.get('/select_thumbnail',(req,res) => {
     if (!req.session.userId) {
@@ -1186,6 +1379,8 @@ router.get('/admin/add-product', checkAdmin, (req, res) => {
 
 // Добавление товара (POST)
 router.post('/admin/add-product', checkAdmin, (req, res) => {
+    console.log('=== DEBUG: Starting add product ===');
+    console.log('Session user:', req.session.userId);
     const formidable = require('formidable');
     const form = new formidable.IncomingForm();
     const uploadDir = path.join(__dirname, '../public/images/products');
@@ -1198,53 +1393,138 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
     form.keepExtensions = true;
     form.maxFileSize = 5 * 1024 * 1024;
     
+    // В POST /admin/add-product исправьте этот участок кода:
+
     form.parse(req, (err, fields, files) => {
         if (err) {
+            console.error('Form parsing error:', err);
             return res.status(500).json({ 
                 success: false, 
                 message: 'Ошибка загрузки файла' 
             });
         }
         
-        if (!fields.productTitle || !fields.productManufacturer || !fields.productDescription || !fields.productPrice) {
+        console.log('=== Processing Form ===');
+        console.log('Fields:', Object.keys(fields));
+        console.log('Files:', Object.keys(files));
+        
+        // 1. Обработка файла изображения
+        let productThumbnail = '';
+        let hasImageError = false;
+        
+        try {
+            if (files.productImage) {
+                let productImageFile;
+                
+                // Определяем структуру файла
+                if (Array.isArray(files.productImage)) {
+                    productImageFile = files.productImage[0];
+                } else if (files.productImage.originalFilename) {
+                    productImageFile = files.productImage;
+                } else {
+                    productImageFile = files.productImage;
+                }
+                
+                console.log('Processing file:', productImageFile);
+                
+                // Проверяем, что файл существует и имеет размер
+                if (productImageFile && productImageFile.size > 0 && productImageFile.filepath) {
+                    const oldPath = productImageFile.filepath;
+                    const newFileName = `${Date.now()}_${productImageFile.originalFilename || 'product.jpg'}`;
+                    const newPath = path.join(uploadDir, newFileName);
+                    
+                    console.log(`Moving file from ${oldPath} to ${newPath}`);
+                    
+                    if (fs.existsSync(oldPath)) {
+                        fs.renameSync(oldPath, newPath);
+                        productThumbnail = newFileName;
+                        console.log('File saved as:', productThumbnail);
+                    } else {
+                        console.error('Source file does not exist:', oldPath);
+                        hasImageError = true;
+                    }
+                } else {
+                    console.error('Invalid file object:', {
+                        size: productImageFile?.size,
+                        filepath: productImageFile?.filepath
+                    });
+                    hasImageError = true;
+                }
+            } else {
+                console.error('No productImage in files object');
+                hasImageError = true;
+            }
+        } catch (fileError) {
+            console.error('File processing error:', fileError);
+            hasImageError = true;
+        }
+        
+        if (hasImageError || !productThumbnail) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Ошибка при обработке изображения. Убедитесь, что файл загружен и имеет допустимый формат (JPG, PNG).' 
+            });
+        }
+        
+        // 2. Обработка поля is_on_sale - ДОБАВЬТЕ ЭТУ ЧАСТЬ!
+        let isOnSale = '0';
+        if (fields.is_on_sale) {
+            if (Array.isArray(fields.is_on_sale)) {
+                isOnSale = fields.is_on_sale.includes('1') ? '1' : '0';
+            } else {
+                isOnSale = fields.is_on_sale === '1' ? '1' : '0';
+            }
+        }
+        console.log('is_on_sale value:', isOnSale);
+        
+        // 3. Проверка обязательных полей
+        if (!fields.productTitle || !fields.productManufacturer || 
+            !fields.productDescription || !fields.productPrice) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Заполните все обязательные поля' 
             });
         }
         
-        let productImageFile = null;
-        if (files.productImage) {
-            productImageFile = Array.isArray(files.productImage) ? files.productImage[0] : files.productImage;
-        }
+        // 4. Подготовка данных товара
+        const productData = {
+            productTitle: Array.isArray(fields.productTitle) ? fields.productTitle[0] : fields.productTitle,
+            productManufacturer: Array.isArray(fields.productManufacturer) ? fields.productManufacturer[0] : fields.productManufacturer,
+            productDescription: Array.isArray(fields.productDescription) ? fields.productDescription[0] : fields.productDescription,
+            productPrice: parseFloat(Array.isArray(fields.productPrice) ? fields.productPrice[0] : fields.productPrice),
+            productThumbnail: productThumbnail,
+            is_on_sale: isOnSale // Теперь переменная определена!
+        };
         
-        let productThumbnail = '';
-        if (productImageFile && productImageFile.size > 0) {
-            const oldPath = productImageFile.filepath;
-            const newFileName = `${Date.now()}_${productImageFile.originalFilename}`;
-            const newPath = path.join(uploadDir, newFileName);
-            
-            try {
-                fs.renameSync(oldPath, newPath);
-                productThumbnail = newFileName;
-            } catch (fileError) {
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Ошибка при сохранении изображения' 
-                });
+        console.log('=== Product Data ===');
+        console.log(productData);
+        
+        // 5. Данные скидки только если включена
+        if (isOnSale === '1') {
+            if (fields.discount_percentage) {
+                productData.discount_percentage = parseFloat(
+                    Array.isArray(fields.discount_percentage) ? fields.discount_percentage[0] : fields.discount_percentage
+                );
             }
-        } else {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Загрузите изображение товара' 
-            });
+            
+            if (fields.discount_start_date) {
+                productData.discount_start_date = Array.isArray(fields.discount_start_date) ? 
+                    fields.discount_start_date[0] : fields.discount_start_date;
+            }
+            
+            if (fields.discount_end_date) {
+                productData.discount_end_date = Array.isArray(fields.discount_end_date) ? 
+                    fields.discount_end_date[0] : fields.discount_end_date;
+            }
         }
         
+        // 6. Обработка категорий
         let categories = [];
         if (fields['categories[]']) {
             categories = Array.isArray(fields['categories[]']) ? fields['categories[]'] : [fields['categories[]']];
         }
         
+        // 7. Обработка характеристик
         const features = [];
         if (fields['feature_keys[]'] && fields['feature_values[]']) {
             const keys = Array.isArray(fields['feature_keys[]']) ? fields['feature_keys[]'] : [fields['feature_keys[]']];
@@ -1260,43 +1540,16 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
             });
         }
         
-        let isOnSaleValue = '0';
-        if (fields.is_on_sale) {
-            isOnSaleValue = Array.isArray(fields.is_on_sale) ? fields.is_on_sale[0] : fields.is_on_sale;
-        }
-
-        // Подготавливаем данные товара с учетом скидок
-        const productData = {
-            productTitle: Array.isArray(fields.productTitle) ? fields.productTitle[0] : fields.productTitle,
-            productManufacturer: Array.isArray(fields.productManufacturer) ? fields.productManufacturer[0] : fields.productManufacturer,
-            productDescription: Array.isArray(fields.productDescription) ? fields.productDescription[0] : fields.productDescription,
-            productPrice: parseFloat(Array.isArray(fields.productPrice) ? fields.productPrice[0] : fields.productPrice),
-            productThumbnail: productThumbnail,
-            is_on_sale: isOnSaleValue === '1' ? 1 : 0
-        };
+        console.log('Categories:', categories);
+        console.log('Features:', features);
         
-        // Добавляем данные о скидке, если они есть
-        if (fields.is_on_sale === '1') { 
-            if (fields.discount_percentage) {
-                productData.discount_percentage = parseFloat(
-                    Array.isArray(fields.discount_percentage) ? fields.discount_percentage[0] : fields.discount_percentage
-                );
-            }
-            
-            if (fields.discount_start_date) {
-                productData.discount_start_date = Array.isArray(fields.discount_start_date) ? fields.discount_start_date[0] : fields.discount_start_date;
-            }
-            
-            if (fields.discount_end_date) {
-                productData.discount_end_date = Array.isArray(fields.discount_end_date) ? fields.discount_end_date[0] : fields.discount_end_date;
-            }
-        }
-        
+        // 8. Добавление товара в БД
         connection.addProductWithFeatures(productData, categories, features, (err, productID) => {
             if (err) {
+                console.error('Database error:', err);
                 return res.status(500).json({ 
                     success: false, 
-                    message: 'Ошибка при добавлении товара в базу данных' 
+                    message: 'Ошибка базы данных: ' + err.message 
                 });
             }
             
@@ -1359,7 +1612,6 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
     const form = new formidable.IncomingForm();
     const uploadDir = path.join(__dirname, '../public/images/products');
     
-    // Создаем директорию если ее нет
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -1372,23 +1624,40 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
     
     form.parse(req, (err, fields, files) => {
         if (err) {
+            console.error('Form parsing error:', err);
             return res.status(500).json({ 
                 success: false, 
                 message: 'Ошибка при обработке формы' 
             });
         }
         
-        // Извлекаем значения
-        const productID = Array.isArray(fields.productID) ? fields.productID[0] : fields.productID;
-        let categories = [];
+        console.log('=== Update Product Form ===');
+        console.log('Fields:', Object.keys(fields));
+        console.log('Files:', Object.keys(files));
         
-        // Обработка категорий
-        if (fields['categories[]']) {
-            categories = Array.isArray(fields['categories[]']) ? fields['categories[]'] : [fields['categories[]']];
+        // 1. Получаем productID
+        const productID = Array.isArray(fields.productID) ? fields.productID[0] : fields.productID;
+        
+        if (!productID) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Не указан ID товара' 
+            });
         }
         
-        // Проверка обязательных полей
-        if (!productID || !fields.productTitle || !fields.productManufacturer || 
+        // 2. Обработка поля is_on_sale
+        let isOnSale = '0';
+        if (fields.is_on_sale) {
+            if (Array.isArray(fields.is_on_sale)) {
+                isOnSale = fields.is_on_sale.includes('1') ? '1' : '0';
+            } else {
+                isOnSale = fields.is_on_sale === '1' ? '1' : '0';
+            }
+        }
+        console.log('is_on_sale value:', isOnSale);
+        
+        // 3. Проверка обязательных полей
+        if (!fields.productTitle || !fields.productManufacturer || 
             !fields.productDescription || !fields.productPrice) {
             return res.status(400).json({ 
                 success: false, 
@@ -1396,13 +1665,99 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             });
         }
         
+        // 4. Обработка изображения
+        let productThumbnail = null;
+        const keepCurrentImage = fields.keepCurrentImage === 'on' || fields.keepCurrentImage === 'true';
+        
+        if (!keepCurrentImage && files.productImage) {
+            try {
+                let productImageFile;
+                
+                // Определяем структуру файла
+                if (Array.isArray(files.productImage)) {
+                    productImageFile = files.productImage[0];
+                } else if (files.productImage.originalFilename) {
+                    productImageFile = files.productImage;
+                } else {
+                    productImageFile = files.productImage;
+                }
+                
+                console.log('Processing update file:', productImageFile);
+                
+                // Проверяем, что файл существует и имеет размер
+                if (productImageFile && productImageFile.size > 0 && productImageFile.filepath) {
+                    const oldPath = productImageFile.filepath;
+                    const newFileName = `${Date.now()}_${productImageFile.originalFilename || 'product.jpg'}`;
+                    const newPath = path.join(uploadDir, newFileName);
+                    
+                    console.log(`Moving file from ${oldPath} to ${newPath}`);
+                    
+                    if (fs.existsSync(oldPath)) {
+                        fs.renameSync(oldPath, newPath);
+                        productThumbnail = newFileName;
+                        console.log('New file saved as:', productThumbnail);
+                    } else {
+                        console.error('Source file does not exist:', oldPath);
+                    }
+                } else {
+                    console.log('File is empty or invalid, keeping current image');
+                }
+            } catch (fileError) {
+                console.error('File processing error:', fileError);
+                // Если ошибка при обработке файла, оставляем текущее изображение
+            }
+        }
+        
+        // 5. Подготовка данных товара
+        const productData = {
+            productTitle: Array.isArray(fields.productTitle) ? fields.productTitle[0] : fields.productTitle,
+            productManufacturer: Array.isArray(fields.productManufacturer) ? fields.productManufacturer[0] : fields.productManufacturer,
+            productDescription: Array.isArray(fields.productDescription) ? fields.productDescription[0] : fields.productDescription,
+            productPrice: parseFloat(Array.isArray(fields.productPrice) ? fields.productPrice[0] : fields.productPrice),
+            is_on_sale: isOnSale
+        };
+        
+        // Добавляем новое изображение если есть
+        if (productThumbnail) {
+            productData.productThumbnail = productThumbnail;
+        }
+        
+        // 6. Данные скидки только если включена
+        if (isOnSale === '1') {
+            if (fields.discount_percentage) {
+                productData.discount_percentage = parseFloat(
+                    Array.isArray(fields.discount_percentage) ? fields.discount_percentage[0] : fields.discount_percentage
+                );
+            }
+            
+            if (fields.discount_start_date) {
+                productData.discount_start_date = Array.isArray(fields.discount_start_date) ? 
+                    fields.discount_start_date[0] : fields.discount_start_date;
+            }
+            
+            if (fields.discount_end_date) {
+                productData.discount_end_date = Array.isArray(fields.discount_end_date) ? 
+                    fields.discount_end_date[0] : fields.discount_end_date;
+            }
+        } else {
+            // Если скидка отключена, очищаем поля скидки
+            productData.discount_percentage = 0;
+            productData.discount_start_date = null;
+            productData.discount_end_date = null;
+        }
+        
+        console.log('=== Update Product Data ===');
+        console.log(productData);
+        
+        // 7. Обработка категорий
+        let categories = [];
         if (fields['categories[]']) {
             categories = Array.isArray(fields['categories[]']) ? fields['categories[]'] : [fields['categories[]']];
         } else if (fields.categories) {
             categories = Array.isArray(fields.categories) ? fields.categories : [fields.categories];
         }
         
-        // Обработка характеристик
+        // 8. Обработка характеристик
         const features = [];
         const keys = Array.isArray(fields['feature_keys[]']) ? fields['feature_keys[]'] : 
                     (fields['feature_keys[]'] ? [fields['feature_keys[]']] : []);
@@ -1418,67 +1773,16 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             }
         });
         
-        // Обработка файла изображения
-        let productThumbnail = null;
-        const keepCurrentImage = fields.keepCurrentImage === 'on' || fields.keepCurrentImage === true;
+        console.log('Categories:', categories);
+        console.log('Features:', features);
         
-        if (!keepCurrentImage && files.productImage && files.productImage.size > 0) {
-            const oldPath = files.productImage.filepath;
-            
-            if (fs.existsSync(oldPath)) {
-                const newFileName = `${Date.now()}_${files.productImage.originalFilename}`;
-                const newPath = path.join(uploadDir, newFileName);
-                
-                try {
-                    fs.renameSync(oldPath, newPath);
-                    productThumbnail = newFileName;
-                } catch (fileError) {
-                }
-            }
-        } else if (keepCurrentImage) {
-        } else {
-        }
-        
-        // Подготавливаем данные товара
-        let isOnSaleValue = '0'; // По умолчанию 0 (не в продаже)
-        if (fields.is_on_sale) {
-            isOnSaleValue = Array.isArray(fields.is_on_sale) ? fields.is_on_sale[0] : fields.is_on_sale;
-        }
-
-        // Подготавливаем данные товара
-        const productData = {
-            productTitle: Array.isArray(fields.productTitle) ? fields.productTitle[0] : fields.productTitle,
-            productManufacturer: Array.isArray(fields.productManufacturer) ? fields.productManufacturer[0] : fields.productManufacturer,
-            productDescription: Array.isArray(fields.productDescription) ? fields.productDescription[0] : fields.productDescription,
-            productPrice: parseFloat(Array.isArray(fields.productPrice) ? fields.productPrice[0] : fields.productPrice),
-            is_on_sale: isOnSaleValue === '1' ? 1 : 0  // Теперь переменная объявлена
-        }
-
-        if (isOnSaleValue === '1') {
-            if (fields.discount_percentage) {
-                productData.discount_percentage = parseFloat(Array.isArray(fields.discount_percentage) ? fields.discount_percentage[0] : fields.discount_percentage);
-            }
-            
-            if (fields.discount_start_date) {
-                productData.discount_start_date = Array.isArray(fields.discount_start_date) ? fields.discount_start_date[0] : fields.discount_start_date;
-            }
-            
-            if (fields.discount_end_date) {
-                productData.discount_end_date = Array.isArray(fields.discount_end_date) ? fields.discount_end_date[0] : fields.discount_end_date;
-            }
-        }
-        
-        // Если есть новое изображение, добавляем его
-        if (productThumbnail) {
-            productData.productThumbnail = productThumbnail;
-        }
-        
-        // Обновляем товар в базе данных
+        // 9. Обновляем товар в базе данных
         connection.updateProduct(productID, productData, categories, features, (err, updatedProductID) => {
             if (err) {
+                console.error('Update product error:', err);
                 return res.status(500).json({ 
                     success: false, 
-                    message: 'Ошибка при обновлении товара в базе данных' 
+                    message: 'Ошибка при обновлении товара в базе данных: ' + err.message 
                 });
             }
             

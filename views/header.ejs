@@ -1,150 +1,147 @@
-<nav class="navbar navbar-expand-lg sticky-top border-bottom header_bg" style=" border-bottom: 0 !important;">
+<nav class="navbar navbar-expand-lg sticky-top header-navbar">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/"><h3><b>SportI</b></h3></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">     
-        </ul> 
-      </div>
-  <% if (session.userId) { %> 
-        <button class='btn' type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
-          <img src="/images/list.png" alt="" width="40px">
+        <!-- Логотип и название сайта -->
+        <a class="navbar-brand site-logo" href="/">
+            <h3><b>SportI</b></h3>
+        </a>
+        
+        <!-- Кнопка меню для мобильных устройств -->
+        <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#mainNavbarContent" aria-controls="mainNavbarContent" 
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
         </button>
-    <% } else { %>
-        <a class="btn" href="/login">
-            <p style="font-size: 21px; margin-bottom: 0;">
-              <b>Log In</b>
-            </p>
-        </a>
-        <a class="btn" href="/register">
-            <p style="font-size: 21px; margin-bottom: 0;">
-              <b>Sign Up</b>
-            </p>
-        </a>
-  <% } %>  
-</nav>
-  
 
-<div class="container">
-  <div class="row justify-content-md-center">
-    <div class="col-md-auto">
-      <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" style="width: 300px; background-color: transparent;">
-        <div class="offcanvas-header p-2 CanvaHeader" style="height: 65px;">
-          <span class="mt-3">
-            <h4 class="d-flex" style="margin: -12px 0 0 12px !important;">
-              <b>
-                <%- session.userName %>
-                <% if (session.userRank === 'admin') { %>
-                  <span class="badge admin-badge ms-1" style="
-                    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-                    color: white;
-                    font-size: 0.6rem;
-                    padding: 0.15rem 0.4rem;
-                    vertical-align: middle;
-                    margin-top: -2px;
-                  ">ADMIN</span>
-                <% } %>
-              </b>
-            </h4>
-          </span>
-          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
-        </div>
-        <div class="w-100 CanvaThumbnail" style="padding: 40px;height: 300px;">
-          <img src="<%- session.userThumbnail %>" alt="" class="rounded-circle profile-pic tr-mask" style="width: 220px;height: 220px; margin: 0px; border: 0 !important; background-color: white !important;">
-        </div>
-        <div class="offcanvas-body CanvaBody p-0">
-          <!-- Аккаунт -->
-          <a href="/acc_page" class="text-decoration-none">
-            <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
-              <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                <i class="fas fa-user-circle" style="font-size: 43px; color: var(--primary-color);"></i>
-              </div>
-              <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                <h3 style="color: var(--primary-color);">Аккаунт</h3>
-              </div>
-            </div>
-          </a>
-
-          <!-- Корзина -->
-          <% if (session.userId) { %> 
-            <a href="/cart/<%= session.userId %>" class="text-decoration-none">
-              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
-                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                  <i class="fas fa-shopping-cart" style="font-size: 43px; color: var(--primary-color);"></i>
-                  <% if (session.cartCount && session.cartCount > 0) { %>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65em; padding: 4px 6px;">
-                      <%= session.cartCount %>
-                    </span>
-                  <% } %>
-                </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3 style="color: var(--primary-color);">Корзина</h3>
-                </div>
-              </div>
-            </a>
-          <% } %>
-
-          <!-- Избранное -->
-          <% if (session.userId) { %> 
-            <a href="/favorites" class="text-decoration-none">
-              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
-                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                  <i class="fas fa-heart" style="font-size: 43px; color: var(--primary-color);"></i>
-                  <% if (session.favorites && session.favorites.length > 0) { %>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65em; padding: 4px 6px;">
-                      <%= session.favorites.length %>
-                    </span>
-                  <% } %>
-                </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3 style="color: var(--primary-color);">Избранное</h3>
-                </div>
-              </div>
-            </a>
-          <% } %>
-
-          <!-- Пункты меню для администратора -->
-          <% if (session.userRank === 'admin') { %>
-            <!-- Добавить товар -->
-            <a href="/admin/add-product" class="text-decoration-none">
-              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.1); border-left: 4px solid var(--primary-color);">
-                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                  <i class="fas fa-plus-circle" style="font-size: 43px; color: var(--primary-color);"></i>
-                </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3 style="color: var(--primary-color);">Добавить товар</h3>
-                </div>
-              </div>
-            </a>
+        <!-- Основное меню -->
+        <div class="collapse navbar-collapse" id="mainNavbarContent">
+            <ul class="navbar-nav me-auto">
+                <!-- Каталог -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/products">
+                        <i class="fas fa-store me-1"></i>
+                        Каталог
+                    </a>
+                </li>
+            </ul>
             
-            <!-- Управление товарами -->
-            <a href="/admin/products" class="text-decoration-none">
-              <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.1); border-left: 4px solid var(--primary-color);">
-                <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                  <i class="fas fa-boxes" style="font-size: 43px; color: var(--primary-color);"></i>
-                </div>
-                <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                  <h3 style="color: var(--primary-color);">Управление</h3>
-                </div>
-              </div>
-            </a>
-          <% } %>
-
-          <!-- Выйти -->
-          <a href="/logout" class="text-decoration-none">
-            <div class="w-100 p-2 d-flex align-items-center menu-item" style="height: 59px; background-color: rgba(96, 96, 255, 0.05);">
-              <div class="m-0 p-0 h-100 d-inline-block position-relative" style="width: 43px; vertical-align: middle; text-align: center;">
-                <i class="fas fa-sign-out-alt" style="font-size: 43px; color: var(--primary-color);"></i>
-              </div>
-              <div class="m-0 p-0 h-100 d-inline-block" style="vertical-align: middle; text-align: center; margin-left: 12px !important;">
-                <h3 style="color: var(--primary-color);">Выйти</h3>
-              </div>
+            <!-- Правая часть навигации -->
+            <div class="d-flex align-items-center">
+                <% if (session.userId) { %>
+                    <!-- Иконка корзины для десктопа -->
+                    <div class="nav-cart-desktop me-3 d-none d-lg-block">
+                        <a href="/cart/<%= session.userId %>" class="nav-icon-link position-relative">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                            <% if (session.cartCount && session.cartCount > 0) { %>
+                                <span class="nav-badge"><%= session.cartCount %></span>
+                            <% } %>
+                        </a>
+                    </div>
+                    
+                    <!-- Иконка избранного для десктопа -->
+                    <div class="nav-favorites-desktop me-3 d-none d-lg-block">
+                        <a href="/favorites" class="nav-icon-link position-relative">
+                            <i class="fas fa-heart fa-lg"></i>
+                            <% if (session.favorites && session.favorites.length > 0) { %>
+                                <span class="nav-badge"><%= session.favorites.length %></span>
+                            <% } %>
+                        </a>
+                    </div>
+                    
+                    <!-- Выпадающее меню пользователя -->
+                    <div class="dropdown user-dropdown">
+                        <button class="btn dropdown-toggle user-dropdown-toggle" type="button" 
+                                id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="<%= session.userThumbnail || '/images/Avatars/default-avatar.png' %>" 
+                                 alt="Аватар" class="user-avatar-sm rounded-circle me-2">
+                            <span class="d-none d-md-inline"><%= session.userName %></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu" 
+                            aria-labelledby="userDropdown">
+                            <!-- Информация о пользователе -->
+                            <li class="dropdown-header user-info">
+                                <img src="<%= session.userThumbnail || '/images/Avatars/default-avatar.png' %>" 
+                                     alt="Аватар" class="user-avatar-lg rounded-circle mb-2">
+                                <h6 class="mb-0"><%= session.userName %></h6>
+                                <small class="text-muted"><%= session.userEmail %></small>
+                                <% if (session.userRank === 'admin') { %>
+                                    <span class="user-badge-admin">ADMIN</span>
+                                <% } %>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- Аккаунт -->
+                            <li>
+                                <a class="dropdown-item" href="/acc_page">
+                                    <i class="fas fa-user-circle me-2"></i>
+                                    Мой аккаунт
+                                </a>
+                            </li>
+                            
+                            <!-- Корзина (для мобильных) -->
+                            <li class="d-lg-none">
+                                <a class="dropdown-item" href="/cart/<%= session.userId %>">
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    Корзина
+                                    <% if (session.cartCount && session.cartCount > 0) { %>
+                                        <span class="badge bg-primary float-end"><%= session.cartCount %></span>
+                                    <% } %>
+                                </a>
+                            </li>
+                            
+                            <!-- Избранное (для мобильных) -->
+                            <li class="d-lg-none">
+                                <a class="dropdown-item" href="/favorites">
+                                    <i class="fas fa-heart me-2"></i>
+                                    Избранное
+                                    <% if (session.favorites && session.favorites.length > 0) { %>
+                                        <span class="badge bg-danger float-end"><%= session.favorites.length %></span>
+                                    <% } %>
+                                </a>
+                            </li>
+                            
+                            <!-- Админ-панель -->
+                            <% if (session.userRank === 'admin') { %>
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="dropdown-header" style="padding: 0.75rem;">
+                                    <h5>Администрирование</h5>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/add-product">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        Добавить товар
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/products">
+                                        <i class="fas fa-boxes me-2"></i>
+                                        Управление товарами
+                                    </a>
+                                </li>
+                            <% } %>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="/logout">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    Выйти
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                <% } else { %>
+                    <!-- Кнопки для неавторизованных пользователей -->
+                    <div class="auth-buttons">
+                        <a class="btn btn-outline-light btn-sm me-2" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Войти
+                        </a>
+                        <a class="btn btn-light btn-sm" href="/register">
+                            <i class="fas fa-user-plus me-1"></i>
+                            Регистрация
+                        </a>
+                    </div>
+                <% } %>
             </div>
-          </a>
         </div>
-      </div>
     </div>
-  </div>
-</div>
+</nav>

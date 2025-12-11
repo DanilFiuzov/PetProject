@@ -15,7 +15,7 @@
 <!-- Оборачиваем весь контент в центральный контейнер -->
 <div class="container-fluid def-bg-settings py-4">
     <div class="row">
-        <!-- Боковая панель с фильтрами - ВНЕ основного контента -->
+        <!-- Боковая панель с фильтрами -->
         <div class="col-lg-3 col-md-4 filters-sidebar">
             <div class="card border-0 shadow-sm rounded-3 sticky-sidebar">
                 <div class="card-body p-4">
@@ -23,7 +23,7 @@
                     <h5 class="fw-bold mb-3 text-primary">
                         <i class="fas fa-search me-2"></i>Поиск
                     </h5>
-                    <form method="GET" action="/products" class="mb-4">
+                    <form method="GET" action="/products" id="searchForm" class="mb-4">
                         <div class="input-group">
                             <input type="text" 
                                    class="form-control border-primary border-opacity-25" 
@@ -40,26 +40,73 @@
                     <h5 class="fw-bold mb-3 text-primary">
                         <i class="fas fa-sort me-2"></i>Сортировка
                     </h5>
-                    <div class="list-group">
-                        <% 
-                            const sortOptions = [
-                                { value: 'newest', label: 'Сначала новые', icon: 'fas fa-clock' },
-                                { value: 'name_asc', label: 'По названию (А-Я)', icon: 'fas fa-sort-alpha-down' },
-                                { value: 'name_desc', label: 'По названию (Я-А)', icon: 'fas fa-sort-alpha-up' },
-                                { value: 'price_asc', label: 'По цене (дешевле)', icon: 'fas fa-sort-amount-down' },
-                                { value: 'price_desc', label: 'По цене (дороже)', icon: 'fas fa-sort-amount-up' },
-                                { value: 'rating', label: 'По рейтингу', icon: 'fas fa-star' },
-                                { value: 'discount', label: 'По скидке', icon: 'fas fa-percentage' },
-                                { value: 'sale', label: 'Акционные товары', icon: 'fas fa-fire' }
-                            ];
-                        %>
-                        <% sortOptions.forEach(option => { %>
-                            <a href="/products?<%= new URLSearchParams({search: searchQuery || '', sort: option.value, page: 1}) %>" 
-                               class="list-group-item list-group-item-action border-0 rounded-3 mb-1 <%= sort === option.value ? 'active bg-primary text-white' : '' %>">
-                                <i class="<%= option.icon %> me-2"></i>
-                                <%= option.label %>
-                            </a>
-                        <% }) %>
+                    <select class="form-select border-primary border-opacity-25 mb-3" 
+                            name="sort" 
+                            onchange="updateSearch()">
+                        <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Сначала новые</option>
+                        <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>По названию (А-Я)</option>
+                        <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>По названию (Я-А)</option>
+                        <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>По цене (дешевле)</option>
+                        <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>По цене (дороже)</option>
+                        <option value="rating" <%= sort === 'rating' ? 'selected' : '' %>>По рейтингу</option>
+                        <option value="discount" <%= sort === 'discount' ? 'selected' : '' %>>По скидке</option>
+                    </select>
+
+                    <!-- Фильтр по цене -->
+                    <h5 class="fw-bold mb-3 text-primary mt-4">
+                        <i class="fas fa-tag me-2"></i>Цена
+                    </h5>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <input type="number" 
+                                   class="form-control border-primary border-opacity-25" 
+                                   name="minPrice" 
+                                   placeholder="От" 
+                                   min="0" 
+                                   value="<%= minPrice || '' %>"
+                                   onchange="updateSearch()">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" 
+                                   class="form-control border-primary border-opacity-25" 
+                                   name="maxPrice" 
+                                   placeholder="До" 
+                                   min="0" 
+                                   value="<%= maxPrice || '' %>"
+                                   onchange="updateSearch()">
+                        </div>
+                    </div>
+
+                    <!-- Категории -->
+                    <h5 class="fw-bold mb-3 text-primary mt-4">
+                        <i class="fas fa-list me-2"></i>Категории
+                    </h5>
+                    <div class="categories-filter mb-3">
+                        <select class="form-select border-primary border-opacity-25" 
+                                name="category" 
+                                onchange="updateSearch()">
+                            <option value="">Все категории</option>
+                            <% allCategories.forEach(cat => { %>
+                                <option value="<%= cat.categorieID %>" 
+                                        <%= category == cat.categorieID ? 'selected' : '' %>>
+                                    <%= cat.categorieName %>
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <!-- Акционные товары -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               name="onSale" 
+                               id="onSale" 
+                               value="true"
+                               <%= onSale ? 'checked' : '' %>
+                               onchange="updateSearch()">
+                        <label class="form-check-label" for="onSale">
+                            <i class="fas fa-fire text-danger me-1"></i>Только акционные товары
+                        </label>
                     </div>
 
                     <!-- Информация о результатах -->
@@ -68,10 +115,13 @@
                             <span class="text-muted">Найдено:</span>
                             <span class="fw-bold"><%= totalProducts || 0 %> товаров</span>
                         </div>
-                        <% if (searchQuery) { %>
+                        <% if (searchQuery || category || minPrice > 0 || maxPrice > 0 || onSale) { %>
                             <div class="alert alert-info border-0 bg-primary bg-opacity-10 text-primary small p-2 rounded-2">
-                                <i class="fas fa-info-circle me-1"></i>
-                                По запросу: "<%= searchQuery %>"
+                                <i class="fas fa-filter me-1"></i>
+                                Применены фильтры
+                                <a href="/products" class="text-primary fw-bold ms-2">
+                                    <i class="fas fa-times"></i> Сбросить
+                                </a>
                             </div>
                         <% } %>
                     </div>
@@ -85,6 +135,11 @@
                 <h1 class="h3 fw-bold mb-0">
                     <i class="fas fa-shopping-bag text-primary me-2"></i>
                     Каталог товаров
+                    <% if (category && allCategories.find(c => c.categorieID == category)) { %>
+                        <span class="text-muted fs-5 ms-2">
+                            / <%= allCategories.find(c => c.categorieID == category).categorieName %>
+                        </span>
+                    <% } %>
                 </h1>
                 <div class="text-muted small">
                     Страница <%= currentPage %> из <%= totalPages %>
@@ -98,9 +153,9 @@
                             <i class="fas fa-search fa-4x text-muted opacity-50"></i>
                         </div>
                         <h4 class="text-muted mb-3">Товары не найдены</h4>
-                        <p class="text-muted mb-4">Попробуйте изменить поисковый запрос или параметры сортировки</p>
-                        <a href="/" class="btn btn-primary px-4 py-2">
-                            <i class="fas fa-home me-2"></i>На главную
+                        <p class="text-muted mb-4">Попробуйте изменить поисковый запрос или параметры фильтрации</p>
+                        <a href="/products" class="btn btn-primary px-4 py-2">
+                            <i class="fas fa-times me-2"></i>Сбросить фильтры
                         </a>
                     </div>
                 </div>
@@ -133,7 +188,6 @@
                             <!-- Кнопка избранного -->
                             <% if (session.userId) { %>
                                 <% 
-                                    // Преобразуем productID в число для сравнения
                                     const productIdNum = parseInt(product.productID);
                                     const isFavorited = session.favorites && session.favorites.some(favId => parseInt(favId) === productIdNum);
                                 %>
@@ -221,7 +275,7 @@
                         <div class="product-actions">
                             <div class="price-container">
                                 <% if (product.isDiscounted) { %>
-                                    <div class="current-price">
+                                    <div class="current-price discount-price-new">
                                         <%= parseFloat(product.discountedPrice || product.displayPrice).toFixed(2) %>₽
                                     </div>
                                     <div class="original-price">
@@ -263,7 +317,15 @@
                             <!-- Назад -->
                             <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
                                 <a class="page-link border-0 rounded-circle mx-1" 
-                                   href="/products?<%= new URLSearchParams({search: searchQuery || '', sort: sort || '', page: currentPage - 1}) %>">
+                                   href="?<%= new URLSearchParams({
+                                        search: searchQuery || '',
+                                        category: category || '',
+                                        minPrice: minPrice || '',
+                                        maxPrice: maxPrice || '',
+                                        onSale: onSale ? 'true' : '',
+                                        sort: sort || '',
+                                        page: currentPage - 1
+                                    }) %>">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
@@ -273,7 +335,15 @@
                                 <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
                                     <li class="page-item <%= i === currentPage ? 'active' : '' %>">
                                         <a class="page-link border-0 rounded-circle mx-1" 
-                                           href="/products?<%= new URLSearchParams({search: searchQuery || '', sort: sort || '', page: i}) %>">
+                                           href="?<%= new URLSearchParams({
+                                                search: searchQuery || '',
+                                                category: category || '',
+                                                minPrice: minPrice || '',
+                                                maxPrice: maxPrice || '',
+                                                onSale: onSale ? 'true' : '',
+                                                sort: sort || '',
+                                                page: i
+                                            }) %>">
                                             <%= i %>
                                         </a>
                                     </li>
@@ -287,7 +357,15 @@
                             <!-- Вперед -->
                             <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
                                 <a class="page-link border-0 rounded-circle mx-1" 
-                                   href="/products?<%= new URLSearchParams({search: searchQuery || '', sort: sort || '', page: currentPage + 1}) %>">
+                                   href="?<%= new URLSearchParams({
+                                        search: searchQuery || '',
+                                        category: category || '',
+                                        minPrice: minPrice || '',
+                                        maxPrice: maxPrice || '',
+                                        onSale: onSale ? 'true' : '',
+                                        sort: sort || '',
+                                        page: currentPage + 1
+                                    }) %>">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
@@ -298,3 +376,40 @@
         </div>
     </div>
 </div>
+
+<script>
+// Функция для обновления поиска при изменении фильтров
+function updateSearch() {
+    const form = document.getElementById('searchForm');
+    const search = form.querySelector('[name="search"]').value;
+    const category = document.querySelector('[name="category"]').value;
+    const minPrice = document.querySelector('[name="minPrice"]').value;
+    const maxPrice = document.querySelector('[name="maxPrice"]').value;
+    const onSale = document.getElementById('onSale').checked ? 'true' : '';
+    const sort = document.querySelector('[name="sort"]').value;
+    
+    const params = new URLSearchParams();
+    
+    if (search) params.set('search', search);
+    if (category) params.set('category', category);
+    if (minPrice) params.set('minPrice', minPrice);
+    if (maxPrice) params.set('maxPrice', maxPrice);
+    if (onSale) params.set('onSale', onSale);
+    if (sort) params.set('sort', sort);
+    
+    window.location.href = `/products?${params.toString()}`;
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики для полей формы
+    const formInputs = document.querySelectorAll('#searchForm input');
+    formInputs.forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                updateSearch();
+            }
+        });
+    });
+});
+</script>

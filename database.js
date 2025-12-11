@@ -1,18 +1,20 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'GameCenter'
-// });
-
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
-    database: 'GameCenter'
+    password: 'root',
+    database: 'sportI'
 });
+
+console.log('Порт подключения из конфигурации:', connection.config.port);
+
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
+//     database: 'GameCenter'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -229,7 +231,7 @@ function getFavoritesByCustomerID(customerID, callback) {
     const query = `
         SELECT p.productID, p.productThumbnail, p.productTitle, p.productPrice, 
                p.productDescription, p.productRating, p.productManufacturer,
-               p.created_at // добавляем поле
+               p.created_at
         FROM favorites f
         JOIN products p ON f.productID = p.productID
         WHERE f.customerID = ?
@@ -403,12 +405,18 @@ function getUserRank(customerID, callback) {
     connection.query(query, [customerID], callback);
 }
 
-// Функция для добавления товара со скидками (исправленная)
+// Функция для добавления товара со скидками
 function addProductWithFeatures(productData, categories, features, callback) {
     connection.beginTransaction((err) => {
         if (err) return callback(err);
         
-        // 1. Добавляем товар со всеми полями скидок
+        // 1. Подготавливаем данные скидки
+        const discountPercentage = productData.discount_percentage ? 
+            parseFloat(productData.discount_percentage) : 0;
+        
+        const isOnSale = (productData.is_on_sale && discountPercentage > 0) ? 1 : 0;
+        
+        // 2. Добавляем товар
         const productQuery = `
             INSERT INTO products (
                 productTitle, 
@@ -421,15 +429,9 @@ function addProductWithFeatures(productData, categories, features, callback) {
                 discount_end_date,
                 is_on_sale,
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())  // NOW() для автоматической даты
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
         
-        // Подготавливаем значения для скидок
-        const discountPercentage = productData.discount_percentage || 0;
-        const discountStartDate = productData.discount_start_date || null;
-        const discountEndDate = productData.discount_end_date || null;
-        const isOnSale = productData.is_on_sale || 0;
-
         connection.query(productQuery, [
             productData.productTitle,
             productData.productManufacturer,
@@ -437,101 +439,92 @@ function addProductWithFeatures(productData, categories, features, callback) {
             productData.productPrice,
             productData.productThumbnail,
             discountPercentage,
-            discountStartDate,
-            discountEndDate,
+            productData.discount_start_date || null,
+            productData.discount_end_date || null,
             isOnSale
         ], (err, result) => {
             if (err) {
+                console.error('Product insert error:', err);
                 return connection.rollback(() => callback(err));
             }
             
             const productID = result.insertId;
-            const promises = [];
             
-            // 2. Добавляем категории если есть
+            // 3. Добавляем категории если есть
             if (categories && categories.length > 0) {
-                categories.forEach(categoryName => {
-                    promises.push(new Promise((resolve, reject) => {
-                        // Находим ID категории по имени
+                const categoryPromises = categories.map(categoryName => {
+                    return new Promise((resolve, reject) => {
                         const findCategoryQuery = 'SELECT categorieID FROM categories WHERE categorieName = ?';
                         connection.query(findCategoryQuery, [categoryName], (err, results) => {
                             if (err) return reject(err);
                             
+                            let categorieID;
                             if (results.length > 0) {
-                                const categorieID = results[0].categorieID;
-                                // Связываем товар с категорией
+                                categorieID = results[0].categorieID;
                                 const linkQuery = 'INSERT INTO categoriesandproducts (categorieID, productID) VALUES (?, ?)';
                                 connection.query(linkQuery, [categorieID, productID], (err) => {
                                     if (err) reject(err);
                                     else resolve();
                                 });
                             } else {
-                                // Если категории нет, создаем её
-                                const insertCategoryQuery = 'INSERT INTO categories (categorieName) VALUES (?)';
-                                connection.query(insertCategoryQuery, [categoryName], (err, catResult) => {
-                                    if (err) return reject(err);
-                                    
-                                    const categorieID = catResult.insertId;
-                                    const linkQuery = 'INSERT INTO categoriesandproducts (categorieID, productID) VALUES (?, ?)';
-                                    connection.query(linkQuery, [categorieID, productID], (err) => {
-                                        if (err) reject(err);
-                                        else resolve();
-                                    });
-                                });
+                                resolve(); // Пропускаем несуществующие категории
                             }
                         });
-                    }));
-                });
-            }
-            
-            // 3. Добавляем характеристики если есть
-            if (features && features.length > 0) {
-                features.forEach(feature => {
-                    promises.push(new Promise((resolve, reject) => {
-                        const featureQuery = `
-                            INSERT INTO product_features (productID, feature_key, feature_value) 
-                            VALUES (?, ?, ?)
-                        `;
-                        connection.query(featureQuery, [productID, feature.key, feature.value], (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        });
-                    }));
-                });
-            }
-            
-            // 4. Обновляем discount_price если есть скидка
-            if (isOnSale && discountPercentage > 0) {
-                promises.push(new Promise((resolve, reject) => {
-                    const updatePriceQuery = `
-                        UPDATE products 
-                        SET discount_price = productPrice * (1 - ? / 100)
-                        WHERE productID = ?
-                    `;
-                    connection.query(updatePriceQuery, [discountPercentage, productID], (err) => {
-                        if (err) reject(err);
-                        else resolve();
                     });
-                }));
-            }
-            
-            // Ждем завершения всех операций
-            if (promises.length > 0) {
-                Promise.all(promises)
-                    .then(() => {
-                        connection.commit((err) => {
-                            if (err) {
-                                return connection.rollback(() => callback(err));
-                            }
-                            callback(null, productID);
+                });
+                
+                // 4. Добавляем характеристики если есть
+                if (features && features.length > 0) {
+                    const featurePromises = features.map(feature => {
+                        return new Promise((resolve, reject) => {
+                            const featureQuery = `
+                                INSERT INTO product_features (productID, feature_key, feature_value) 
+                                VALUES (?, ?, ?)
+                            `;
+                            connection.query(featureQuery, [productID, feature.key, feature.value], (err) => {
+                                if (err) reject(err);
+                                else resolve();
+                            });
                         });
-                    })
-                    .catch(err => {
-                        connection.rollback(() => callback(err));
                     });
+                    
+                    // Ждем все операции
+                    Promise.all([...categoryPromises, ...featurePromises])
+                        .then(() => {
+                            connection.commit((err) => {
+                                if (err) {
+                                    console.error('Commit error:', err);
+                                    return connection.rollback(() => callback(err));
+                                }
+                                callback(null, productID);
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Promise error:', err);
+                            connection.rollback(() => callback(err));
+                        });
+                } else {
+                    // Только категории
+                    Promise.all(categoryPromises)
+                        .then(() => {
+                            connection.commit((err) => {
+                                if (err) {
+                                    console.error('Commit error:', err);
+                                    return connection.rollback(() => callback(err));
+                                }
+                                callback(null, productID);
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Promise error:', err);
+                            connection.rollback(() => callback(err));
+                        });
+                }
             } else {
+                // Нет категорий
                 connection.commit((err) => {
                     if (err) {
+                        console.error('Commit error:', err);
                         return connection.rollback(() => callback(err));
                     }
                     callback(null, productID);
@@ -593,7 +586,7 @@ function updateProductFeatures(productID, features, callback) {
     });
 }
 
-// Функция для обновления товара со скидками (исправленная)
+// Функция для обновления товара со скидками
 function updateProduct(productID, productData, categories, features, callback) {
     connection.beginTransaction((err) => {
         if (err) {
@@ -610,6 +603,13 @@ function updateProduct(productID, productData, categories, features, callback) {
         const discountEndDate = updateData.discount_end_date || null;
         const isOnSale = updateData.is_on_sale || 0;
         
+        // Рассчитываем discount_price если есть скидка
+        let discountPrice = null;
+        if (isOnSale == 1 && discountPercentage > 0) {
+            const originalPrice = parseFloat(updateData.productPrice) || 0;
+            discountPrice = originalPrice * (1 - discountPercentage / 100);
+        }
+        
         const updateProductQuery = `
             UPDATE products 
             SET productTitle = ?, 
@@ -621,10 +621,7 @@ function updateProduct(productID, productData, categories, features, callback) {
                 discount_start_date = ?,
                 discount_end_date = ?,
                 is_on_sale = ?,
-                discount_price = CASE 
-                    WHEN ? > 0 AND ? = 1 THEN productPrice * (1 - ? / 100)
-                    ELSE NULL
-                END
+                discount_price = ?
             WHERE productID = ?
         `;
         
@@ -638,9 +635,7 @@ function updateProduct(productID, productData, categories, features, callback) {
             discountStartDate,
             discountEndDate,
             isOnSale,
-            discountPercentage,
-            isOnSale,
-            discountPercentage,
+            discountPrice,
             productID
         ], (err, result) => {
             if (err) {
@@ -656,6 +651,7 @@ function updateProduct(productID, productData, categories, features, callback) {
                     return connection.rollback(() => callback(err));
                 }
                 
+                // 3. Добавляем новые категории если есть
                 if (categories && categories.length > 0) {
                     const categoryPromises = categories.map(categoryName => {
                         return new Promise((resolve, reject) => {
@@ -689,16 +685,18 @@ function updateProduct(productID, productData, categories, features, callback) {
                         });
                     });
                     
-                    // 3. Обновляем характеристики
+                    // 4. Обновляем характеристики
                     Promise.all(categoryPromises)
                         .then(() => {
                             updateProductFeatures(productID, features, (err) => {
                                 if (err) {
+                                    console.error('Ошибка обновления характеристик:', err);
                                     return connection.rollback(() => callback(err));
                                 }
                                 
                                 connection.commit((err) => {
                                     if (err) {
+                                        console.error('Ошибка коммита:', err);
                                         return connection.rollback(() => callback(err));
                                     }
                                     callback(null, productID);
@@ -706,17 +704,20 @@ function updateProduct(productID, productData, categories, features, callback) {
                             });
                         })
                         .catch(err => {
+                            console.error('Ошибка добавления категорий:', err);
                             connection.rollback(() => callback(err));
                         });
                 } else {
                     // Нет категорий
                     updateProductFeatures(productID, features, (err) => {
                         if (err) {
+                            console.error('Ошибка обновления характеристик:', err);
                             return connection.rollback(() => callback(err));
                         }
                         
                         connection.commit((err) => {
                             if (err) {
+                                console.error('Ошибка коммита:', err);
                                 return connection.rollback(() => callback(err));
                             }
                             callback(null, productID);
