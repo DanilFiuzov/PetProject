@@ -156,6 +156,7 @@
                     
                     <!-- Кнопки покупки -->
                     <div class="d-grid gap-3">
+                        <div class="d-flex gap-2">
                         <% if (session && session.userId) { %>
                             <button class="btn btn-primary btn-lg py-3 fw-bold" 
                                     onclick="addToCart('<%= product.productID %>')">
@@ -166,15 +167,10 @@
                                 <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
                             </a>
                         <% } %>
-                        
+                        </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-primary flex-grow-1 py-3">
                                 <i class="fas fa-share-alt me-2"></i>Поделиться
-                            </button>
-                            <button class="btn btn-outline-primary py-3" 
-                                    onclick="printPage()"
-                                    title="Распечатать">
-                                <i class="fas fa-print"></i>
                             </button>
                         </div>
                     </div>
