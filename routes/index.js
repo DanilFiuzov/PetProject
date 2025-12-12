@@ -1330,8 +1330,6 @@ router.get('/admin/add-product', checkAdmin, (req, res) => {
 
 // Добавление товара (POST)
 router.post('/admin/add-product', checkAdmin, (req, res) => {
-    console.log('=== DEBUG: Starting add product ===');
-    console.log('Session user:', req.session.userId);
     const formidable = require('formidable');
     const form = new formidable.IncomingForm();
     const uploadDir = path.join(__dirname, '../public/images/products');
@@ -1355,10 +1353,6 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
             });
         }
         
-        console.log('=== Processing Form ===');
-        console.log('Fields:', Object.keys(fields));
-        console.log('Files:', Object.keys(files));
-        
         // 1. Обработка файла изображения
         let productThumbnail = '';
         let hasImageError = false;
@@ -1376,20 +1370,15 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
                     productImageFile = files.productImage;
                 }
                 
-                console.log('Processing file:', productImageFile);
-                
                 // Проверяем, что файл существует и имеет размер
                 if (productImageFile && productImageFile.size > 0 && productImageFile.filepath) {
                     const oldPath = productImageFile.filepath;
                     const newFileName = `${Date.now()}_${productImageFile.originalFilename || 'product.jpg'}`;
                     const newPath = path.join(uploadDir, newFileName);
                     
-                    console.log(`Moving file from ${oldPath} to ${newPath}`);
-                    
                     if (fs.existsSync(oldPath)) {
                         fs.renameSync(oldPath, newPath);
                         productThumbnail = newFileName;
-                        console.log('File saved as:', productThumbnail);
                     } else {
                         console.error('Source file does not exist:', oldPath);
                         hasImageError = true;
@@ -1426,7 +1415,6 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
                 isOnSale = fields.is_on_sale === '1' ? '1' : '0';
             }
         }
-        console.log('is_on_sale value:', isOnSale);
         
         // 3. Проверка обязательных полей
         if (!fields.productTitle || !fields.productManufacturer || 
@@ -1446,9 +1434,6 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
             productThumbnail: productThumbnail,
             is_on_sale: isOnSale // Теперь переменная определена!
         };
-        
-        console.log('=== Product Data ===');
-        console.log(productData);
         
         // 5. Данные скидки только если включена
         if (isOnSale === '1') {
@@ -1490,9 +1475,6 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
                 }
             });
         }
-        
-        console.log('Categories:', categories);
-        console.log('Features:', features);
         
         // 8. Добавление товара в БД
         connection.addProductWithFeatures(productData, categories, features, (err, productID) => {
@@ -1582,9 +1564,6 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             });
         }
         
-        console.log('=== Update Product Form ===');
-        console.log('Fields:', Object.keys(fields));
-        console.log('Files:', Object.keys(files));
         
         // 1. Получаем productID
         const productID = Array.isArray(fields.productID) ? fields.productID[0] : fields.productID;
@@ -1597,16 +1576,23 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
         }
         
         // 2. Обработка поля is_on_sale
+        // Логируем полученные данные для отладки
+        console.log('fields.is_on_sale:', fields.is_on_sale);
+        console.log('Type:', Array.isArray(fields.is_on_sale) ? 'Array' : typeof fields.is_on_sale);
+        
+        // Обработка is_on_sale
         let isOnSale = '0';
         if (fields.is_on_sale) {
             if (Array.isArray(fields.is_on_sale)) {
+                console.log('Array values:', fields.is_on_sale);
                 isOnSale = fields.is_on_sale.includes('1') ? '1' : '0';
             } else {
                 isOnSale = fields.is_on_sale === '1' ? '1' : '0';
             }
         }
-        console.log('is_on_sale value:', isOnSale);
         
+        console.log('Final is_on_sale value:', isOnSale);
+
         // 3. Проверка обязательных полей
         if (!fields.productTitle || !fields.productManufacturer || 
             !fields.productDescription || !fields.productPrice) {
@@ -1633,20 +1619,15 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
                     productImageFile = files.productImage;
                 }
                 
-                console.log('Processing update file:', productImageFile);
-                
                 // Проверяем, что файл существует и имеет размер
                 if (productImageFile && productImageFile.size > 0 && productImageFile.filepath) {
                     const oldPath = productImageFile.filepath;
                     const newFileName = `${Date.now()}_${productImageFile.originalFilename || 'product.jpg'}`;
                     const newPath = path.join(uploadDir, newFileName);
                     
-                    console.log(`Moving file from ${oldPath} to ${newPath}`);
-                    
                     if (fs.existsSync(oldPath)) {
                         fs.renameSync(oldPath, newPath);
                         productThumbnail = newFileName;
-                        console.log('New file saved as:', productThumbnail);
                     } else {
                         console.error('Source file does not exist:', oldPath);
                     }
@@ -1697,8 +1678,6 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             productData.discount_end_date = null;
         }
         
-        console.log('=== Update Product Data ===');
-        console.log(productData);
         
         // 7. Обработка категорий
         let categories = [];
@@ -1723,9 +1702,6 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
                 });
             }
         });
-        
-        console.log('Categories:', categories);
-        console.log('Features:', features);
         
         // 9. Обновляем товар в базе данных
         connection.updateProduct(productID, productData, categories, features, (err, updatedProductID) => {

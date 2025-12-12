@@ -13,7 +13,7 @@
                         <div class="card category-card h-100 border-0 shadow-sm hover-lift">
                             <div class="card-body text-center p-4">
                                 <div class="category-icon mb-3">
-                                    <i class="fas fa-<%= index === 0 ? 'dumbbell' : index === 1 ? 'weight-hanging' : 'weight' %> fa-2x text-white"></i>
+                                    <i class="fas fa-<%= index === 0 ? 'dumbbell' : index === 1 ? 'weight' : 'weight-hanging' %> fa-2x text-white"></i>
                                 </div>
                                 <h4 class="card-title mb-2" style="color: var(--text-dark);">
                                     <%= category.categorieName %>
@@ -22,8 +22,8 @@
                                 <p class="category-description">
                                     <% const descriptions = [
                                         'Диски и блины для штанг всех типов и весов',
-                                        'Профессиональные гантели и аксессуары',
-                                        'Качественные гири для силовых тренировок'
+                                        'Качественные гири для силовых тренировок',
+                                        'Профессиональные гантели и аксессуары'
                                     ]; %>
                                     <%= descriptions[index] || 'Спортивные товары для профессиональных тренировок' %>
                                 </p>

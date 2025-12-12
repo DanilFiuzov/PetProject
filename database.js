@@ -1,18 +1,18 @@
 const mysql = require('mysql2');
 
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: 'root',
-//     database: 'sportI'
-// });
-
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
-    database: 'SportI'
+    password: 'root',
+    database: 'sportI'
 });
+
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
+//     database: 'SportI'
+// });
 
 //Аккаунт
 connection.connect((err) => {
@@ -73,6 +73,7 @@ function GetProducts(callback) {
         callback(null, products);
     });
 }
+
 function addToCart(customerID, productID, callback) {
     const query = `INSERT INTO shopping_cart (customerID, productID, sc_count) 
                    VALUES (?, ?, 1) 

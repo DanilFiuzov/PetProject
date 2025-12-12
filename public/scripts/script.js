@@ -258,6 +258,7 @@ function resetStars() {
     });
 }
 
+//Расчет рейтинга
 function setRating(rating) {
     currentRating = rating;
     resetStars();
@@ -819,6 +820,7 @@ function validateForm(form) {
     
     return isValid;
 }
+
 // Очистка ошибок при вводе
 document.addEventListener('input', function(e) {
     if (e.target.hasAttribute('required')) {
