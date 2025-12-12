@@ -65,24 +65,6 @@ function extractFormFields(fields) {
 
 // Главная страница с каруселью, категориями и популярными товарами
 router.get('/', (req, res) => {
-    // Получаем данные для карусели (товары со скидками)
-    const carouselQuery = `
-        SELECT p.*, 
-            GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list
-        FROM products p
-        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
-        LEFT JOIN categories c ON cp.categorieID = c.categorieID
-        WHERE p.is_on_sale = 1 
-        AND p.discount_percentage > 0
-        AND (
-            (p.discount_start_date IS NULL OR p.discount_start_date <= NOW())
-            AND (p.discount_end_date IS NULL OR p.discount_end_date >= NOW())
-        )
-        GROUP BY p.productID
-        ORDER BY p.discount_percentage DESC
-        LIMIT 5
-    `;
-    
     // Получаем популярные товары (сортировка по рейтингу)
     const popularQuery = `
         SELECT p.*, 
@@ -116,33 +98,6 @@ router.get('/', (req, res) => {
     
     // Выполняем все запросы параллельно
     Promise.all([
-        new Promise((resolve, reject) => {
-            connection.connection.query(carouselQuery, (err, results) => {
-                if (err) {
-                    console.error('Carousel query error:', err);
-                    resolve([]);
-                } else {
-                    const items = results.map(row => {
-                        const priceInfo = connection.calculateDiscountedPrice(row);
-                        const originalPrice = parseFloat(row.productPrice) || 0;
-                        const discountedPrice = priceInfo.isDiscounted ? priceInfo.discountedPrice : originalPrice;
-                        
-                        return {
-                            ...row,
-                            categories: row.categories_list ? row.categories_list.split(', ') : [],
-                            category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
-                            priceInfo: priceInfo,
-                            discountedPrice: discountedPrice.toFixed(2),
-                            originalPrice: originalPrice.toFixed(2),
-                            discountPercentage: priceInfo.discountPercentage || 0,
-                            isDiscounted: priceInfo.isDiscounted,
-                            displayPrice: priceInfo.isDiscounted ? discountedPrice.toFixed(2) : originalPrice.toFixed(2)
-                        };
-                    });
-                    resolve(items);
-                }
-            });
-        }),
         new Promise((resolve, reject) => {
             connection.connection.query(popularQuery, (err, results) => {
                 if (err) {
@@ -208,7 +163,7 @@ router.get('/', (req, res) => {
             });
         })
     ])
-    .then(([carouselItems, popularProducts, categories, discountedProducts]) => {
+    .then(([popularProducts, categories, discountedProducts]) => {
         // Берем 3 основные категории
         const mainCategories = categories.slice(0, 3);
         const otherCategoriesCount = Math.max(0, categories.length - 3);
@@ -256,7 +211,6 @@ router.get('/', (req, res) => {
                     
                     // Собираем все ID товаров для проверки избранного
                     const allProductIds = [
-                        ...carouselItems.map(p => p.productID),
                         ...popularProducts.map(p => p.productID),
                         ...discountedProducts.map(p => p.productID)
                     ];
@@ -275,7 +229,6 @@ router.get('/', (req, res) => {
                     // Отправляем данные для главной страницы
                     res.render('layout', {
                         body: 'home',
-                        carouselItems: markFavorites(carouselItems),
                         mainCategories: mainCategories,
                         otherCategoriesCount: otherCategoriesCount,
                         popularProducts: markFavorites(popularProducts),
@@ -288,7 +241,6 @@ router.get('/', (req, res) => {
                     // В случае ошибки показываем страницу без избранных
                     res.render('layout', {
                         body: 'home',
-                        carouselItems: carouselItems,
                         mainCategories: mainCategories,
                         otherCategoriesCount: otherCategoriesCount,
                         popularProducts: popularProducts,
@@ -305,7 +257,6 @@ router.get('/', (req, res) => {
             // Отправляем данные для главной страницы
             res.render('layout', {
                 body: 'home',
-                carouselItems: carouselItems,
                 mainCategories: mainCategories,
                 otherCategoriesCount: otherCategoriesCount,
                 popularProducts: popularProducts,

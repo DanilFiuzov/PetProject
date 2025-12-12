@@ -1,20 +1,18 @@
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'sportI'
-});
-
-console.log('Порт подключения из конфигурации:', connection.config.port);
-
 // const connection = mysql.createConnection({
 //     host: 'localhost',
 //     user: 'root',
-//     password: '',
-//     database: 'GameCenter'
+//     password: 'root',
+//     database: 'sportI'
 // });
+
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'SportI'
+});
 
 //Аккаунт
 connection.connect((err) => {
