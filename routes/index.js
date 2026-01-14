@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
 
-
 // Глобальный массив для хранения аватарок
 let avatars = [];
 // Функция для загрузки аватарок из файловой системы
@@ -263,6 +262,7 @@ router.get('/', (req, res) => {
                 discountedProducts: discountedProducts,
                 session: req.session
             });
+            console.log(discountedProducts)
         }
     })
     .catch(err => {
