@@ -262,7 +262,6 @@ router.get('/', (req, res) => {
                 discountedProducts: discountedProducts,
                 session: req.session
             });
-            console.log(discountedProducts)
         }
     })
     .catch(err => {

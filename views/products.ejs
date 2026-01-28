@@ -56,25 +56,27 @@
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-tag me-2"></i>Цена
                     </h5>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <input type="number" 
-                                   class="form-control border-primary border-opacity-25" 
-                                   name="minPrice" 
-                                   placeholder="От" 
-                                   min="0" 
-                                   value="<%= minPrice || '' %>"
-                                   onchange="updateSearch()">
+                    <div class="price-range-container mb-4">
+                        <div class="range-slider">
+                            <div class="slider-track"></div>
+                            <div class="slider-range"></div>
+                            <input type="range" class="thumb thumb-left" min="0" max="100000" value="<%= minPrice || 0 %>" step="100">
+                            <input type="range" class="thumb thumb-right" min="0" max="100000" value="<%= maxPrice || 100000 %>" step="100">
                         </div>
-                        <div class="col-6">
-                            <input type="number" 
-                                   class="form-control border-primary border-opacity-25" 
-                                   name="maxPrice" 
-                                   placeholder="До" 
-                                   min="0" 
-                                   value="<%= maxPrice || '' %>"
-                                   onchange="updateSearch()">
+                        <div class="range-values d-flex justify-content-between mt-2">
+                            <div>
+                                <span class="badge bg-light text-primary border border-primary border-opacity-25 px-3 py-1">
+                                    <i class="fas fa-ruble-sign me-1"></i><span class="min-value"><%= minPrice || 0 %></span>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="badge bg-light text-primary border border-primary border-opacity-25 px-3 py-1">
+                                    <i class="fas fa-ruble-sign me-1"></i><span class="max-value"><%= maxPrice || 100000 %></span>
+                                </span>
+                            </div>
                         </div>
+                        <input type="hidden" name="minPrice" id="minPriceHidden" value="<%= minPrice || '' %>">
+                        <input type="hidden" name="maxPrice" id="maxPriceHidden" value="<%= maxPrice || '' %>">
                     </div>
 
                     <!-- Категории -->
@@ -380,8 +382,8 @@ function updateSearch() {
     const form = document.getElementById('searchForm');
     const search = form.querySelector('[name="search"]').value;
     const category = document.querySelector('[name="category"]').value;
-    const minPrice = document.querySelector('[name="minPrice"]').value;
-    const maxPrice = document.querySelector('[name="maxPrice"]').value;
+    const minPrice = document.getElementById('minPriceHidden').value;
+    const maxPrice = document.getElementById('maxPriceHidden').value;
     const onSale = document.getElementById('onSale').checked ? 'true' : '';
     const sort = document.querySelector('[name="sort"]').value;
     
@@ -397,16 +399,89 @@ function updateSearch() {
     window.location.href = `/products?${params.toString()}`;
 }
 
+// Инициализация слайдера диапазона цен
+function initPriceSlider() {
+    const rangeSlider = document.querySelector('.range-slider');
+    if (!rangeSlider) return;
+    
+    const thumbLeft = rangeSlider.querySelector('.thumb-left');
+    const thumbRight = rangeSlider.querySelector('.thumb-right');
+    const range = rangeSlider.querySelector('.slider-range');
+    const minValElem = document.querySelector('.min-value');
+    const maxValElem = document.querySelector('.max-value');
+    const minHidden = document.getElementById('minPriceHidden');
+    const maxHidden = document.getElementById('maxPriceHidden');
+    
+    // Синхронизация позиций ползунков
+    const updateRange = () => {
+        const minVal = parseInt(thumbLeft.value);
+        const maxVal = parseInt(thumbRight.value);
+        
+        // Предотвращение пересечения ползунков
+        if (minVal > maxVal) {
+            [thumbLeft.value, thumbRight.value] = [maxVal, minVal];
+        }
+        
+        const minPercent = (thumbLeft.value - thumbLeft.min) / (thumbLeft.max - thumbLeft.min) * 100;
+        const maxPercent = (thumbRight.value - thumbRight.min) / (thumbRight.max - thumbRight.min) * 100;
+        
+        range.style.left = `${minPercent}%`;
+        range.style.right = `${100 - maxPercent}%`;
+        
+        // Обновление отображаемых значений
+        minValElem.textContent = thumbLeft.value;
+        maxValElem.textContent = thumbRight.value;
+        
+        // Обновление скрытых полей
+        minHidden.value = thumbLeft.value;
+        maxHidden.value = thumbRight.value;
+    };
+    
+    // Инициализация
+    updateRange();
+    
+    // Обработчики событий
+    thumbLeft.addEventListener('input', updateRange);
+    thumbRight.addEventListener('input', updateRange);
+    
+    // Обновление поиска при завершении движения ползунка
+    thumbLeft.addEventListener('change', updateSearch);
+    thumbRight.addEventListener('change', updateSearch);
+    
+    // Обновление при клике на трек
+    rangeSlider.querySelector('.slider-track').addEventListener('click', (e) => {
+        const rect = rangeSlider.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        const minVal = parseInt(thumbLeft.value);
+        const maxVal = parseInt(thumbRight.value);
+        const newValue = Math.round(pos * (thumbLeft.max - thumbLeft.min) + parseInt(thumbLeft.min));
+        
+        if (Math.abs(newValue - minVal) < Math.abs(newValue - maxVal)) {
+            thumbLeft.value = newValue;
+        } else {
+            thumbRight.value = newValue;
+        }
+        
+        updateRange();
+        updateSearch();
+    });
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Добавляем обработчики для полей формы
-    const formInputs = document.querySelectorAll('#searchForm input');
-    formInputs.forEach(input => {
-        input.addEventListener('keypress', function(e) {
+    // Инициализация слайдера цен
+    initPriceSlider();
+    
+    // Обработчики для поля поиска
+    const searchInput = document.querySelector('#searchForm [name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 updateSearch();
             }
         });
-    });
+    }
+    
+    // Обработчики для остальных фильтров (уже есть в HTML через onchange)
 });
 </script>
