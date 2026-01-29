@@ -86,7 +86,7 @@
                         
                         <!-- Рейтинг и производитель -->
                         <div class="d-flex align-items-center mb-4">
-                            <div class="rating me-3">
+                            <div class="rating me-3" style="cursor: pointer;">
                                 <% 
                                     const rating = product.productRating || 0;
                                     for (let j = 0; j < 5; j++) { 
@@ -224,7 +224,7 @@
     </div>
 
     <!-- Отзывы -->
-    <div class="mt-5">
+    <div id="reviews-section" class="mt-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="h3 fw-bold">
                 <i class="fas fa-comments text-primary me-2"></i>Отзывы покупателей
@@ -475,5 +475,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Обновляем таймер каждую минуту
     setInterval(updateAllTimers, 60000); // 60000 мс = 1 минута
+
+    const ratingElement = document.querySelector('.rating.me-3');
+    if (ratingElement) {
+        ratingElement.addEventListener('click', function(event) {
+            const reviewsSection = document.getElementById('reviews-section');
+            if (reviewsSection) {
+                event.preventDefault();
+                reviewsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
 });
 </script>
