@@ -17,7 +17,7 @@
     <div class="row">
         <!-- Боковая панель с фильтрами -->
         <div class="col-lg-3 col-lg-3-search col-md-4 filters-sidebar">
-            <div class="card border-0 shadow-sm rounded-3 sticky-sidebar no-hover">
+            <div class="card border-0 shadow-sm rounded-3 sticky-sidebar">
                 <div class="card-body p-4">
                     <!-- Поиск -->
                     <h5 class="fw-bold mb-3 text-primary">
@@ -56,6 +56,7 @@
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-tag me-2"></i>Цена
                     </h5>
+<<<<<<< HEAD
                     <div class="price-range-container mb-4">
 <<<<<<< HEAD
                         <div class="range-slider" 
@@ -161,10 +162,46 @@
                             <span class="text-muted small" id="selectedCategoriesCount">
                                 Выбрано: <span class="fw-bold"><%= selectedCategories.length %></span>
                             </span>
+=======
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <input type="number" 
+                                   class="form-control border-primary border-opacity-25" 
+                                   name="minPrice" 
+                                   placeholder="От" 
+                                   min="0" 
+                                   value="<%= minPrice || '' %>"
+                                   onchange="updateSearch()">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" 
+                                   class="form-control border-primary border-opacity-25" 
+                                   name="maxPrice" 
+                                   placeholder="До" 
+                                   min="0" 
+                                   value="<%= maxPrice || '' %>"
+                                   onchange="updateSearch()">
+>>>>>>> parent of 37eb59f (Realease v1.3)
                         </div>
                     </div>
 
-                    <input type="hidden" name="category" id="categoriesHidden" value="<%= category || '' %>">
+                    <!-- Категории -->
+                    <h5 class="fw-bold mb-3 text-primary mt-4">
+                        <i class="fas fa-list me-2"></i>Категории
+                    </h5>
+                    <div class="categories-filter mb-3">
+                        <select class="form-select border-primary border-opacity-25" 
+                                name="category" 
+                                onchange="updateSearch()">
+                            <option value="">Все категории</option>
+                            <% allCategories.forEach(cat => { %>
+                                <option value="<%= cat.categorieID %>" 
+                                        <%= category == cat.categorieID ? 'selected' : '' %>>
+                                    <%= cat.categorieName %>
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
 
                     <!-- Акционные товары -->
                     <div class="form-check mb-3">
@@ -451,8 +488,8 @@ function updateSearch() {
     const form = document.getElementById('searchForm');
     const search = form.querySelector('[name="search"]').value;
     const category = document.querySelector('[name="category"]').value;
-    const minPrice = document.getElementById('minPriceHidden').value;
-    const maxPrice = document.getElementById('maxPriceHidden').value;
+    const minPrice = document.querySelector('[name="minPrice"]').value;
+    const maxPrice = document.querySelector('[name="maxPrice"]').value;
     const onSale = document.getElementById('onSale').checked ? 'true' : '';
     const sort = document.querySelector('[name="sort"]').value;
     
@@ -468,6 +505,7 @@ function updateSearch() {
     window.location.href = `/products?${params.toString()}`;
 }
 
+<<<<<<< HEAD
 // Инициализация слайдера диапазона цен
 function initPriceSlider() {
     const rangeSlider = document.querySelector('.range-slider');
@@ -759,15 +797,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('#searchForm [name="search"]');
     if (searchInput) {
         searchInput.addEventListener('keypress', function(e) {
+=======
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики для полей формы
+    const formInputs = document.querySelectorAll('#searchForm input');
+    formInputs.forEach(input => {
+        input.addEventListener('keypress', function(e) {
+>>>>>>> parent of 37eb59f (Realease v1.3)
             if (e.key === 'Enter') {
                 updateSearch();
             }
         });
+<<<<<<< HEAD
     }
 <<<<<<< HEAD
 =======
     
     // Обработчики для остальных фильтров (уже есть в HTML через onchange)
 >>>>>>> 50e9382a2a9fe22c68dbaf80b28d11fe345f53f1
+=======
+    });
+>>>>>>> parent of 37eb59f (Realease v1.3)
 });
 </script>

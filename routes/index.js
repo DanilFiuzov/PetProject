@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
 
+
 // Глобальный массив для хранения аватарок
 let avatars = [];
 // Функция для загрузки аватарок из файловой системы
@@ -272,310 +273,269 @@ router.get('/', (req, res) => {
 
 // Каталог товаров с расширенным поиском и фильтрацией
 router.get('/products', (req, res) => {
-    // === ЗАПРОС РЕАЛЬНЫХ ГРАНИЦ ЦЕН ИЗ БД ===
-    const priceBoundsQuery = `
+    const searchQuery = req.query.search || '';
+    const category = req.query.category || '';
+    const minPrice = parseFloat(req.query.minPrice) || 0;
+    const maxPrice = parseFloat(req.query.maxPrice) || 0;
+    const onSale = req.query.onSale === 'true';
+    const sort = req.query.sort || 'newest';
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12;
+    const offset = (page - 1) * limit;
+    
+    // Базовый запрос с GROUP_CONCAT для категорий
+    let productsQuery = `
         SELECT 
-            COALESCE(MIN(productPrice), 0) AS min_price,
-            COALESCE(MAX(productPrice), 100000) AS max_price
-        FROM products 
-        WHERE productPrice IS NOT NULL 
-        AND productPrice > 0
+            p.*,
+            GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list,
+            GROUP_CONCAT(DISTINCT c.categorieID ORDER BY c.categorieID SEPARATOR ',') as categories_ids
+        FROM products p
+        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
+        LEFT JOIN categories c ON cp.categorieID = c.categorieID
+        WHERE 1=1
     `;
     
-    connection.connection.query(priceBoundsQuery, (err, boundsResult) => {
-        if (err) console.error('Ошибка получения границ цен:', err);
-        
-        // Устанавливаем границы слайдера (округляем для удобства)
-        const dbMin = boundsResult?.[0]?.min_price || 0;
-        const dbMax = boundsResult?.[0]?.max_price || 100000;
-        
-        // Округление: минимум вниз до сотен, максимум вверх + 10%
-        const sliderMin = Math.max(0, Math.floor(dbMin / 100) * 100);
-        const sliderMax = Math.ceil(dbMax * 1.1 / 100) * 100;
-        
-        // === ВАЛИДАЦИЯ ВХОДНЫХ ПАРАМЕТРОВ ===
-        let minPrice = sliderMin;
-        let maxPrice = sliderMax;
-        
-        if (req.query.minPrice) {
-            const parsed = parseFloat(req.query.minPrice);
-            if (!isNaN(parsed)) minPrice = Math.max(sliderMin, Math.min(sliderMax, parsed));
-        }
-        
-        if (req.query.maxPrice) {
-            const parsed = parseFloat(req.query.maxPrice);
-            if (!isNaN(parsed)) maxPrice = Math.max(sliderMin, Math.min(sliderMax, parsed));
-        }
-        
-        if (minPrice > maxPrice);
-        
-        // === ОСТАЛЬНЫЕ ПАРАМЕТРЫ ===
-        const searchQuery = req.query.search || '';
-        const category = req.query.category || '';
-        const onSale = req.query.onSale === 'true';
-        const sort = req.query.sort || 'newest';
-        const page = parseInt(req.query.page) || 1;
-        const limit = 12;
-        const offset = (page - 1) * limit;
-        
-        // Базовый запрос с GROUP_CONCAT для категорий
-        let productsQuery = `
-            SELECT 
-                p.*,
-                GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list,
-                GROUP_CONCAT(DISTINCT c.categorieID ORDER BY c.categorieID SEPARATOR ',') as categories_ids
-            FROM products p
-            LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
-            LEFT JOIN categories c ON cp.categorieID = c.categorieID
-            WHERE 1=1
-        `;
-        
-        let countQuery = `
-            SELECT COUNT(DISTINCT p.productID) as total 
-            FROM products p
-            LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
-            WHERE 1=1
-        `;
-        
-        const queryParams = [];
-        const countParams = [];
-        
-        // Поиск
-        if (searchQuery) {
-            productsQuery += `
-                AND (
-                    p.productTitle LIKE ? OR 
-                    p.productManufacturer LIKE ? OR 
-                    p.productDescription LIKE ? OR
-                    EXISTS (
-                        SELECT 1 FROM categoriesandproducts cp2
-                        JOIN categories c2 ON cp2.categorieID = c2.categorieID
-                        WHERE cp2.productID = p.productID 
-                        AND c2.categorieName LIKE ?
-                    )
+    let countQuery = `
+        SELECT COUNT(DISTINCT p.productID) as total 
+        FROM products p
+        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
+        WHERE 1=1
+    `;
+    
+    const queryParams = [];
+    const countParams = [];
+    
+    // Поиск по названию, производителю, описанию ИЛИ категории
+    if (searchQuery) {
+        productsQuery += `
+            AND (
+                p.productTitle LIKE ? OR 
+                p.productManufacturer LIKE ? OR 
+                p.productDescription LIKE ? OR
+                EXISTS (
+                    SELECT 1 FROM categoriesandproducts cp2
+                    JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                    WHERE cp2.productID = p.productID 
+                    AND c2.categorieName LIKE ?
                 )
-            `;
-            countQuery += `
-                AND (
-                    p.productTitle LIKE ? OR 
-                    p.productManufacturer LIKE ? OR 
-                    p.productDescription LIKE ? OR
-                    EXISTS (
-                        SELECT 1 FROM categoriesandproducts cp2
-                        JOIN categories c2 ON cp2.categorieID = c2.categorieID
-                        WHERE cp2.productID = p.productID 
-                        AND c2.categorieName LIKE ?
-                    )
+            )
+        `;
+        countQuery += `
+            AND (
+                p.productTitle LIKE ? OR 
+                p.productManufacturer LIKE ? OR 
+                p.productDescription LIKE ? OR
+                EXISTS (
+                    SELECT 1 FROM categoriesandproducts cp2
+                    JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                    WHERE cp2.productID = p.productID 
+                    AND c2.categorieName LIKE ?
                 )
-            `;
-            const searchPattern = `%${searchQuery}%`;
-            queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
-            countParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
+            )
+        `;
+        const searchPattern = `%${searchQuery}%`;
+        queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
+        countParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
+    }
+    
+    // Фильтр по категории
+    if (category) {
+        productsQuery += `
+            AND EXISTS (
+                SELECT 1 FROM categoriesandproducts cp2
+                JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                WHERE cp2.productID = p.productID 
+                AND c2.categorieID = ?
+            )
+        `;
+        countQuery += `
+            AND EXISTS (
+                SELECT 1 FROM categoriesandproducts cp2
+                JOIN categories c2 ON cp2.categorieID = c2.categorieID
+                WHERE cp2.productID = p.productID 
+                AND c2.categorieID = ?
+            )
+        `;
+        queryParams.push(category);
+        countParams.push(category);
+    }
+    
+    // Фильтр по цене
+    if (minPrice > 0) {
+        productsQuery += ` AND p.productPrice >= ?`;
+        countQuery += ` AND p.productPrice >= ?`;
+        queryParams.push(minPrice);
+        countParams.push(minPrice);
+    }
+    
+    if (maxPrice > 0) {
+        productsQuery += ` AND p.productPrice <= ?`;
+        countQuery += ` AND p.productPrice <= ?`;
+        queryParams.push(maxPrice);
+        countParams.push(maxPrice);
+    }
+    
+    // Фильтр акционных товаров
+    if (onSale) {
+        productsQuery += ` AND p.is_on_sale = 1 AND p.discount_percentage > 0`;
+        countQuery += ` AND p.is_on_sale = 1 AND p.discount_percentage > 0`;
+    }
+    
+    // Добавляем сортировку
+    let orderBy = 'p.created_at DESC';
+    switch(sort) {
+        case 'newest':
+            orderBy = 'p.created_at DESC, p.productID DESC';
+            break;
+        case 'price_asc':
+            orderBy = 'CASE WHEN p.is_on_sale = 1 AND p.discount_percentage > 0 THEN p.productPrice * (1 - p.discount_percentage/100) ELSE p.productPrice END ASC';
+            break;
+        case 'price_desc':
+            orderBy = 'CASE WHEN p.is_on_sale = 1 AND p.discount_percentage > 0 THEN p.productPrice * (1 - p.discount_percentage/100) ELSE p.productPrice END DESC';
+            break;
+        case 'rating':
+            orderBy = 'p.productRating DESC, p.created_at DESC';
+            break;
+        case 'name_asc':
+            orderBy = 'p.productTitle ASC';
+            break;
+        case 'name_desc':
+            orderBy = 'p.productTitle DESC';
+            break;
+        case 'discount':
+            orderBy = 'p.discount_percentage DESC, p.created_at DESC';
+            break;
+    }
+    
+    // Добавляем GROUP BY, сортировку и пагинацию
+    productsQuery += ` GROUP BY p.productID ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
+    
+    // Получаем список всех категорий для фильтра
+    connection.connection.query('SELECT categorieID, categorieName FROM categories ORDER BY categorieName', (err, allCategories) => {
+        if (err) {
+            allCategories = [];
         }
         
-        // Фильтр по категории
-        if (category) {
-            // Разбиваем строку на массив и фильтруем пустые значения
-            const categoryIds = category.toString().split(',').filter(id => id.trim() !== '');
-            
-            if (categoryIds.length > 0) {
-                const placeholders = categoryIds.map(() => '?').join(',');
-                productsQuery += `
-                    AND EXISTS (
-                        SELECT 1 FROM categoriesandproducts cp2
-                        WHERE cp2.productID = p.productID 
-                        AND cp2.categorieID IN (${placeholders})
-                    )
-                `;
-                countQuery += `
-                    AND EXISTS (
-                        SELECT 1 FROM categoriesandproducts cp2
-                        WHERE cp2.productID = p.productID 
-                        AND cp2.categorieID IN (${placeholders})
-                    )
-                `;
-                queryParams.push(...categoryIds);
-                countParams.push(...categoryIds);
+        // Выполняем запрос на количество
+        connection.connection.query(countQuery, countParams, (err, countResult) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Ошибка при получении количества товаров');
             }
-        }
-        
-        // Фильтр по цене (только если не границы слайдера)
-        if (minPrice > sliderMin) {
-            productsQuery += ` AND p.productPrice >= ?`;
-            countQuery += ` AND p.productPrice >= ?`;
-            queryParams.push(minPrice);
-            countParams.push(minPrice);
-        }
-        
-        if (maxPrice < sliderMax) {
-            productsQuery += ` AND p.productPrice <= ?`;
-            countQuery += ` AND p.productPrice <= ?`;
-            queryParams.push(maxPrice);
-            countParams.push(maxPrice);
-        }
-        
-        // Фильтр акционных товаров
-        if (onSale) {
-            productsQuery += ` AND p.is_on_sale = 1 AND p.discount_percentage > 0`;
-            countQuery += ` AND p.is_on_sale = 1 AND p.discount_percentage > 0`;
-        }
-        
-        // Сортировка
-        let orderBy = 'p.created_at DESC';
-        switch(sort) {
-            case 'newest':
-                orderBy = 'p.created_at DESC, p.productID DESC';
-                break;
-            case 'price_asc':
-                orderBy = 'CASE WHEN p.is_on_sale = 1 AND p.discount_percentage > 0 THEN p.productPrice * (1 - p.discount_percentage/100) ELSE p.productPrice END ASC';
-                break;
-            case 'price_desc':
-                orderBy = 'CASE WHEN p.is_on_sale = 1 AND p.discount_percentage > 0 THEN p.productPrice * (1 - p.discount_percentage/100) ELSE p.productPrice END DESC';
-                break;
-            case 'rating':
-                orderBy = 'p.productRating DESC, p.created_at DESC';
-                break;
-            case 'name_asc':
-                orderBy = 'p.productTitle ASC';
-                break;
-            case 'name_desc':
-                orderBy = 'p.productTitle DESC';
-                break;
-            case 'discount':
-                orderBy = 'p.discount_percentage DESC, p.created_at DESC';
-                break;
-        }
-        
-        // GROUP BY, сортировка и пагинация
-        productsQuery += ` GROUP BY p.productID ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
-        queryParams.push(limit, offset);
-        
-        // Получаем категории
-        connection.connection.query('SELECT categorieID, categorieName FROM categories ORDER BY categorieName', (err, allCategories) => {
-            if (err) allCategories = [];
             
-            // Запрос количества
-            connection.connection.query(countQuery, countParams, (err, countResult) => {
+            const totalProducts = countResult[0].total;
+            const totalPages = Math.ceil(totalProducts / limit);
+            
+            // Выполняем запрос на товары
+            connection.connection.query(productsQuery, queryParams, (err, results) => {
                 if (err) {
                     console.error(err);
-                    return res.status(500).send('Ошибка при получении количества товаров');
+                    return res.status(500).send('Ошибка при получении списка продуктов');
                 }
                 
-                const totalProducts = countResult[0].total;
-                const totalPages = Math.ceil(totalProducts / limit);
+                // Формируем массив продуктов с категориями и информацией о скидках
+                const products = results.map(row => {
+                    const priceInfo = connection.calculateDiscountedPrice(row);
+                    const originalPrice = parseFloat(row.productPrice) || 0;
+                    const discountedPrice = priceInfo.isDiscounted ? priceInfo.discountedPrice : originalPrice;
+                    
+                    return {
+                        productID: row.productID,
+                        productTitle: row.productTitle,
+                        productThumbnail: row.productThumbnail,
+                        productPrice: originalPrice,
+                        productDescription: row.productDescription,
+                        productManufacturer: row.productManufacturer,
+                        productRating: row.productRating || 0,
+                        created_at: row.created_at,
+                        categories: row.categories_list ? row.categories_list.split(', ') : [],
+                        categories_ids: row.categories_ids ? row.categories_ids.split(',') : [],
+                        category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
+                        priceInfo: priceInfo,
+                        displayPrice: priceInfo.isDiscounted ? 
+                            (isNaN(discountedPrice) ? originalPrice.toFixed(2) : discountedPrice.toFixed(2)) : 
+                            originalPrice.toFixed(2),
+                        originalPrice: originalPrice.toFixed(2),
+                        discountPercentage: priceInfo.discountPercentage || 0,
+                        isDiscounted: priceInfo.isDiscounted,
+                        is_on_sale: row.is_on_sale,
+                        discount_percentage: row.discount_percentage || 0,
+                        discount_start_date: row.discount_start_date,
+                        discount_end_date: row.discount_end_date
+                    };
+                });
                 
-                // Запрос товаров
-                connection.connection.query(productsQuery, queryParams, (err, results) => {
-                    if (err) {
-                        console.error(err);
-                        return res.status(500).send('Ошибка при получении списка продуктов');
-                    }
+                const productIDs = products.map(p => p.productID);
+                
+                // Для авторизованных пользователей загружаем избранные товары
+                if (req.session.userId && productIDs.length > 0) {
+                    const placeholders = productIDs.map(() => '?').join(',');
+                    const favoritesQuery = `
+                        SELECT productID FROM favorites 
+                        WHERE customerID = ? AND productID IN (${placeholders})
+                    `;
+                    const favoritesParams = [req.session.userId, ...productIDs];
                     
-                    // Формируем массив продуктов
-                    const products = results.map(row => {
-                        const priceInfo = connection.calculateDiscountedPrice(row);
-                        const originalPrice = parseFloat(row.productPrice) || 0;
-                        const discountedPrice = priceInfo.isDiscounted ? priceInfo.discountedPrice : originalPrice;
+                    connection.connection.query(favoritesQuery, favoritesParams, (favoritesErr, favoritesResults) => {
+                        if (favoritesErr) {
+                            favoritesResults = [];
+                        }
                         
-                        return {
-                            productID: row.productID,
-                            productTitle: row.productTitle,
-                            productThumbnail: row.productThumbnail,
-                            productPrice: originalPrice,
-                            productDescription: row.productDescription,
-                            productManufacturer: row.productManufacturer,
-                            productRating: row.productRating || 0,
-                            created_at: row.created_at,
-                            categories: row.categories_list ? row.categories_list.split(', ') : [],
-                            categories_ids: row.categories_ids ? row.categories_ids.split(',') : [],
-                            category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
-                            priceInfo: priceInfo,
-                            displayPrice: priceInfo.isDiscounted ? 
-                                (isNaN(discountedPrice) ? originalPrice.toFixed(2) : discountedPrice.toFixed(2)) : 
-                                originalPrice.toFixed(2),
-                            originalPrice: originalPrice.toFixed(2),
-                            discountPercentage: priceInfo.discountPercentage || 0,
-                            isDiscounted: priceInfo.isDiscounted,
-                            is_on_sale: row.is_on_sale,
-                            discount_percentage: row.discount_percentage || 0,
-                            discount_start_date: row.discount_start_date,
-                            discount_end_date: row.discount_end_date
-                        };
-                    });
-                    
-                    const productIDs = products.map(p => p.productID);
-                    
-                    // Для авторизованных пользователей
-                    if (req.session.userId && productIDs.length > 0) {
-                        const placeholders = productIDs.map(() => '?').join(',');
-                        const favoritesQuery = `
-                            SELECT productID FROM favorites 
-                            WHERE customerID = ? AND productID IN (${placeholders})
-                        `;
-                        const favoritesParams = [req.session.userId, ...productIDs];
+                        const favoriteIdsSet = new Set(favoritesResults.map(f => f.productID));
                         
-                        connection.connection.query(favoritesQuery, favoritesParams, (favoritesErr, favoritesResults) => {
-                            if (favoritesErr) favoritesResults = [];
+                        connection.getCartByCustomerID(req.session.userId, (cartErr, cartItems) => {
+                            if (cartErr) {
+                                cartItems = [];
+                            }
                             
-                            const favoriteIdsSet = new Set(favoritesResults.map(f => f.productID));
+                            req.session.cart = {};
+                            cartItems.forEach(item => {
+                                req.session.cart[item.productID] = { sc_count: item.sc_count };
+                            });
                             
-                            connection.getCartByCustomerID(req.session.userId, (cartErr, cartItems) => {
-                                if (cartErr) cartItems = [];
-                                
-                                req.session.cart = {};
-                                cartItems.forEach(item => {
-                                    req.session.cart[item.productID] = { sc_count: item.sc_count };
-                                });
-                                
-                                req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
-                                    return total + (item.sc_count || 0);
-                                }, 0);
-                                
-                                req.session.favorites = Array.from(favoriteIdsSet);
-                                
-                                // Рендер с ДИНАМИЧЕСКИМИ границами
-                                res.render('layout', {
-                                    body: 'products',
-                                    products: products,
-                                    allCategories: allCategories,
-                                    session: req.session,
-                                    searchQuery: searchQuery,
-                                    category: category,
-                                    minPrice: minPrice,
-                                    maxPrice: maxPrice,
-                                    sliderMin: sliderMin,
-                                    sliderMax: sliderMax,
-                                    onSale: onSale,
-                                    sort: sort,
-                                    currentPage: page,
-                                    totalPages: totalPages,
-                                    totalProducts: totalProducts,
-                                    limit: limit
-                                });
+                            req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
+                                return total + (item.sc_count || 0);
+                            }, 0);
+                            
+                            req.session.favorites = Array.from(favoriteIdsSet);
+                            
+                            res.render('layout', {
+                                body: 'products',
+                                products: products,
+                                allCategories: allCategories,
+                                session: req.session,
+                                searchQuery: searchQuery,
+                                category: category,
+                                minPrice: minPrice,
+                                maxPrice: maxPrice,
+                                onSale: onSale,
+                                sort: sort,
+                                currentPage: page,
+                                totalPages: totalPages,
+                                totalProducts: totalProducts,
+                                limit: limit
                             });
                         });
-                    } else {
-                        // Рендер с ДИНАМИЧЕСКИМИ границами
-                        res.render('layout', {
-                            body: 'products',
-                            products: products,
-                            allCategories: allCategories,
-                            session: req.session,
-                            searchQuery: searchQuery,
-                            category: category,
-                            minPrice: minPrice,
-                            maxPrice: maxPrice,
-                            sliderMin: sliderMin,
-                            sliderMax: sliderMax,
-                            onSale: onSale,
-                            sort: sort,
-                            currentPage: page,
-                            totalPages: totalPages,
-                            totalProducts: totalProducts,
-                            limit: limit
-                        });
-                    }
-                });
+                    });
+                } else {
+                    res.render('layout', {
+                        body: 'products',
+                        products: products,
+                        allCategories: allCategories,
+                        session: req.session,
+                        searchQuery: searchQuery,
+                        category: category,
+                        minPrice: minPrice,
+                        maxPrice: maxPrice,
+                        onSale: onSale,
+                        sort: sort,
+                        currentPage: page,
+                        totalPages: totalPages,
+                        totalProducts: totalProducts,
+                        limit: limit
+                    });
+                }
             });
         });
     });
