@@ -17,7 +17,7 @@
     <div class="row">
         <!-- Боковая панель с фильтрами -->
         <div class="col-lg-3 col-lg-3-search col-md-4 filters-sidebar">
-            <div class="card border-0 shadow-sm rounded-3 sticky-sidebar">
+            <div class="card border-0 shadow-sm rounded-3 sticky-sidebar no-hover">
                 <div class="card-body p-4">
                     <!-- Поиск -->
                     <h5 class="fw-bold mb-3 text-primary">
@@ -56,44 +56,92 @@
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-tag me-2"></i>Цена
                     </h5>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <input type="number" 
-                                   class="form-control border-primary border-opacity-25" 
-                                   name="minPrice" 
-                                   placeholder="От" 
-                                   min="0" 
-                                   value="<%= minPrice || '' %>"
-                                   onchange="updateSearch()">
+                    <div class="price-range-container mb-4">
+                        <div class="range-slider" 
+                            data-min="<%= sliderMin %>" 
+                            data-max="<%= sliderMax %>">
+                            <div class="slider-track"></div>
+                            <div class="slider-range"></div>
+                            <input type="range" class="thumb thumb-left" 
+                                min="<%= sliderMin %>" max="<%= sliderMax %>" 
+                                value="<%= minPrice %>" step="100">
+                            <input type="range" class="thumb thumb-right" 
+                                min="<%= sliderMin %>" max="<%= sliderMax %>" 
+                                value="<%= maxPrice %>" step="100">
                         </div>
-                        <div class="col-6">
-                            <input type="number" 
-                                   class="form-control border-primary border-opacity-25" 
-                                   name="maxPrice" 
-                                   placeholder="До" 
-                                   min="0" 
-                                   value="<%= maxPrice || '' %>"
-                                   onchange="updateSearch()">
+                        
+                        <!-- Стилизованные инпуты вместо бейджей -->
+                        <div class="range-values d-flex justify-content-between mt-2">
+                            <div class="price-input-wrapper">
+                                <i class="fas fa-ruble-sign me-1"></i>
+                                <input type="number" 
+                                    class="price-input-badge min-price-input" 
+                                    value="<%= minPrice %>" 
+                                    min="<%= sliderMin %>" 
+                                    max="<%= sliderMax %>" 
+                                    step="100"
+                                    aria-label="Минимальная цена">
+                            </div>
+                            <div class="price-input-wrapper">
+                                <i class="fas fa-ruble-sign me-1"></i>
+                                <input type="number" 
+                                    class="price-input-badge max-price-input" 
+                                    value="<%= maxPrice %>" 
+                                    min="<%= sliderMin %>" 
+                                    max="<%= sliderMax %>" 
+                                    step="100"
+                                    aria-label="Максимальная цена">
+                            </div>
                         </div>
+                        
+                        <input type="hidden" name="minPrice" id="minPriceHidden" value="<%= minPrice %>">
+                        <input type="hidden" name="maxPrice" id="maxPriceHidden" value="<%= maxPrice %>">
                     </div>
-
                     <!-- Категории -->
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-list me-2"></i>Категории
+                        <button class="btn btn-sm btn-link text-primary p-0 ms-2" 
+                                type="button" 
+                                onclick="toggleCategories()" 
+                                id="toggleCategoriesBtn"
+                                aria-expanded="true">
+                            <i class="fas fa-chevron-up ms-1" id="categoriesToggleIcon" style="font-size: 2vh;"></i>
+                        </button>
                     </h5>
-                    <div class="categories-filter mb-3">
-                        <select class="form-select border-primary border-opacity-25" 
-                                name="category" 
-                                onchange="updateSearch()">
-                            <option value="">Все категории</option>
+                    <div class="categories-filter mb-3" id="categoriesFilterContainer">
+                        <div class="categories-list" id="categoriesList">
+                            <% 
+                                // Парсим строку категорий в массив для правильной проверки
+                                const selectedCategories = category ? category.toString().split(',').filter(id => id.trim() !== '') : [];
+                            %>
                             <% allCategories.forEach(cat => { %>
-                                <option value="<%= cat.categorieID %>" 
-                                        <%= category == cat.categorieID ? 'selected' : '' %>>
-                                    <%= cat.categorieName %>
-                                </option>
+                                <div class="form-check category-item" data-category-id="<%= cat.categorieID %>">
+                                    <input class="form-check-input" 
+                                        type="checkbox" 
+                                        id="category_<%= cat.categorieID %>" 
+                                        value="<%= cat.categorieID %>"
+                                        <%= selectedCategories.includes(cat.categorieID.toString()) ? 'checked' : '' %>
+                                        onchange="updateCategoryFilter()">
+                                    <label class="form-check-label" for="category_<%= cat.categorieID %>">
+                                        <%= cat.categorieName %>
+                                    </label>
+                                </div>
                             <% }) %>
-                        </select>
+                        </div>
+                        
+                        <div class="categories-footer d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    type="button" 
+                                    onclick="clearCategories()">
+                                <i class="fas fa-times me-1"></i>Очистить
+                            </button>
+                            <span class="text-muted small" id="selectedCategoriesCount">
+                                Выбрано: <span class="fw-bold"><%= selectedCategories.length %></span>
+                            </span>
+                        </div>
                     </div>
+
+                    <input type="hidden" name="category" id="categoriesHidden" value="<%= category || '' %>">
 
                     <!-- Акционные товары -->
                     <div class="form-check mb-3">
@@ -380,8 +428,8 @@ function updateSearch() {
     const form = document.getElementById('searchForm');
     const search = form.querySelector('[name="search"]').value;
     const category = document.querySelector('[name="category"]').value;
-    const minPrice = document.querySelector('[name="minPrice"]').value;
-    const maxPrice = document.querySelector('[name="maxPrice"]').value;
+    const minPrice = document.getElementById('minPriceHidden').value;
+    const maxPrice = document.getElementById('maxPriceHidden').value;
     const onSale = document.getElementById('onSale').checked ? 'true' : '';
     const sort = document.querySelector('[name="sort"]').value;
     
@@ -397,16 +445,238 @@ function updateSearch() {
     window.location.href = `/products?${params.toString()}`;
 }
 
+// Инициализация слайдера диапазона цен
+function initPriceSlider() {
+    const rangeSlider = document.querySelector('.range-slider');
+    if (!rangeSlider) return;
+    
+    // КРИТИЧНО: Берём значения ИЗ ДАТА-АТРИБУТОВ, а не из скрытых инпутов
+    const sliderMin = parseInt(rangeSlider.dataset.min) || 0;
+    const sliderMax = parseInt(rangeSlider.dataset.max) || 100000;
+    
+    const thumbLeft = rangeSlider.querySelector('.thumb-left');
+    const thumbRight = rangeSlider.querySelector('.thumb-right');
+    const range = rangeSlider.querySelector('.slider-range');
+    const minInput = document.querySelector('.min-price-input');
+    const maxInput = document.querySelector('.max-price-input');
+    const minHidden = document.getElementById('minPriceHidden');
+    const maxHidden = document.getElementById('maxPriceHidden');
+    
+    // Устанавливаем корректные атрибуты для инпутов (защита от некорректных данных)
+    [minInput, maxInput].forEach(input => {
+        if (input) {
+            input.min = sliderMin;
+            input.max = sliderMax;
+            input.step = 100;
+            // Приводим текущее значение к границам слайдера
+            let val = parseInt(input.value) || sliderMin;
+            val = Math.max(sliderMin, Math.min(sliderMax, val));
+            input.value = val;
+        }
+    });
+    
+    // Инициализация ползунков с валидацией
+    let initialMin = Math.max(sliderMin, Math.min(sliderMax, parseInt(thumbLeft.value) || sliderMin));
+    let initialMax = Math.max(sliderMin, Math.min(sliderMax, parseInt(thumbRight.value) || sliderMax));
+    
+    // Защита от пересечения при инициализации
+    if (initialMin > initialMax) {
+        initialMin = sliderMin;
+        initialMax = sliderMax;
+    }
+    
+    thumbLeft.value = initialMin;
+    thumbRight.value = initialMax;
+    
+    const updateRange = () => {
+        let minVal = parseInt(thumbLeft.value) || sliderMin;
+        let maxVal = parseInt(thumbRight.value) || sliderMax;
+        
+        // Защита от пересечения
+        if (minVal > maxVal) [minVal, maxVal] = [maxVal, minVal];
+        
+        // Обновляем позицию прогресс-бара
+        const minPercent = ((minVal - sliderMin) / (sliderMax - sliderMin)) * 100;
+        const maxPercent = ((maxVal - sliderMin) / (sliderMax - sliderMin)) * 100;
+        range.style.left = `${minPercent}%`;
+        range.style.right = `${100 - maxPercent}%`;
+        
+        // Синхронизируем ВСЕ элементы
+        thumbLeft.value = minVal;
+        thumbRight.value = maxVal;
+        if (minInput) minInput.value = minVal;
+        if (maxInput) maxInput.value = maxVal;
+        if (minHidden) minHidden.value = minVal;
+        if (maxHidden) maxHidden.value = maxVal;
+    };
+    
+    // Инициализация
+    updateRange();
+    
+    // События ползунков
+    thumbLeft.addEventListener('input', updateRange);
+    thumbRight.addEventListener('input', updateRange);
+    thumbLeft.addEventListener('change', updateSearch);
+    thumbRight.addEventListener('change', updateSearch);
+    
+    // События инпутов с валидацией
+    const validateInput = (input, isMin) => {
+        let value = parseInt(input.value) || (isMin ? sliderMin : sliderMax);
+        
+        // Приводим к границам слайдера
+        value = Math.max(sliderMin, Math.min(sliderMax, value));
+        
+        // Синхронизируем с противоположным полем
+        if (isMin) {
+            const maxVal = parseInt(maxInput.value) || sliderMax;
+            if (value > maxVal) value = maxVal;
+            thumbLeft.value = value;
+        } else {
+            const minVal = parseInt(minInput.value) || sliderMin;
+            if (value < minVal) value = minVal;
+            thumbRight.value = value;
+        }
+        
+        input.value = value;
+        updateRange();
+    };
+    
+    if (minInput) {
+        minInput.addEventListener('change', () => {
+            validateInput(minInput, true);
+            updateSearch();
+        });
+        // Мгновенная валидация при вводе (только цифры)
+        minInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+    }
+    
+    if (maxInput) {
+        maxInput.addEventListener('change', () => {
+            validateInput(maxInput, false);
+            updateSearch();
+        });
+        maxInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+    }
+    
+    // Клик по треку
+    rangeSlider.querySelector('.slider-track').addEventListener('click', (e) => {
+        const rect = rangeSlider.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        const newValue = Math.round(pos * (sliderMax - sliderMin) + sliderMin);
+        
+        const minVal = parseInt(thumbLeft.value);
+        const maxVal = parseInt(thumbRight.value);
+        
+        // Определяем, к какому ползунку ближе клик
+        if (Math.abs(newValue - minVal) < Math.abs(newValue - maxVal)) {
+            thumbLeft.value = Math.max(sliderMin, Math.min(newValue, maxVal - 100)); // минимум 100 разницы
+        } else {
+            thumbRight.value = Math.min(sliderMax, Math.max(newValue, minVal + 100));
+        }
+        
+        updateRange();
+        updateSearch();
+    });
+}
+
+// Функция переключения видимости категорий
+function toggleCategories() {
+    const list = document.getElementById('categoriesList');
+    const btn = document.getElementById('toggleCategoriesBtn');
+    const icon = document.getElementById('categoriesToggleIcon');
+    const text = document.getElementById('categoriesToggleText');
+    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+    
+    if (isExpanded) {
+        list.classList.add('collapsed');
+        btn.setAttribute('aria-expanded', 'false');
+    } else {
+        list.classList.remove('collapsed');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
+
+// Обновление фильтра категорий
+function updateCategoryFilter() {
+    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+    const hiddenInput = document.getElementById('categoriesHidden');
+    
+    // Сохраняем как строку с разделителем или пустую строку
+    hiddenInput.value = selectedIds.join(',');
+    
+    // Обновляем счётчик
+    updateCategoriesCount(selectedIds.length);
+    
+    // Автоматически применяем фильтр
+    updateSearch();
+}
+
+// Очистка выбранных категорий
+function clearCategories() {
+    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+    });
+    
+    const hiddenInput = document.getElementById('categoriesHidden');
+    hiddenInput.value = '';
+    
+    updateCategoriesCount(0);
+    updateSearch();
+}
+
+// Обновление счётчика выбранных категорий
+function updateCategoriesCount(count) {
+    const countEl = document.querySelector('#selectedCategoriesCount .fw-bold');
+    if (countEl) {
+        countEl.textContent = count;
+    }
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Добавляем обработчики для полей формы
-    const formInputs = document.querySelectorAll('#searchForm input');
-    formInputs.forEach(input => {
-        input.addEventListener('keypress', function(e) {
+    // Инициализация слайдера цен
+    initPriceSlider();
+    
+    // Инициализация счётчика категорий
+    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
+    updateCategoriesCount(checkboxes.length);
+    
+    // Добавляем обработчик клика на лейблы для удобства
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Если кликнули на сам чекбокс или лейбл - ничего не делаем (браузер сам обработает)
+            if (e.target.classList.contains('form-check-input') || 
+                e.target.classList.contains('form-check-label')) {
+                return;
+            }
+            
+            // Если кликнули на сам элемент (но не на чекбокс/лейбл)
+            const checkbox = this.querySelector('.form-check-input');
+            if (checkbox) {
+                // Переключаем чекбокс
+                checkbox.checked = !checkbox.checked;
+                
+                // Вызываем событие изменения для обновления фильтра
+                const event = new Event('change', { bubbles: true });
+                checkbox.dispatchEvent(event);
+            }
+        });
+    });
+    
+    // Обработчики для поля поиска
+    const searchInput = document.querySelector('#searchForm [name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 updateSearch();
             }
         });
-    });
+    }
 });
 </script>

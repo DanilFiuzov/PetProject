@@ -388,9 +388,18 @@ body {
     background: white;
 }
 
-.card:hover {
+/* Обычные карты */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover:not(.no-hover) {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card.no-hover {
+    transition: none !important;
 }
 
 .card img {
@@ -1474,41 +1483,187 @@ body {
 
 /* =============== КАТЕГОРИИ В ФИЛЬТРАХ =============== */
 .categories-filter {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--category-border);
-    border-radius: 8px;
-    padding: 0.5rem;
     background: white;
+    border: 1px solid var(--category-border, #dee2e6);
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
 }
 
-.categories-filter .form-check {
-    padding: 0.25rem 0.5rem;
-    margin: 0;
-    border-radius: 4px;
+.categories-list {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.categories-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.categories-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.categories-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color, #6060ff);
+    border-radius: 3px;
+}
+
+.categories-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark, #4a4aff);
+}
+
+.category-item {
+    padding: 0.6rem 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: 6px;
     transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
     animation: filterSlideIn 0.3s ease forwards;
+    min-height: 40px;
 }
 
-.categories-filter .form-check:hover {
-    background-color: rgba(96, 96, 255, 0.05);
+.category-item:hover {
+    background-color: rgba(96, 96, 255, 0.08);
+    transform: translateX(4px);
 }
 
-.categories-filter .form-check-input {
-    margin-right: 0.5rem;
+.category-item .form-check {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-.form-check-input:checked + .form-check-label {
-    color: var(--primary-color);
+.category-item .form-check-input {
+    margin-right: 0.75rem !important;
+    cursor: pointer;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px;
+    min-height: 18px;
+    border: 2px solid var(--border-color, #ced4da);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    margin-left: 0;
+}
+
+.category-item .form-check-input:checked {
+    background-color: var(--primary-color, #6060ff) !important;
+    border-color: var(--primary-color, #6060ff) !important;
+    transform: scale(1.1);
+}
+
+.category-item .form-check-label {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-color, #495057);
+    transition: all 0.2s ease;
+    flex: 1;
+    margin-bottom: 0 !important;
+    line-height: 1.4;
+}
+
+.category-item:hover .form-check-label {
+    color: var(--primary-color, #6060ff);
+}
+
+.category-item .form-check-input:checked + .form-check-label {
+    color: var(--primary-color, #6060ff);
     font-weight: 600;
 }
 
-.form-check:hover .form-check-input:not(:checked) {
-    border-color: var(--primary-light);
+/* Футер категорий */
+.categories-footer {
+    border-color: var(--border-color, #dee2e6);
 }
 
-.form-check:hover .form-check-label {
-    color: var(--primary-color);
+.categories-footer .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.categories-footer .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Анимация появления */
+@keyframes filterSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Сворачивание списка */
+.categories-list.collapsed {
+    max-height: 0 !important;
+    padding: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+/* Кнопка переключения */
+#toggleCategoriesBtn {
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    padding: 0 !important;
+    margin-left: 0.5rem !important;
+}
+
+#toggleCategoriesBtn:hover {
+    text-decoration: underline;
+    transform: scale(1.05);
+}
+
+#toggleCategoriesBtn i {
+    transition: transform 0.3s ease;
+    font-size: 0.9em;
+}
+
+#toggleCategoriesBtn[aria-expanded="false"] #categoriesToggleIcon {
+    transform: rotate(180deg);
+}
+
+/* Стиль для выбранного количества */
+#selectedCategoriesCount .fw-bold {
+    color: var(--primary-color, #6060ff);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .categories-filter {
+        padding: 0.5rem;
+    }
+    
+    .category-item {
+        padding: 0.5rem 0.6rem;
+        min-height: 38px;
+    }
+    
+    .categories-list {
+        max-height: 200px;
+    }
+    
+    .category-item .form-check-input {
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px;
+        min-height: 16px;
+    }
 }
 
 /* =============== ТЕКСТОВЫЕ УТИЛИТЫ =============== */
@@ -2186,3 +2341,177 @@ html {
     }
 }
 
+/* Слайдер диапазона цен */
+.price-range-container {
+    padding: 10px 0;
+}
+
+.range-slider {
+    position: relative;
+    height: 36px;
+    width: 100%;
+    margin: 15px 0 25px;
+    overflow: visible; /* Критично для отображения выступающих элементов */
+}
+
+/* Трек (фон слайдера) */
+.slider-track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: var(--bg-light, #e9ecef); /* Резервный цвет на случай отсутствия переменной */
+    border-radius: 3px;
+    cursor: pointer;
+    transform: translateY(-50%);
+    z-index: 1; /* Под прогресс-баром */
+}
+
+/* Прогресс-бар МЕЖДУ ползунками (ключевое исправление) */
+.slider-range {
+    position: absolute;
+    top: 50%;
+    height: 6px;
+    background: var(--primary-color, #6060ff); /* Явный резервный цвет для Chrome */
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 2; /* ВАЖНО: выше трека (z-index:1), но ниже ползунков */
+    transform: translateY(-50%);
+    /* Гарантируем видимость даже при нулевой ширине */
+    min-width: 4px;
+    display: block;
+}
+
+/* Стили ползунков (без изменений, но с уточнением) */
+.thumb {
+    position: absolute;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 36px;
+    background: transparent;
+    pointer-events: none;
+    z-index: 3; /* Выше прогресс-бара (z-index:2) */
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color, #6060ff);
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    pointer-events: all;
+    position: relative;
+    z-index: 4; /* Выше контейнера .thumb */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.thumb::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color, #6060ff);
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    pointer-events: all;
+    position: relative;
+    z-index: 4;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Эффекты при взаимодействии */
+.thumb:focus::-webkit-slider-thumb,
+.thumb:active::-webkit-slider-thumb,
+.thumb:focus::-moz-range-thumb,
+.thumb:active::-moz-range-thumb {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 4px rgba(96, 96, 255, 0.25);
+}
+
+/* Стили значений и бейджей (без изменений) */
+.range-values .badge {
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.range-values .badge:hover {
+    background: var(--primary-color, #6060ff);
+    color: white;
+    border-color: var(--primary-color, #6060ff);
+    transform: translateY(-1px);
+}
+
+/* Стилизованные инпуты под бейджи */
+.price-input-wrapper {
+    display: inline-flex;
+    align-items: center;
+    background: #f8f9fa; /* bg-light */
+    border: 1px solid #6060ff; /* primary */
+    border-opacity: 0.25;
+    color: #6060ff; /* primary */
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 90px;
+    justify-content: center;
+}
+
+.price-input-wrapper:hover {
+    background: #6060ff;
+    color: white;
+    border-color: #6060ff;
+    transform: translateY(-1px);
+}
+
+.price-input-badge {
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    color: inherit;
+    font-weight: inherit;
+    font-size: 0.95rem;
+    text-align: center;
+    /* Убираем стрелки везде */
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.price-input-badge::-webkit-inner-spin-button,
+.price-input-badge::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Эффект фокуса (как в Bootstrap) */
+.price-input-wrapper:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(96, 96, 255, 0.25);
+    border-color: #6060ff;
+}
+
+/* Адаптивность на мобильных */
+@media (max-width: 768px) {
+    .price-input-wrapper {
+        min-width: 75px;
+        padding: 0.2rem 0.5rem;
+    }
+    .price-input-badge {
+        font-size: 0.9rem;
+    }
+}
