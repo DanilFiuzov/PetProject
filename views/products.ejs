@@ -12,9 +12,15 @@
     </div>
 </nav>
 
+<!-- Оверлей для мобильного меню -->
+<div class="mobile-overlay" onclick="closeFilters()"></div>
+
 <!-- Оборачиваем весь контент в центральный контейнер -->
 <div class="container-fluid def-bg-settings py-4">
     <div class="row">
+        <button class="btn btn-outline-primary mobile-filters-toggle d-md-none" onclick="toggleFilters()">
+            <i class="fas fa-filter me-1"></i>Фильтры
+        </button>
         <!-- Боковая панель с фильтрами -->
         <div class="col-lg-3 col-lg-3-search col-md-4 filters-sidebar">
             <div class="card border-0 shadow-sm rounded-3 sticky-sidebar no-hover">
@@ -56,44 +62,29 @@
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-tag me-2"></i>Цена
                     </h5>
-                    <div class="price-range-container mb-4">
-                        <div class="range-slider" 
-                            data-min="<%= sliderMin %>" 
-                            data-max="<%= sliderMax %>">
-                            <div class="slider-track"></div>
-                            <div class="slider-range"></div>
-                            <input type="range" class="thumb thumb-left" 
-                                min="<%= sliderMin %>" max="<%= sliderMax %>" 
-                                value="<%= minPrice %>" step="100">
-                            <input type="range" class="thumb thumb-right" 
-                                min="<%= sliderMin %>" max="<%= sliderMax %>" 
-                                value="<%= maxPrice %>" step="100">
-                        </div>
-                        
-                        <!-- Стилизованные инпуты вместо бейджей -->
-                        <div class="range-values d-flex justify-content-between mt-2">
-                            <div class="price-input-wrapper">
-                                <i class="fas fa-ruble-sign me-1"></i>
+                    <div class="mb-4">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small text-muted">От</label>
                                 <input type="number" 
-                                    class="price-input-badge min-price-input" 
+                                    class="form-control form-control-sm" 
+                                    id="minPriceInput" 
                                     value="<%= minPrice %>" 
                                     min="<%= sliderMin %>" 
-                                    max="<%= sliderMax %>" 
-                                    step="100"
-                                    aria-label="Минимальная цена">
+                                    max="<%= sliderMax %>"
+                                    oninput="document.getElementById('minPriceHidden').value = this.value">
                             </div>
-                            <div class="price-input-wrapper">
-                                <i class="fas fa-ruble-sign me-1"></i>
+                            <div class="col-6">
+                                <label class="form-label small text-muted">До</label>
                                 <input type="number" 
-                                    class="price-input-badge max-price-input" 
+                                    class="form-control form-control-sm" 
+                                    id="maxPriceInput" 
                                     value="<%= maxPrice %>" 
                                     min="<%= sliderMin %>" 
-                                    max="<%= sliderMax %>" 
-                                    step="100"
-                                    aria-label="Максимальная цена">
+                                    max="<%= sliderMax %>"
+                                    oninput="document.getElementById('maxPriceHidden').value = this.value">
                             </div>
                         </div>
-                        
                         <input type="hidden" name="minPrice" id="minPriceHidden" value="<%= minPrice %>">
                         <input type="hidden" name="maxPrice" id="maxPriceHidden" value="<%= maxPrice %>">
                     </div>
@@ -163,7 +154,7 @@
                             <span class="text-muted">Найдено:</span>
                             <span class="fw-bold"><%= totalProducts || 0 %> товаров</span>
                         </div>
-                        <% if (searchQuery || category || minPrice > 0 || maxPrice > 0 || onSale) { %>
+                        <% if (searchQuery || category || onSale) { %>
                             <div class="alert alert-info border-0 bg-primary bg-opacity-10 text-primary small p-2 rounded-2">
                                 <i class="fas fa-filter me-1"></i>
                                 Применены фильтры
@@ -321,14 +312,14 @@
                             <div class="price-container">
                                 <% if (product.isDiscounted) { %>
                                     <div class="current-price discount-price-new">
-                                        <%= parseFloat(product.discountedPrice || product.displayPrice).toFixed(2) %>₽
+                                        <%= parseFloat(product.discountedPrice || product.displayPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                     </div>
                                     <div class="original-price">
-                                        <%= parseFloat(product.originalPrice || product.productPrice).toFixed(2) %>₽
+                                        <%= parseFloat(product.originalPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                     </div>
                                 <% } else { %>
                                     <div class="current-price">
-                                        <%= parseFloat(product.displayPrice || product.productPrice).toFixed(2) %>₽
+                                        <%= parseFloat(product.displayPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                     </div>
                                 <% } %>
                             </div>
@@ -445,161 +436,6 @@ function updateSearch() {
     window.location.href = `/products?${params.toString()}`;
 }
 
-// Инициализация слайдера диапазона цен
-function initPriceSlider() {
-    const rangeSlider = document.querySelector('.range-slider');
-    if (!rangeSlider) return;
-    
-    // КРИТИЧНО: Берём значения ИЗ ДАТА-АТРИБУТОВ, а не из скрытых инпутов
-    const sliderMin = parseInt(rangeSlider.dataset.min) || 0;
-    const sliderMax = parseInt(rangeSlider.dataset.max) || 100000;
-    
-    const thumbLeft = rangeSlider.querySelector('.thumb-left');
-    const thumbRight = rangeSlider.querySelector('.thumb-right');
-    const range = rangeSlider.querySelector('.slider-range');
-    const minInput = document.querySelector('.min-price-input');
-    const maxInput = document.querySelector('.max-price-input');
-    const minHidden = document.getElementById('minPriceHidden');
-    const maxHidden = document.getElementById('maxPriceHidden');
-    
-    // Устанавливаем корректные атрибуты для инпутов (защита от некорректных данных)
-    [minInput, maxInput].forEach(input => {
-        if (input) {
-            input.min = sliderMin;
-            input.max = sliderMax;
-            input.step = 100;
-            // Приводим текущее значение к границам слайдера
-            let val = parseInt(input.value) || sliderMin;
-            val = Math.max(sliderMin, Math.min(sliderMax, val));
-            input.value = val;
-        }
-    });
-    
-    // Инициализация ползунков с валидацией
-    let initialMin = Math.max(sliderMin, Math.min(sliderMax, parseInt(thumbLeft.value) || sliderMin));
-    let initialMax = Math.max(sliderMin, Math.min(sliderMax, parseInt(thumbRight.value) || sliderMax));
-    
-    // Защита от пересечения при инициализации
-    if (initialMin > initialMax) {
-        initialMin = sliderMin;
-        initialMax = sliderMax;
-    }
-    
-    thumbLeft.value = initialMin;
-    thumbRight.value = initialMax;
-    
-    const updateRange = () => {
-        let minVal = parseInt(thumbLeft.value) || sliderMin;
-        let maxVal = parseInt(thumbRight.value) || sliderMax;
-        
-        // Защита от пересечения
-        if (minVal > maxVal) [minVal, maxVal] = [maxVal, minVal];
-        
-        // Обновляем позицию прогресс-бара
-        const minPercent = ((minVal - sliderMin) / (sliderMax - sliderMin)) * 100;
-        const maxPercent = ((maxVal - sliderMin) / (sliderMax - sliderMin)) * 100;
-        range.style.left = `${minPercent}%`;
-        range.style.right = `${100 - maxPercent}%`;
-        
-        // Синхронизируем ВСЕ элементы
-        thumbLeft.value = minVal;
-        thumbRight.value = maxVal;
-        if (minInput) minInput.value = minVal;
-        if (maxInput) maxInput.value = maxVal;
-        if (minHidden) minHidden.value = minVal;
-        if (maxHidden) maxHidden.value = maxVal;
-    };
-    
-    // Инициализация
-    updateRange();
-    
-    // События ползунков
-    thumbLeft.addEventListener('input', updateRange);
-    thumbRight.addEventListener('input', updateRange);
-    thumbLeft.addEventListener('change', updateSearch);
-    thumbRight.addEventListener('change', updateSearch);
-    
-    // События инпутов с валидацией
-    const validateInput = (input, isMin) => {
-        let value = parseInt(input.value) || (isMin ? sliderMin : sliderMax);
-        
-        // Приводим к границам слайдера
-        value = Math.max(sliderMin, Math.min(sliderMax, value));
-        
-        // Синхронизируем с противоположным полем
-        if (isMin) {
-            const maxVal = parseInt(maxInput.value) || sliderMax;
-            if (value > maxVal) value = maxVal;
-            thumbLeft.value = value;
-        } else {
-            const minVal = parseInt(minInput.value) || sliderMin;
-            if (value < minVal) value = minVal;
-            thumbRight.value = value;
-        }
-        
-        input.value = value;
-        updateRange();
-    };
-    
-    if (minInput) {
-        minInput.addEventListener('change', () => {
-            validateInput(minInput, true);
-            updateSearch();
-        });
-        // Мгновенная валидация при вводе (только цифры)
-        minInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        });
-    }
-    
-    if (maxInput) {
-        maxInput.addEventListener('change', () => {
-            validateInput(maxInput, false);
-            updateSearch();
-        });
-        maxInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        });
-    }
-    
-    // Клик по треку
-    rangeSlider.querySelector('.slider-track').addEventListener('click', (e) => {
-        const rect = rangeSlider.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / rect.width;
-        const newValue = Math.round(pos * (sliderMax - sliderMin) + sliderMin);
-        
-        const minVal = parseInt(thumbLeft.value);
-        const maxVal = parseInt(thumbRight.value);
-        
-        // Определяем, к какому ползунку ближе клик
-        if (Math.abs(newValue - minVal) < Math.abs(newValue - maxVal)) {
-            thumbLeft.value = Math.max(sliderMin, Math.min(newValue, maxVal - 100)); // минимум 100 разницы
-        } else {
-            thumbRight.value = Math.min(sliderMax, Math.max(newValue, minVal + 100));
-        }
-        
-        updateRange();
-        updateSearch();
-    });
-}
-
-// Функция переключения видимости категорий
-function toggleCategories() {
-    const list = document.getElementById('categoriesList');
-    const btn = document.getElementById('toggleCategoriesBtn');
-    const icon = document.getElementById('categoriesToggleIcon');
-    const text = document.getElementById('categoriesToggleText');
-    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
-    
-    if (isExpanded) {
-        list.classList.add('collapsed');
-        btn.setAttribute('aria-expanded', 'false');
-    } else {
-        list.classList.remove('collapsed');
-        btn.setAttribute('aria-expanded', 'true');
-    }
-}
-
 // Обновление фильтра категорий
 function updateCategoryFilter() {
     const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
@@ -638,10 +474,17 @@ function updateCategoriesCount(count) {
     }
 }
 
+function toggleFilters() {
+    document.querySelector('.filters-sidebar').classList.toggle('active');
+    document.querySelector('.mobile-overlay').classList.toggle('active');
+}
+function closeFilters() {
+    document.querySelector('.filters-sidebar').classList.remove('active');
+    document.querySelector('.mobile-overlay').classList.remove('active');
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация слайдера цен
-    initPriceSlider();
     
     // Инициализация счётчика категорий
     const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
