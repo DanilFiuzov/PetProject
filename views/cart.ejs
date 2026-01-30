@@ -14,16 +14,16 @@
     </div>
 </nav>
 
-<div class="container def-bg-settings py-4">
+<div class="container def-bg-settings py-4 cart-page">
     <!-- Заголовок -->
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <h1 class="h2 fw-bold">
-            <i class="fas fa-shopping-cart text-primary me-2"></i>
+    <div class="cart-header">
+        <h1>
+            <i class="fas fa-shopping-cart"></i>
             Корзина покупок
         </h1>
         <% if (products.length > 0) { %>
-            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-4 py-3">
-                <i class="fas fa-box me-1"></i>
+            <span class="cart-badge">
+                <i class="fas fa-box"></i>
                 <%= products.length %> товар(ов)
             </span>
         <% } %>
@@ -31,10 +31,10 @@
 
     <% if (products.length === 0) { %>
         <!-- Пустая корзина -->
-        <div class="card border-0 shadow-lg rounded-4">
+        <div class="card empty-cart-card">
             <div class="card-body text-center py-5 px-4">
                 <div class="empty-cart-icon mb-4">
-                    <i class="fas fa-shopping-cart fa-4x text-muted opacity-50"></i>
+                    <i class="fas fa-shopping-cart fa-4x"></i>
                 </div>
                 <h3 class="text-muted mb-3 fw-bold">Ваша корзина пуста</h3>
                 <p class="text-muted mb-4 lead">Добавьте товары в корзину, чтобы оформить заказ</p>
@@ -49,13 +49,13 @@
             </div>
         </div>
     <% } else { %>
-        <div class="row g-5">
+        <div class="row g-4">
             <!-- Список товаров -->
             <div class="col-lg-8">
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-header bg-transparent border-0 py-4">
-                        <h3 class="h4 fw-bold mb-0">
-                            <i class="fas fa-boxes me-2"></i>Товары в корзине
+                <div class="card cart-products-card no-hover">
+                    <div class="cart-products-header">
+                        <h3>
+                            <i class="fas fa-boxes"></i>Товары в корзине
                         </h3>
                     </div>
                     <div class="card-body p-0">
@@ -68,64 +68,61 @@
                                 %>
                                 <% totalPrice += itemTotal; %>
                                 
-                                <div class="list-group-item border-0 p-4">
-                                    <div class="row g-4 align-items-center">
+                                <div class="cart-item">
+                                    <div class="cart-item-row">
                                         <!-- Изображение -->
-                                        <div class="col-md-3 col-lg-2">
-                                            <a href="/product/<%= product.productID %>" class="text-decoration-none">
-                                                <div class="image-container rounded-3 overflow-hidden bg-light" style="height: 120px;">
-                                                    <img src="/images/products/<%= product.productThumbnail %>" 
-                                                         class="img-fluid w-100 h-100 object-fit-cover"
-                                                         alt="<%= product.productTitle %>">
-                                                </div>
+                                        <div class="cart-item-image">
+                                            <a href="/product/<%= product.productID %>" class="text-decoration-none d-block h-100">
+                                                <img src="/images/products/<%= product.productThumbnail %>" 
+                                                     alt="<%= product.productTitle %>">
                                             </a>
                                         </div>
 
                                         <!-- Информация -->
-                                        <div class="col-md-5 col-lg-6">
-                                            <div>
-                                                <h6 class="fw-bold mb-2">
-                                                    <a href="/product/<%= product.productID %>" 
-                                                       class="text-decoration-none text-dark">
-                                                        <%= product.productTitle %>
-                                                    </a>
-                                                </h6>
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <span class="text-muted me-2">Производитель:</span>
-                                                    <span class="fw-medium"><%= product.productManufacturer %></span>
-                                                </div>
-                                                <div class="d-flex align-items-center price-display">
-                                                    <% if (product.isDiscounted) { %>
-                                                        <span class="text-muted text-decoration-line-through me-2">
-                                                            <%= parseFloat(product.productPrice).toFixed(2) %>₽
-                                                        </span>
-                                                        <span class="text-primary fw-bold">
-                                                            <%= itemPrice.toFixed(2) %>₽
-                                                        </span>
-                                                    <% } else { %>
-                                                        <span class="text-primary fw-bold">
-                                                            <%= itemPrice.toFixed(2) %>₽
-                                                        </span>
-                                                    <% } %>
-                                                </div>
+                                        <div class="cart-item-info">
+                                            <h6 class="cart-item-title mb-0">
+                                                <a href="/product/<%= product.productID %>" 
+                                                   class="text-decoration-none">
+                                                    <%= product.productTitle %>
+                                                </a>
+                                            </h6>
+                                            <div class="cart-item-manufacturer">
+                                                <i class="fas fa-industry"></i>
+                                                <span><%= product.productManufacturer %></span>
+                                            </div>
+                                            <div class="cart-item-price">
+                                                <% if (product.isDiscounted) { %>
+                                                    <span class="cart-item-price-original">
+                                                        <%= parseFloat(product.productPrice).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                                    </span>
+                                                    <span class="cart-item-price-discounted">
+                                                        <%= itemPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="cart-item-price-regular">
+                                                        <%= itemPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                                    </span>
+                                                <% } %>
+                                                <span class="text-muted" style="font-size: 0.9rem;">
+                                                    за 1 шт.
+                                                </span>
                                             </div>
                                         </div>
 
                                         <!-- Количество -->
-                                        <div class="col-md-2 col-lg-2">
-                                            <div class="d-flex align-items-center justify-content-center">
+                                        <div class="cart-item-quantity">
+                                            <div class="quantity-control">
                                                 <form action="/cart/update" method="post" class="d-inline">
                                                     <input type="hidden" name="productID" value="<%= product.productID %>">
                                                     <button type="submit" 
                                                             name="action" 
                                                             value="decrease" 
-                                                            class="btn btn-outline-secondary rounded-circle p-0"
-                                                            style="width: 36px; height: 36px;"
+                                                            class="quantity-btn"
                                                             <%= product.sc_count <= 1 ? 'disabled' : '' %>>
                                                         <i class="fas fa-minus"></i>
                                                     </button>
                                                 </form>
-                                                <span class="mx-3 fw-bold fs-5" style="min-width: 40px;">
+                                                <span class="quantity-display">
                                                     <%= product.sc_count %>
                                                 </span>
                                                 <form action="/cart/update" method="post" class="d-inline">
@@ -133,8 +130,7 @@
                                                     <button type="submit" 
                                                             name="action" 
                                                             value="increase" 
-                                                            class="btn btn-outline-secondary rounded-circle p-0"
-                                                            style="width: 36px; height: 36px;">
+                                                            class="quantity-btn">
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                 </form>
@@ -142,20 +138,18 @@
                                         </div>
 
                                         <!-- Итого и удаление -->
-                                        <div class="col-md-2 col-lg-2">
-                                            <div class="d-flex flex-column align-items-end">
-                                                <span class="fw-bold fs-5 text-primary mb-3">
-                                                    <%= itemTotal.toFixed(2) %>₽
-                                                </span>
-                                                <form action="/cart/remove" method="post" class="d-inline">
-                                                    <input type="hidden" name="productID" value="<%= product.productID %>">
-                                                    <button type="submit" 
-                                                            class="btn btn-outline-danger rounded-pill px-3"
-                                                            title="Удалить из корзины">
-                                                        <i class="fas fa-trash-alt me-1"></i>Удалить
-                                                    </button>
-                                                </form>
-                                            </div>
+                                        <div class="cart-item-actions">
+                                            <span class="cart-item-total">
+                                                <%= itemTotal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                            </span>
+                                            <form action="/cart/remove" method="post" class="d-inline">
+                                                <input type="hidden" name="productID" value="<%= product.productID %>">
+                                                <button type="submit" 
+                                                        class="cart-item-remove"
+                                                        title="Удалить из корзины">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -165,15 +159,15 @@
                 </div>
 
                 <!-- Продолжить покупки -->
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <a href="/products" class="btn btn-outline-primary px-4 py-3">
-                        <i class="fas fa-arrow-left me-2"></i>Продолжить покупки
+                <div class="cart-continue-actions">
+                    <a href="/products" class="cart-continue-btn">
+                        <i class="fas fa-arrow-left"></i>Продолжить покупки
                     </a>
                     <form action="/cart/clear" method="post" class="d-inline">
                         <button type="submit" 
-                                class="btn btn-outline-danger px-4 py-3"
+                                class="cart-clear-btn"
                                 onclick="return confirm('Вы уверены, что хотите очистить всю корзину?')">
-                            <i class="fas fa-trash-alt me-2"></i>Очистить корзину
+                            <i class="fas fa-trash-alt"></i>Очистить корзину
                         </button>
                     </form>
                 </div>
@@ -181,50 +175,46 @@
 
             <!-- Итоги заказа -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm rounded-4 sticky-order-summary">
-                    <div class="card-body p-4">
-                        <h3 class="h4 fw-bold mb-4">
-                            <i class="fas fa-receipt text-primary me-2"></i>Итог заказа
-                        </h3>
-                        
-                        <!-- Детали -->
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted">Товары (<%= products.length %>)</span>
-                                <span class="fw-bold"><%= totalPrice.toFixed(2) %>₽</span>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted">Доставка</span>
-                                <span class="fw-bold text-success">Бесплатно</span>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted">Скидка</span>
-                                <span class="fw-bold text-danger">0.00₽</span>
-                            </div>
-                            
-                            <hr class="my-4">
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <span class="h5 fw-bold mb-0">Итого к оплате:</span>
-                                <span class="h3 fw-bold text-primary"><%= totalPrice.toFixed(2) %>₽</span>
-                            </div>
+                <div class="order-summary-card no-hover sticky-order-summary">
+                    <h3 class="order-summary-header">
+                        <i class="fas fa-receipt text-primary"></i>Итог заказа
+                    </h3>
+                    
+                    <!-- Детали -->
+                    <div>
+                        <div class="order-summary-item">
+                            <span>Товары (<%= products.length %>)</span>
+                            <span><%= totalPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
                         </div>
                         
-                        <!-- Кнопка оформления -->
-                        <button class="btn btn-primary btn-lg w-100 py-3 mb-3 fw-bold" 
-                                onclick="showNotification('Функция оформления заказа в разработке', 'info')">
-                            <i class="fas fa-lock me-2"></i>Перейти к оформлению
-                        </button>
-                        
-                        <!-- Дополнительная информация -->
-                        <div class="text-center">
-                            <small class="text-muted">
-                                <i class="fas fa-shield-alt me-1"></i>
-                                Безопасная оплата • Гарантия возврата
-                            </small>
+                        <div class="order-summary-item">
+                            <span>Доставка</span>
+                            <span class="text-success">Бесплатно</span>
                         </div>
+                        
+                        <div class="order-summary-item">
+                            <span>Скидка</span>
+                            <span class="text-danger">0₽</span>
+                        </div>
+                        
+                        <div class="order-summary-total">
+                            <span>Итого к оплате:</span>
+                            <span><%= totalPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопка оформления -->
+                    <button class="order-summary-checkout" 
+                            onclick="showNotification('Функция оформления заказа в разработке', 'info')">
+                        <i class="fas fa-lock"></i>&nbspПерейти к оформлению
+                    </button>
+                    
+                    <!-- Дополнительная информация -->
+                    <div class="order-summary-info">
+                        <small>
+                            <i class="fas fa-shield-alt"></i>
+                            Безопасная оплата • Гарантия возврата
+                        </small>
                     </div>
                 </div>
             </div>
