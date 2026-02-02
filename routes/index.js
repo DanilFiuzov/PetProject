@@ -312,7 +312,7 @@ router.get('/products', (req, res) => {
         // === ОСТАЛЬНЫЕ ПАРАМЕТРЫ ===
         const searchQuery = req.query.search || '';
         const category = req.query.category || '';
-        const onSale = req.query.onSale === 'true';
+        let onSale = req.query.onSale === 'true';
         const sort = req.query.sort || 'newest';
         const page = parseInt(req.query.page) || 1;
         const limit = 12;
@@ -336,6 +336,21 @@ router.get('/products', (req, res) => {
             LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
             WHERE 1=1
         `;
+
+        if (onSale) {
+            productsQuery += ` 
+                AND p.is_on_sale = 1 
+                AND COALESCE(p.discount_percentage, 0) > 0 
+                AND (p.discount_start_date IS NULL OR p.discount_start_date <= NOW()) 
+                AND (p.discount_end_date IS NULL OR p.discount_end_date >= NOW())
+            `;
+            countQuery += ` 
+                AND p.is_on_sale = 1 
+                AND COALESCE(p.discount_percentage, 0) > 0 
+                AND (p.discount_start_date IS NULL OR p.discount_start_date <= NOW()) 
+                AND (p.discount_end_date IS NULL OR p.discount_end_date >= NOW())
+            `;
+        }
         
         const queryParams = [];
         const countParams = [];
@@ -442,7 +457,18 @@ router.get('/products', (req, res) => {
                 orderBy = 'p.productTitle DESC';
                 break;
             case 'discount':
-                orderBy = 'p.discount_percentage DESC, p.created_at DESC';
+                // Сортируем: сначала товары с АКТИВНОЙ скидкой (по убыванию процента), затем остальные
+                orderBy = `
+                        CASE 
+                            WHEN p.is_on_sale = 1 
+                                AND p.discount_percentage > 0 
+                                AND (p.discount_start_date IS NULL OR p.discount_start_date <= NOW()) 
+                                AND (p.discount_end_date IS NULL OR p.discount_end_date >= NOW())
+                            THEN COALESCE(p.discount_percentage, 0) 
+                            ELSE 0 
+                        END DESC,
+                        p.created_at DESC
+                    `;
                 break;
         }
         
@@ -580,6 +606,118 @@ router.get('/products', (req, res) => {
         });
     });
 });
+
+// API для автодополнения поиска
+router.get('/api/search-suggestions', (req, res) => {
+    const query = req.query.query || '';
+    const isPopular = req.query.popular === 'true';
+    
+    // Если запрошенные популярные товары и нет запроса
+    if (isPopular && !query) {
+        const sql = `
+            SELECT 
+                p.productID, 
+                p.productTitle, 
+                p.productThumbnail, 
+                p.productPrice,
+                p.is_on_sale,
+                p.discount_percentage,
+                p.discount_start_date,
+                p.discount_end_date
+            FROM products p
+            WHERE p.productPrice IS NOT NULL
+            ORDER BY p.productRating DESC, p.created_at DESC
+            LIMIT 5
+        `;
+        
+        connection.connection.query(sql, [], (err, results) => {
+            if (err) {
+                console.error('Popular suggestions error:', err);
+                return res.json([]);
+            }
+            
+            const suggestions = formatSuggestions(results);
+            res.json(suggestions);
+        });
+        return;
+    }
+    
+    // Обычный поиск по запросу
+    if (query.length < 2) {
+        return res.json([]);
+    }
+    
+    const searchPattern = `%${query}%`;
+    const sql = `
+        SELECT 
+            p.productID, 
+            p.productTitle, 
+            p.productThumbnail, 
+            p.productPrice,
+            p.is_on_sale,
+            p.discount_percentage,
+            p.discount_start_date,
+            p.discount_end_date
+        FROM products p
+        WHERE 
+            (p.productTitle LIKE ? OR p.productDescription LIKE ?)
+            AND p.productPrice IS NOT NULL
+        ORDER BY 
+            CASE 
+                WHEN p.productTitle LIKE ? THEN 1 
+                ELSE 2 
+            END,
+            p.productRating DESC
+        LIMIT 8
+    `;
+    
+    connection.connection.query(sql, [
+        searchPattern, 
+        searchPattern,
+        `${query}%`
+    ], (err, results) => {
+        if (err) {
+            console.error('Search suggestions error:', err);
+            return res.json([]);
+        }
+        
+        const suggestions = formatSuggestions(results);
+        res.json(suggestions);
+    });
+});
+
+// Вспомогательная функция для форматирования результатов
+function formatSuggestions(results) {
+    return results.map(product => {
+        const now = new Date();
+        const startDate = product.discount_start_date ? new Date(product.discount_start_date) : null;
+        const endDate = product.discount_end_date ? new Date(product.discount_end_date) : null;
+        
+        const isDiscountActive = product.is_on_sale && 
+            product.discount_percentage > 0 && 
+            (!startDate || now >= startDate) && 
+            (!endDate || now <= endDate);
+        
+        // Конвертируем в число и проверяем на валидность
+        let displayPrice = parseFloat(product.productPrice) || 0;
+        let originalPrice = parseFloat(product.productPrice) || 0;
+        
+        if (isDiscountActive) {
+            const discountValue = (displayPrice * parseFloat(product.discount_percentage || 0) / 100);
+            displayPrice = displayPrice - discountValue;
+        }
+        
+        return {
+            id: product.productID,
+            title: product.productTitle,
+            thumbnail: product.productThumbnail,
+            price: displayPrice.toFixed(2),
+            originalPrice: originalPrice.toFixed(2),
+            isDiscounted: isDiscountActive,
+            discountPercentage: isDiscountActive ? parseFloat(product.discount_percentage || 0).toFixed(0) : 0
+        };
+    });
+}
 
 // Вход (GET)
 router.get('/login', (req, res) => {

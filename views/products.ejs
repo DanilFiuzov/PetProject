@@ -1,19 +1,44 @@
 <!-- Хлебные крошки -->
 <nav aria-label="breadcrumb" class="breadcrumb-container">
-    <div class="container">
-        <ol class="breadcrumb bg-light p-3 rounded-3">
-            <li class="breadcrumb-item">
-                <a href="/" class="text-decoration-none text-primary">
-                    <i class="fas fa-home me-1"></i>Главная
-                </a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">Каталог товаров</li>
-        </ol>
-    </div>
+  <div class="container">
+    <ol class="breadcrumb bg-light p-3 rounded-3">
+      <li class="breadcrumb-item">
+        <a href="/" class="text-decoration-none text-primary">
+          <i class="fas fa-home me-1"></i>Главная
+        </a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Каталог товаров</li>
+    </ol>
+  </div>
 </nav>
+
+<!-- ЦЕНТРАЛЬНЫЙ КОМПАКТНЫЙ ПОИСК -->
+<div class="central-search-wrapper">
+  <div class="central-search-inner">
+    <form method="GET" action="/products" id="centralSearchForm" class="central-search-form">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fas fa-search"></i>
+        </span>
+        <input type="text"
+               class="form-control"
+               name="search"
+               id="centralSearchInput"
+               placeholder="Поиск товаров..."
+               value="<%= searchQuery || '' %>"
+               autocomplete="off">
+        <button class="btn btn-search" type="submit">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <div id="centralSearchSuggestions" class="search-suggestions-container"></div>
+    </form>
+  </div>
+</div>
 
 <!-- Оверлей для мобильного меню -->
 <div class="mobile-overlay" onclick="closeFilters()"></div>
+
 
 <!-- Оборачиваем весь контент в центральный контейнер -->
 <div class="container-fluid def-bg-settings py-4">
@@ -25,69 +50,66 @@
         <div class="col-lg-3 col-lg-3-search col-md-4 filters-sidebar">
             <div class="card border-0 shadow-sm rounded-3 sticky-sidebar no-hover">
                 <div class="card-body p-4">
-                    <!-- Поиск -->
-                    <h5 class="fw-bold mb-3 text-primary">
-                        <i class="fas fa-search me-2"></i>Поиск
-                    </h5>
-                    <form method="GET" action="/products" id="searchForm" class="mb-4">
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control border-primary border-opacity-25" 
-                                   name="search" 
-                                   placeholder="Поиск товаров..." 
-                                   value="<%= searchQuery || '' %>">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- Сортировка -->
+                    <!-- Сортировка - КАСТОМНЫЙ ВЫПАДАЮЩИЙ СПИСОК -->
                     <h5 class="fw-bold mb-3 text-primary">
                         <i class="fas fa-sort me-2"></i>Сортировка
                     </h5>
-                    <select class="form-select border-primary border-opacity-25 mb-3" 
-                            name="sort" 
-                            onchange="updateSearch()">
-                        <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Сначала новые</option>
-                        <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>По названию (А-Я)</option>
-                        <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>По названию (Я-А)</option>
-                        <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>По цене (дешевле)</option>
-                        <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>По цене (дороже)</option>
-                        <option value="rating" <%= sort === 'rating' ? 'selected' : '' %>>По рейтингу</option>
-                        <option value="discount" <%= sort === 'discount' ? 'selected' : '' %>>По скидке</option>
-                    </select>
+                    <div class="custom-select-wrapper mb-3">
+                        <div class="custom-select" id="sortDropdown" tabindex="0">
+                            <div class="custom-select-selected" id="sortSelected">
+                                <% 
+                                    const sortOptions = {
+                                        'newest': 'Сначала новые',
+                                        'name_asc': 'По названию (А-Я)',
+                                        'name_desc': 'По названию (Я-А)',
+                                        'price_asc': 'По цене (дешевле)',
+                                        'price_desc': 'По цене (дороже)',
+                                        'rating': 'По рейтингу',
+                                        'discount': 'По скидке'
+                                    };
+                                    // Выбираем текст для текущего значения
+                                    const selectedText = sortOptions[sort] || 'Сначала новые';
+                                %>
+                                <%= selectedText %>
+                            </div>
+                            <div class="custom-select-arrow">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="custom-select-options" id="sortOptions">
+                                <div class="custom-select-option <%= sort === 'newest' ? 'active' : '' %>" data-value="newest">
+                                    Сначала новые
+                                </div>
+                                <div class="custom-select-option <%= sort === 'name_asc' ? 'active' : '' %>" data-value="name_asc">
+                                    По названию (А-Я)
+                                </div>
+                                <div class="custom-select-option <%= sort === 'name_desc' ? 'active' : '' %>" data-value="name_desc">
+                                    По названию (Я-А)
+                                </div>
+                                <div class="custom-select-option <%= sort === 'price_asc' ? 'active' : '' %>" data-value="price_asc">
+                                    По цене (дешевле)
+                                </div>
+                                <div class="custom-select-option <%= sort === 'price_desc' ? 'active' : '' %>" data-value="price_desc">
+                                    По цене (дороже)
+                                </div>
+                                <div class="custom-select-option <%= sort === 'rating' ? 'active' : '' %>" data-value="rating">
+                                    По рейтингу
+                                </div>
+                                <div class="custom-select-option <%= sort === 'discount' ? 'active' : '' %>" data-value="discount">
+                                    По скидке
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="sort" id="sortHidden" value="<%= sort || 'newest' %>">
+                    </div>
 
                     <!-- Фильтр по цене -->
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-tag me-2"></i>Цена
                     </h5>
-                    <div class="mb-4">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="form-label small text-muted">От</label>
-                                <input type="number" 
-                                    class="form-control form-control-sm" 
-                                    id="minPriceInput" 
-                                    value="<%= minPrice %>" 
-                                    min="<%= sliderMin %>" 
-                                    max="<%= sliderMax %>"
-                                    oninput="document.getElementById('minPriceHidden').value = this.value">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small text-muted">До</label>
-                                <input type="number" 
-                                    class="form-control form-control-sm" 
-                                    id="maxPriceInput" 
-                                    value="<%= maxPrice %>" 
-                                    min="<%= sliderMin %>" 
-                                    max="<%= sliderMax %>"
-                                    oninput="document.getElementById('maxPriceHidden').value = this.value">
-                            </div>
-                        </div>
-                        <input type="hidden" name="minPrice" id="minPriceHidden" value="<%= minPrice %>">
-                        <input type="hidden" name="maxPrice" id="maxPriceHidden" value="<%= maxPrice %>">
+                    <div class="price-range-container">
+                        <!-- Слайдер будет инициализирован через JavaScript -->
                     </div>
+
                     <!-- Категории -->
                     <h5 class="fw-bold mb-3 text-primary mt-4">
                         <i class="fas fa-list me-2"></i>Категории
@@ -96,10 +118,10 @@
                                 onclick="toggleCategories()" 
                                 id="toggleCategoriesBtn"
                                 aria-expanded="true">
-                            <i class="fas fa-chevron-up ms-1" id="categoriesToggleIcon" style="font-size: 2vh;"></i>
+                            <i class="fas fa-chevron-down ms-1" id="categoriesToggleIcon" style="font-size: 2vh;"></i>
                         </button>
                     </h5>
-                    <div class="categories-filter mb-3" id="categoriesFilterContainer">
+                    <div class="categories-filter mb-3 d-none" id="categoriesFilterContainer">
                         <div class="categories-list" id="categoriesList">
                             <% 
                                 // Парсим строку категорий в массив для правильной проверки
@@ -124,7 +146,7 @@
                             <button class="btn btn-sm btn-outline-primary" 
                                     type="button" 
                                     onclick="clearCategories()">
-                                <i class="fas fa-times me-1"></i>Очистить
+                                <i class="fas fa-times me-1"></i>
                             </button>
                             <span class="text-muted small" id="selectedCategoriesCount">
                                 Выбрано: <span class="fw-bold"><%= selectedCategories.length %></span>
@@ -142,11 +164,16 @@
                                id="onSale" 
                                value="true"
                                <%= onSale ? 'checked' : '' %>
-                               onchange="updateSearch()">
+                               onchange="applyFilters()">
                         <label class="form-check-label" for="onSale">
                             <i class="fas fa-fire text-danger me-1"></i>Только акционные товары
                         </label>
                     </div>
+
+                    <!-- Кнопка "Применить фильтры" -->
+                    <button class="btn apply-filters-btn" onclick="applyFilters()">
+                        <i class="fas fa-check-circle me-2"></i>Применить фильтры
+                    </button>
 
                     <!-- Информация о результатах -->
                     <div class="mt-4 pt-3 border-top">
@@ -414,112 +441,522 @@
 </div>
 
 <script>
-// Функция для обновления поиска при изменении фильтров
-function updateSearch() {
-    const form = document.getElementById('searchForm');
-    const search = form.querySelector('[name="search"]').value;
-    const category = document.querySelector('[name="category"]').value;
-    const minPrice = document.getElementById('minPriceHidden').value;
-    const maxPrice = document.getElementById('maxPriceHidden').value;
-    const onSale = document.getElementById('onSale').checked ? 'true' : '';
-    const sort = document.querySelector('[name="sort"]').value;
+// Глобальные переменные для слайдера
+let minPriceValue = <%= minPrice %>;
+let maxPriceValue = <%= maxPrice %>;
+const sliderMin = <%= sliderMin %>;
+const sliderMax = <%= sliderMax %>;
+const step = 100;
+
+// Кастомный выпадающий список для сортировки
+document.addEventListener('DOMContentLoaded', function() {
+  const sortDropdown = document.getElementById('sortDropdown');
+  const sortSelected = document.getElementById('sortSelected');
+  const sortOptions = document.getElementById('sortOptions');
+  const sortHidden = document.getElementById('sortHidden');
+  
+  if (sortDropdown) {
+    // Открытие/закрытие выпадающего списка
+    sortDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+      this.classList.toggle('open');
+    });
     
-    const params = new URLSearchParams();
+    // Выбор опции
+    document.querySelectorAll('.custom-select-option').forEach(option => {
+      option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const value = this.getAttribute('data-value');
+        const text = this.textContent.trim();
+        
+        // Обновляем выбранное значение
+        sortSelected.textContent = text;
+        sortHidden.value = value;
+        
+        // Убираем активный класс со всех
+        document.querySelectorAll('.custom-select-option').forEach(opt => {
+          opt.classList.remove('active');
+        });
+        
+        // Добавляем активный класс к выбранному
+        this.classList.add('active');
+        
+        // Закрываем список
+        sortDropdown.classList.remove('open');
+        
+        // Применяем фильтры
+        applyFilters();
+      });
+    });
     
-    if (search) params.set('search', search);
-    if (category) params.set('category', category);
-    if (minPrice) params.set('minPrice', minPrice);
-    if (maxPrice) params.set('maxPrice', maxPrice);
-    if (onSale) params.set('onSale', onSale);
-    if (sort) params.set('sort', sort);
+    // Закрытие при клике вне списка
+    document.addEventListener('click', function(e) {
+      if (!sortDropdown.contains(e.target)) {
+        sortDropdown.classList.remove('open');
+      }
+    });
     
-    window.location.href = `/products?${params.toString()}`;
+    // Закрытие при нажатии на клавишу ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        sortDropdown.classList.remove('open');
+      }
+    });
+  }
+  
+  initPriceSlider();
+  initCategoryFilters();
+  initStickyFilters();
+  initSearchForm();
+});
+
+// Инициализация слайдера цен
+function initPriceSlider() {
+  const sliderContainer = document.querySelector('.price-range-container');
+  if (!sliderContainer) return;
+  
+  // Создаём слайдер
+  const sliderHTML = `
+    <div class="price-range-values">
+      <span id="minValueDisplay">${minPriceValue.toLocaleString()}₽</span>
+      <span id="maxValueDisplay">${maxPriceValue.toLocaleString()}₽</span>
+    </div>
+    <div class="price-slider" id="priceSlider">
+      <div class="slider-thumb min" id="minThumb">
+        <span class="range-slider-value" id="minValueLabel">${minPriceValue.toLocaleString()}₽</span>
+      </div>
+      <div class="slider-thumb max" id="maxThumb">
+        <span class="range-slider-value" id="maxValueLabel">${maxPriceValue.toLocaleString()}₽</span>
+      </div>
+    </div>
+    <div class="price-inputs">
+      <div class="price-input-wrapper">
+        <span class="price-input-badge">От</span>
+        <input type="number" class="price-input" id="minPriceInput" value="${minPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
+      </div>
+      <div class="price-input-wrapper">
+        <span class="price-input-badge">До</span>
+        <input type="number" class="price-input" id="maxPriceInput" value="${maxPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
+      </div>
+    </div>
+    <input type="hidden" id="minPriceHidden" value="${minPriceValue}">
+    <input type="hidden" id="maxPriceHidden" value="${maxPriceValue}">
+  `;
+  
+  // Заменяем старый блок цен на новый слайдер
+  const priceSection = document.querySelector('.price-range-container');
+  if (priceSection) {
+    priceSection.innerHTML = sliderHTML;
+  }
+  
+  // Обновляем стили слайдера
+  updateSliderStyle();
+  
+  // Добавляем обработчики событий
+  const minThumb = document.getElementById('minThumb');
+  const maxThumb = document.getElementById('maxThumb');
+  const minInput = document.getElementById('minPriceInput');
+  const maxInput = document.getElementById('maxPriceInput');
+  
+  // Обработчик для минимума
+  minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
+  minInput.addEventListener('input', (e) => {
+    let value = Math.floor(parseInt(e.target.value) / step) * step;
+    value = Math.max(sliderMin, Math.min(value, maxPriceValue - step));
+    minPriceValue = value;
+    e.target.value = value;
+    document.getElementById('minValueDisplay').textContent = value.toLocaleString() + '₽';
+    document.getElementById('minValueLabel').textContent = value.toLocaleString() + '₽';
+    document.getElementById('minPriceHidden').value = value;
+    updateSliderStyle();
+  });
+  
+  // Обработчик для максимума
+  maxThumb.addEventListener('mousedown', (e) => startDrag(e, 'max'));
+  maxInput.addEventListener('input', (e) => {
+    let value = Math.ceil(parseInt(e.target.value) / step) * step;
+    value = Math.min(sliderMax, Math.max(value, minPriceValue + step));
+    maxPriceValue = value;
+    e.target.value = value;
+    document.getElementById('maxValueDisplay').textContent = value.toLocaleString() + '₽';
+    document.getElementById('maxValueLabel').textContent = value.toLocaleString() + '₽';
+    document.getElementById('maxPriceHidden').value = value;
+    updateSliderStyle();
+  });
+  
+  // Обработчик фокуса для инпутов
+  minInput.addEventListener('focus', () => {
+    document.querySelector('.price-input-wrapper:nth-child(1)').classList.add('active');
+  });
+  minInput.addEventListener('blur', () => {
+    document.querySelector('.price-input-wrapper:nth-child(1)').classList.remove('active');
+  });
+  maxInput.addEventListener('focus', () => {
+    document.querySelector('.price-input-wrapper:nth-child(2)').classList.add('active');
+  });
+  maxInput.addEventListener('blur', () => {
+    document.querySelector('.price-input-wrapper:nth-child(2)').classList.remove('active');
+  });
 }
 
-// Обновление фильтра категорий
+function updateSliderStyle() {
+  const minPercentage = ((minPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
+  const maxPercentage = ((maxPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
+  const slider = document.getElementById('priceSlider');
+  
+  if (slider) {
+    // Добавляем плавный переход для градиента
+    slider.style.transition = 'background 0.1s ease';
+    slider.style.setProperty('--min-percentage', minPercentage + '%');
+    slider.style.setProperty('--max-percentage', maxPercentage + '%');
+  }
+  
+  const minThumb = document.getElementById('minThumb');
+  const maxThumb = document.getElementById('maxThumb');
+  
+  if (minThumb && maxThumb) {
+    // УБРАЛИ transition для ползунков - теперь двигаются мгновенно
+    minThumb.style.transition = 'none';
+    maxThumb.style.transition = 'none';
+    minThumb.style.left = minPercentage + '%';
+    maxThumb.style.right = (100 - maxPercentage) + '%';
+  }
+}
+
+// Функция для перетаскивания ползунков - УБРАНА ЗАДЕРЖКА
+function startDrag(e, type) {
+  e.preventDefault();
+  const thumb = e.target;
+  thumb.classList.add('active');
+  const startX = e.clientX;
+  const startValue = type === 'min' ? minPriceValue : maxPriceValue;
+  
+  // Отключаем плавность в начале перетаскивания
+  const slider = document.getElementById('priceSlider');
+  if (slider) {
+    slider.style.transition = 'none';
+  }
+  
+  function onMouseMove(e) {
+    const deltaX = e.clientX - startX;
+    const sliderWidth = document.getElementById('priceSlider').offsetWidth;
+    const pixelsPerStep = (sliderWidth / (sliderMax - sliderMin)) * step;
+    let newValue = startValue + Math.round(deltaX / pixelsPerStep) * step;
+    
+    if (type === 'min') {
+      newValue = Math.max(sliderMin, Math.min(newValue, maxPriceValue - step));
+      minPriceValue = newValue;
+      document.getElementById('minPriceInput').value = newValue;
+      document.getElementById('minValueDisplay').textContent = newValue.toLocaleString() + '₽';
+      document.getElementById('minValueLabel').textContent = newValue.toLocaleString() + '₽';
+      document.getElementById('minPriceHidden').value = newValue;
+    } else {
+      newValue = Math.min(sliderMax, Math.max(newValue, minPriceValue + step));
+      maxPriceValue = newValue;
+      document.getElementById('maxPriceInput').value = newValue;
+      document.getElementById('maxValueDisplay').textContent = newValue.toLocaleString() + '₽';
+      document.getElementById('maxValueLabel').textContent = newValue.toLocaleString() + '₽';
+      document.getElementById('maxPriceHidden').value = newValue;
+    }
+    updateSliderStyle();
+  }
+  
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    thumb.classList.remove('active');
+    
+    // Включаем плавность обратно после отпускания
+    const slider = document.getElementById('priceSlider');
+    if (slider) {
+      slider.style.transition = 'background 0.1s ease';
+    }
+  }
+  
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+}
+
+// Функция для обновления фильтров категорий
+function initCategoryFilters() {
+  const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
+  updateCategoriesCount(checkboxes.length);
+  
+  // Добавляем обработчик клика на лейблы
+  document.querySelectorAll('.category-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      if (e.target.classList.contains('form-check-input') ||
+          e.target.classList.contains('form-check-label')) {
+        return;
+      }
+      const checkbox = this.querySelector('.form-check-input');
+      if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        const event = new Event('change', { bubbles: true });
+        checkbox.dispatchEvent(event);
+      }
+    });
+  });
+}
+
+// Функция для стики фильтров
+function initStickyFilters() {
+  const filtersSidebar = document.querySelector('.filters-sidebar');
+  if (filtersSidebar) {
+    window.addEventListener('scroll', function() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      if (scrollTop > 300) {
+        filtersSidebar.classList.add('sticky-active');
+      } else {
+        filtersSidebar.classList.remove('sticky-active');
+      }
+    });
+  }
+}
+
+// Функция для формы поиска - обновленная версия
+function initSearchForm() {
+  const centralSearchInput = document.getElementById('centralSearchInput');
+  const suggestionsContainer = document.getElementById('centralSearchSuggestions');
+  
+  if (!centralSearchInput || !suggestionsContainer) {
+    console.warn('Search elements not found');
+    return;
+  }
+  
+  let debounceTimer;
+  let isMouseOverSuggestions = false;
+  
+  // Показ подсказок при фокусе
+  centralSearchInput.addEventListener('focus', function(e) {
+    const query = this.value.trim();
+    if (query.length === 0) {
+      fetchPopularSuggestions();
+    } else if (query.length >= 2) {
+      fetchSuggestions(query);
+    }
+  });
+  
+  // Обработчик ввода
+  centralSearchInput.addEventListener('input', function(e) {
+    clearTimeout(debounceTimer);
+    const query = this.value.trim();
+    
+    if (query.length < 2) {
+      if (query.length === 0) {
+        fetchPopularSuggestions();
+      } else {
+        hideSuggestions();
+      }
+      return;
+    }
+    
+    debounceTimer = setTimeout(() => {
+      fetchSuggestions(query);
+    }, 300);
+  });
+  
+  // Скрыть подсказки при потере фокуса
+  centralSearchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      if (!isMouseOverSuggestions) {
+        hideSuggestions();
+      }
+    }, 200);
+  });
+  
+  // Обработчик клика по подсказке
+  suggestionsContainer.addEventListener('click', function(e) {
+    const item = e.target.closest('.search-suggestion-item');
+    if (item) {
+      const productId = item.dataset.productId;
+      window.location.href = `/product/${productId}`;
+    }
+  });
+  
+  // Отслеживание наведения на подсказки
+  suggestionsContainer.addEventListener('mouseenter', () => {
+    isMouseOverSuggestions = true;
+  });
+  
+  suggestionsContainer.addEventListener('mouseleave', () => {
+    isMouseOverSuggestions = false;
+    setTimeout(() => {
+      if (document.activeElement !== centralSearchInput) {
+        hideSuggestions();
+      }
+    }, 200);
+  });
+  
+  // Обработчик клавиш
+  centralSearchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const form = document.getElementById('centralSearchForm');
+      if (form) {
+        form.submit();
+      }
+    }
+    if (e.key === 'Escape') {
+      hideSuggestions();
+    }
+  });
+}
+
+function displaySuggestions(suggestions) {
+  const suggestionsContainer = document.getElementById('centralSearchSuggestions');
+  if (!suggestionsContainer) return;
+  
+  if (!Array.isArray(suggestions) || suggestions.length === 0) {
+    suggestionsContainer.innerHTML = `
+      <div class="search-suggestions-empty">
+        <i class="fas fa-search"></i>
+        <p>Ничего не найдено</p>
+      </div>
+    `;
+    suggestionsContainer.classList.add('show');
+    return;
+  }
+  
+  let html = '';
+  suggestions.forEach(suggestion => {
+    const discountBadge = suggestion.isDiscounted ? `
+      <div class="search-suggestion-discount-badge">
+        <i class="fas fa-tag"></i>-${suggestion.discountPercentage}%
+      </div>
+    ` : '';
+    
+    html += `
+      <div class="search-suggestion-item" data-product-id="${suggestion.id}">
+        <div style="position: relative;">
+          <img src="/images/products/${suggestion.thumbnail}" alt="${suggestion.title}">
+          ${discountBadge}
+        </div>
+        <div class="search-suggestion-info">
+          <div class="search-suggestion-title">${suggestion.title}</div>
+          <div class="search-suggestion-price-container">
+            <span class="search-suggestion-price">${suggestion.price.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
+            ${suggestion.isDiscounted ? `
+              <span class="search-suggestion-original-price">${suggestion.originalPrice.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  suggestionsContainer.innerHTML = html;
+  suggestionsContainer.classList.add('show');
+}
+
+function hideSuggestions() {
+  const suggestionsContainer = document.getElementById('centralSearchSuggestions');
+  if (suggestionsContainer) {
+    suggestionsContainer.classList.remove('show');
+  }
+}
+
+function fetchSuggestions(query) {
+  fetch(`/api/search-suggestions?query=${encodeURIComponent(query)}`)
+    .then(response => response.json())
+    .then(suggestions => {
+      displaySuggestions(suggestions);
+    })
+    .catch(error => {
+      console.error('Error fetching suggestions:', error);
+      hideSuggestions();
+    });
+}
+
+function fetchPopularSuggestions() {
+  fetch('/api/search-suggestions?popular=true')
+    .then(response => response.json())
+    .then(suggestions => {
+      displaySuggestions(suggestions);
+    })
+    .catch(error => {
+      console.error('Error fetching popular suggestions:', error);
+      hideSuggestions();
+    });
+}
+
+// Функция для применения фильтров
+function applyFilters() {
+  const form = document.getElementById('searchForm');
+  const search = form ? form.querySelector('[name="search"]').value : '';
+  const category = document.querySelector('[name="category"]').value;
+  const minPrice = document.getElementById('minPriceHidden').value;
+  const maxPrice = document.getElementById('maxPriceHidden').value;
+  const onSale = document.getElementById('onSale').checked ? 'true' : '';
+  const sort = document.querySelector('[name="sort"]').value;
+  
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (category) params.set('category', category);
+  if (minPrice !== sliderMin.toString()) params.set('minPrice', minPrice);
+  if (maxPrice !== sliderMax.toString()) params.set('maxPrice', maxPrice);
+  if (onSale) params.set('onSale', onSale);
+  if (sort) params.set('sort', sort);
+  
+  window.location.href = `/products?${params.toString()}`;
+}
+
+// Обновление фильтра категорий (без авто-применения)
 function updateCategoryFilter() {
-    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
-    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
-    const hiddenInput = document.getElementById('categoriesHidden');
-    
-    // Сохраняем как строку с разделителем или пустую строку
-    hiddenInput.value = selectedIds.join(',');
-    
-    // Обновляем счётчик
-    updateCategoriesCount(selectedIds.length);
-    
-    // Автоматически применяем фильтр
-    updateSearch();
+  const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
+  const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+  const hiddenInput = document.getElementById('categoriesHidden');
+  hiddenInput.value = selectedIds.join(',');
+  updateCategoriesCount(selectedIds.length);
 }
 
 // Очистка выбранных категорий
 function clearCategories() {
-    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input');
-    checkboxes.forEach(cb => {
-        cb.checked = false;
-    });
-    
-    const hiddenInput = document.getElementById('categoriesHidden');
-    hiddenInput.value = '';
-    
-    updateCategoriesCount(0);
-    updateSearch();
+  const checkboxes = document.querySelectorAll('#categoriesList .form-check-input');
+  checkboxes.forEach(cb => {
+    cb.checked = false;
+  });
+  const hiddenInput = document.getElementById('categoriesHidden');
+  hiddenInput.value = '';
+  updateCategoriesCount(0);
 }
 
-// Обновление счётчика выбранных категорий
+// Обновление счётчика категорий
 function updateCategoriesCount(count) {
-    const countEl = document.querySelector('#selectedCategoriesCount .fw-bold');
-    if (countEl) {
-        countEl.textContent = count;
-    }
+  const countEl = document.querySelector('#selectedCategoriesCount .fw-bold');
+  if (countEl) {
+    countEl.textContent = count;
+  }
 }
 
+// Функция для сворачивания/разворачивания категорий
+function toggleCategories() {
+  const container = document.getElementById('categoriesFilterContainer');
+  const icon = document.getElementById('categoriesToggleIcon');
+  const btn = document.getElementById('toggleCategoriesBtn');
+  
+  if (container && icon && btn) {
+    container.classList.toggle('d-none');
+    if (container.classList.contains('d-none')) {
+      icon.classList.remove('fa-chevron-up');
+      icon.classList.add('fa-chevron-down');
+      btn.setAttribute('aria-expanded', 'false');
+    } else {
+      icon.classList.remove('fa-chevron-down');
+      icon.classList.add('fa-chevron-up');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  }
+}
+
+// Функции для мобильного меню
 function toggleFilters() {
-    document.querySelector('.filters-sidebar').classList.toggle('active');
-    document.querySelector('.mobile-overlay').classList.toggle('active');
-}
-function closeFilters() {
-    document.querySelector('.filters-sidebar').classList.remove('active');
-    document.querySelector('.mobile-overlay').classList.remove('active');
+  document.querySelector('.filters-sidebar').classList.toggle('active');
+  document.querySelector('.mobile-overlay').classList.toggle('active');
 }
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Инициализация счётчика категорий
-    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
-    updateCategoriesCount(checkboxes.length);
-    
-    // Добавляем обработчик клика на лейблы для удобства
-    document.querySelectorAll('.category-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            // Если кликнули на сам чекбокс или лейбл - ничего не делаем (браузер сам обработает)
-            if (e.target.classList.contains('form-check-input') || 
-                e.target.classList.contains('form-check-label')) {
-                return;
-            }
-            
-            // Если кликнули на сам элемент (но не на чекбокс/лейбл)
-            const checkbox = this.querySelector('.form-check-input');
-            if (checkbox) {
-                // Переключаем чекбокс
-                checkbox.checked = !checkbox.checked;
-                
-                // Вызываем событие изменения для обновления фильтра
-                const event = new Event('change', { bubbles: true });
-                checkbox.dispatchEvent(event);
-            }
-        });
-    });
-    
-    // Обработчики для поля поиска
-    const searchInput = document.querySelector('#searchForm [name="search"]');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                updateSearch();
-            }
-        });
-    }
-});
+function closeFilters() {
+  document.querySelector('.filters-sidebar').classList.remove('active');
+  document.querySelector('.mobile-overlay').classList.remove('active');
+}
 </script>
