@@ -497,7 +497,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initPriceSlider();
     initCategoryFilters();
-    initStickyFilters();
     initSearchForm();
 });
 
@@ -548,6 +547,14 @@ function initPriceSlider() {
     const maxThumb = document.getElementById('maxThumb');
     const minInput = document.getElementById('minPriceInput');
     const maxInput = document.getElementById('maxPriceInput');
+
+        // Обработчик для минимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
+    minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
+    minThumb.addEventListener('touchstart', (e) => startDrag(e, 'min'));
+
+    // Обработчик для максимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
+    maxThumb.addEventListener('mousedown', (e) => startDrag(e, 'max'));
+    maxThumb.addEventListener('touchstart', (e) => startDrag(e, 'max'));
     
     // Обработчик для минимума
     minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
@@ -612,53 +619,88 @@ function updateSliderStyle() {
 
 // Функция для перетаскивания ползунков - УБРАНА ЗАДЕРЖКА
 function startDrag(e, type) {
-    e.preventDefault();
-    const thumb = e.target;
+  e.preventDefault();
+  
+  // Определяем, это тач-событие или мышиное
+  const isTouch = e.type === 'touchstart';
+  
+  // Получаем координаты в зависимости от типа события
+  const startX = isTouch ? e.touches[0].clientX : e.clientX;
+  
+  const startValue = type === 'min' ? minPriceValue : maxPriceValue;
+  const thumb = e.target.closest('.slider-thumb');
+  
+  if (thumb) {
     thumb.classList.add('active');
-    const startX = e.clientX;
-    const startValue = type === 'min' ? minPriceValue : maxPriceValue;
+  }
+  
+  // Отключаем плавность в начале перетаскивания
+  const slider = document.getElementById('priceSlider');
+  if (slider) {
+    slider.style.transition = 'none';
+  }
+  
+  // Функция для обработки движения
+  function handleMove(e) {
+    // Предотвращаем прокрутку страницы при перетаскивании на мобильных
+    e.preventDefault();
     
-    // Отключаем плавность в начале перетаскивания
+    // Получаем текущую координату X
+    const currentX = isTouch ? e.touches[0].clientX : e.clientX;
+    
+    const deltaX = currentX - startX;
+    const sliderWidth = document.getElementById('priceSlider').offsetWidth;
+    const pixelsPerStep = (sliderWidth / (sliderMax - sliderMin)) * step;
+    
+    // Вычисляем новое значение
+    let newValue = startValue + Math.round(deltaX / pixelsPerStep) * step;
+    
+    // Обновляем значение в зависимости от типа ползунка
+    if (type === 'min') {
+      newValue = Math.max(sliderMin, Math.min(newValue, maxPriceValue - step));
+      minPriceValue = newValue;
+      document.getElementById('minPriceInput').value = newValue;
+      document.getElementById('minPriceHidden').value = newValue;
+    } else {
+      newValue = Math.min(sliderMax, Math.max(newValue, minPriceValue + step));
+      maxPriceValue = newValue;
+      document.getElementById('maxPriceInput').value = newValue;
+      document.getElementById('maxPriceHidden').value = newValue;
+    }
+    
+    // Обновляем стиль слайдера
+    updateSliderStyle();
+  }
+  
+  // Функция для обработки окончания перетаскивания
+  function handleEnd() {
+    // Удаляем все обработчики событий
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('mouseup', handleEnd);
+    document.removeEventListener('touchmove', handleMove, { passive: false });
+    document.removeEventListener('touchend', handleEnd);
+    document.removeEventListener('touchcancel', handleEnd);
+    
+    // Убираем активный класс с ползунка
+    if (thumb) {
+      thumb.classList.remove('active');
+    }
+    
+    // Включаем плавность обратно после отпускания
     const slider = document.getElementById('priceSlider');
     if (slider) {
-        slider.style.transition = 'none';
+      slider.style.transition = 'background 0.1s ease';
     }
-    
-    function onMouseMove(e) {
-        const deltaX = e.clientX - startX;
-        const sliderWidth = document.getElementById('priceSlider').offsetWidth;
-        const pixelsPerStep = (sliderWidth / (sliderMax - sliderMin)) * step;
-        let newValue = startValue + Math.round(deltaX / pixelsPerStep) * step;
-        
-        if (type === 'min') {
-            newValue = Math.max(sliderMin, Math.min(newValue, maxPriceValue - step));
-            minPriceValue = newValue;
-            document.getElementById('minPriceInput').value = newValue;
-            document.getElementById('minPriceHidden').value = newValue;
-        } else {
-            newValue = Math.min(sliderMax, Math.max(newValue, minPriceValue + step));
-            maxPriceValue = newValue;
-            document.getElementById('maxPriceInput').value = newValue;
-            document.getElementById('maxPriceHidden').value = newValue;
-        }
-        
-        updateSliderStyle();
-    }
-    
-    function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        thumb.classList.remove('active');
-        
-        // Включаем плавность обратно после отпускания
-        const slider = document.getElementById('priceSlider');
-        if (slider) {
-            slider.style.transition = 'background 0.1s ease';
-        }
-    }
-    
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+  }
+  
+  // Добавляем обработчики для мыши
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('mouseup', handleEnd);
+  
+  // Добавляем обработчики для тач-устройств
+  document.addEventListener('touchmove', handleMove, { passive: false });
+  document.addEventListener('touchend', handleEnd);
+  document.addEventListener('touchcancel', handleEnd);
 }
 
 // Функция для обновления фильтров категорий - БЕЗ автоматического применения
@@ -684,19 +726,7 @@ function initCategoryFilters() {
 }
 
 // Функция для стики фильтров
-function initStickyFilters() {
-    const filtersSidebar = document.querySelector('.filters-sidebar');
-    if (filtersSidebar) {
-        window.addEventListener('scroll', function() {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            if (scrollTop > 300) {
-                filtersSidebar.classList.add('sticky-active');
-            } else {
-                filtersSidebar.classList.remove('sticky-active');
-            }
-        });
-    }
-}
+
 
 // Функция для формы поиска - обновленная версия
 function initSearchForm() {
