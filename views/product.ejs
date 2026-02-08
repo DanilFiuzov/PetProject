@@ -53,10 +53,11 @@
                         </button>
                     <% } %>
                     
+                    <!-- Кнопка редактирования товара (желтая) -->
                     <% if (session && session.userRank === 'admin') { %>
                         <a href="/admin/edit-product/<%= product.productID %>" 
-                           class="btn btn-warning rounded-circle shadow-lg"
-                           title="Редактировать товар">
+                        class="btn btn-custom-warning rounded-circle shadow-lg"
+                        title="Редактировать товар">
                             <i class="fas fa-edit fa-lg"></i>
                         </a>
                     <% } %>
@@ -67,7 +68,7 @@
         <!-- Информация о товаре -->
         <div class="col-lg-8">
             <!-- Основная информация -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-4 no-hover">
                 <div class="card-body p-4">
                     <!-- Заголовок и категории -->
                     <div class="mb-4">
@@ -158,18 +159,18 @@
                     <div class="d-grid gap-3">
                         <div class="d-flex gap-2">
                         <% if (session && session.userId) { %>
-                            <button class="btn btn-primary btn-lg py-3 fw-bold" 
+                            <button class="btn btn-custom btn-lg py-3 fw-bold" 
                                     onclick="addToCart('<%= product.productID %>')">
                                 <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
                             </button>
                         <% } else { %>
-                            <a href="/login" class="btn btn-primary btn-lg py-3 fw-bold">
+                            <a href="/login" class="btn btn-custom btn-lg py-3 fw-bold">
                                 <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
                             </a>
                         <% } %>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-primary flex-grow-1 py-3">
+                            <button class="btn btn-outline-custom flex-grow-1 py-3">
                                 <i class="fas fa-share-alt me-2"></i>Поделиться
                             </button>
                         </div>
@@ -291,19 +292,20 @@
                             <% }) %>
                         </div>
                         
-                        <% if (session && session.userId) { %>
-                            <button id="add-review-btn" 
-                                    class="btn btn-primary w-100 mt-4 py-3"
-                                    onclick="openReviewModal()"
-                                    <%= hasReviewed ? 'disabled' : '' %>>
-                                <i class="fas fa-plus me-2"></i>
-                                <%= hasReviewed ? 'Вы уже оставили отзыв' : 'Оставить отзыв' %>
-                            </button>
-                        <% } else { %>
-                            <a href="/login" class="btn btn-outline-primary w-100 mt-4 py-3">
-                                <i class="fas fa-sign-in-alt me-2"></i>Войти, чтобы оставить отзыв
-                            </a>
-                        <% } %>
+                    <!-- Кнопка отзыва -->
+                    <% if (session && session.userId) { %>
+                        <button id="add-review-btn" 
+                                class="btn btn-custom w-100 mt-4 py-3"
+                                onclick="openReviewModal()"
+                                <%= hasReviewed ? 'disabled' : '' %>>
+                            <i class="fas fa-plus me-2"></i>
+                            <%= hasReviewed ? 'Вы уже оставили отзыв' : 'Оставить отзыв' %>
+                        </button>
+                    <% } else { %>
+                        <a href="/login" class="btn btn-outline-custom w-100 mt-4 py-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Войти, чтобы оставить отзыв
+                        </a>
+                    <% } %>
                     </div>
                 </div>
             </div>
@@ -317,8 +319,9 @@
                                 <i class="far fa-comment-alt fa-4x text-muted mb-3"></i>
                                 <h5 class="text-muted mb-3">Пока нет отзывов</h5>
                                 <p class="text-muted mb-4">Будьте первым, кто поделится своим мнением об этом товаре</p>
+                                <!-- Кнопка "Написать отзыв" в пустом блоке отзывов -->
                                 <% if (session && session.userId && !hasReviewed) { %>
-                                    <button class="btn btn-primary px-4 py-2" onclick="openReviewModal()">
+                                    <button class="btn btn-custom px-4 py-2" onclick="openReviewModal()">
                                         <i class="fas fa-plus me-2"></i>Написать отзыв
                                     </button>
                                 <% } %>
@@ -403,9 +406,10 @@
                         </div>
                     </div>
                 </div>
+                <!-- Кнопки в модальном окне -->
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary px-4" onclick="submitReview()">Отправить отзыв</button>
+                    <button type="button" class="btn btn-outline-custom px-4" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-custom px-4" onclick="submitReview()">Отправить отзыв</button>
                 </div>
             </div>
         </div>

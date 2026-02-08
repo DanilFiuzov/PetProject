@@ -1,0 +1,246 @@
+<!-- Хлебные крошки -->
+<nav aria-label="breadcrumb" class="breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb bg-light p-3 rounded-3">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/acc_page" class="text-decoration-none text-primary">
+                    <i class="fas fa-user-circle me-1"></i>Мой аккаунт
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-shopping-bag me-1"></i>Мои заказы
+            </li>
+        </ol>
+    </div>
+</nav>
+
+<div class="container def-bg-settings py-4">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold">
+            <i class="fas fa-shopping-bag text-primary me-2"></i>
+            Мои заказы
+        </h1>
+        <a href="/acc_page" class="btn btn-outline-custom">
+            <i class="fas fa-arrow-left me-1"></i>Назад в аккаунт
+        </a>
+    </div>
+
+    <% if (orders.length === 0) { %>
+        <!-- Пустая страница заказов -->
+        <div class="card empty-cart-card">
+            <div class="card-body text-center py-5 px-4">
+                <div class="empty-cart-icon mb-4">
+                    <i class="fas fa-box-open fa-4x text-muted"></i>
+                </div>
+                <h3 class="text-muted mb-3 fw-bold">У вас пока нет заказов</h3>
+                <p class="text-muted mb-4 lead">Оформите первый заказ, чтобы увидеть его здесь</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/products" class="btn btn-custom px-4 py-3">
+                        <i class="fas fa-shopping-bag me-2"></i>В каталог
+                    </a>
+                    <a href="/" class="btn btn-outline-custom px-4 py-3">
+                        <i class="fas fa-home me-2"></i>На главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    <% } else { %>
+        <!-- Список заказов -->
+        <div class="row g-4">
+            <% orders.forEach(order => { %>
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-3 overflow-hidden order-card">
+                    <!-- Верхняя панель с информацией -->
+                    <div class="card-header bg-light py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1 fw-bold">
+                                    <i class="fas fa-receipt me-2"></i>
+                                    Заказ #<%= order.orderID %>
+                                </h5>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    <%= new Date(order.orderDate).toLocaleDateString('ru-RU', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </small>
+                            </div>
+                            <div>
+                                <% if (order.orderStatusID === 1) { %>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-clock me-1"></i><%= order.statusName %>
+                                    </span>
+                                <% } else if (order.orderStatusID === 2 || order.orderStatusID === 3) { %>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-cogs me-1"></i><%= order.statusName %>
+                                    </span>
+                                <% } else if (order.orderStatusID === 4) { %>
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-shipping-fast me-1"></i><%= order.statusName %>
+                                    </span>
+                                <% } else if (order.orderStatusID === 5 || order.orderStatusID === 6) { %>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i><%= order.statusName %>
+                                    </span>
+                                <% } else if (order.orderStatusID === 7) { %>
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i><%= order.statusName %>
+                                    </span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary"><%= order.statusName %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Тело карточки -->
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <!-- Левая колонка - информация о заказе -->
+                            <div class="col-md-6">
+                                <!-- Способ получения -->
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold mb-2">
+                                        <i class="fas fa-truck me-2"></i>Способ получения
+                                    </label>
+                                    <div class="fw-bold">
+                                        <% if (order.deliveryType === 'pickup') { %>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-store me-1"></i>Самовывоз
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-shipping-fast me-1"></i>Доставка
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Адрес или пункт выдачи -->
+                                <% if (order.deliveryType === 'pickup' && order.pointName) { %>
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold mb-2">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Пункт выдачи
+                                    </label>
+                                    <div class="fw-bold"><%= order.pointName %></div>
+                                    <div class="text-muted small"><%= order.pointAddress %></div>
+                                </div>
+                                <% } else if (order.deliveryAddress) { %>
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold mb-2">
+                                        <i class="fas fa-map-pin me-2"></i>Адрес доставки
+                                    </label>
+                                    <div class="fw-bold"><%= order.deliveryAddress %></div>
+                                </div>
+                                <% } %>
+
+                                <!-- Способ оплаты -->
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold mb-2">
+                                        <i class="fas fa-credit-card me-2"></i>Способ оплаты
+                                    </label>
+                                    <div class="fw-bold">
+                                        <% if (order.paymentType === 'online') { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-mobile-alt me-1"></i>СБП / Онлайн
+                                            </span>
+                                        <% } else if (order.paymentType === 'cash') { %>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-money-bill-wave me-1"></i>Наличные / Карта
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-credit-card me-1"></i>Карта
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Статус оплаты -->
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold mb-2">
+                                        <i class="fas fa-file-invoice-dollar me-2"></i>Статус оплаты
+                                    </label>
+                                    <div class="fw-bold">
+                                        <% if (order.paymentStatus === 'paid') { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>Оплачено
+                                            </span>
+                                        <% } else if (order.paymentStatus === 'pending') { %>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i>Ожидает оплаты
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle me-1"></i>Не оплачено
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Правая колонка - итоги -->
+                            <div class="col-md-6">
+                                <div class="bg-light rounded-3 p-3 h-100">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator me-2"></i>Итоги заказа
+                                    </h6>
+                                    
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Сумма заказа:</span>
+                                        <span class="fw-bold">
+                                            <%= parseFloat(order.totalAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Доставка:</span>
+                                        <span class="text-success fw-bold">Бесплатно</span>
+                                    </div>
+                                    
+                                    <hr class="my-2">
+                                    
+                                    <div class="d-flex justify-content-between fw-bold fs-5">
+                                        <span>Итого:</span>
+                                        <span class="text-primary">
+                                            <%= parseFloat(order.totalAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки действий -->
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                <a href="/order/<%= order.orderID %>" class="btn btn-custom">
+                                    <i class="fas fa-eye me-1"></i>Подробнее
+                                </a>
+                                <% if (order.paymentStatus === 'pending' && order.paymentType === 'online') { %>
+                                <a href="/payment/sbp/<%= order.orderID %>" class="btn btn-custom-success">
+                                    <i class="fas fa-credit-card me-1"></i>Оплатить сейчас
+                                </a>
+                                <% } %>
+                                <a href="/products" class="btn btn-outline-custom">
+                                    <i class="fas fa-shopping-bag me-1"></i>Продолжить покупки
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>
+

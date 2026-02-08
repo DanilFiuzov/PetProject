@@ -1,0 +1,254 @@
+<!-- Хлебные крошки -->
+<nav aria-label="breadcrumb" class="breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb bg-light p-3 rounded-3">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/cart/<%= session.userId %>" class="text-decoration-none text-primary">
+                    <i class="fas fa-shopping-cart me-1"></i>Корзина
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-check-circle me-1"></i>Заказ оформлен
+            </li>
+        </ol>
+    </div>
+</nav>
+
+<div class="container def-bg-settings py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Успешное оформление -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-body p-5 text-center">
+                    <!-- Иконка успеха -->
+                    <div class="mb-4">
+                        <div class="position-relative d-inline-block">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-4 mb-3">
+                                <i class="fas fa-check-circle fa-5x text-success"></i>
+                            </div>
+                            <div class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Заголовок -->
+                    <h1 class="mb-3 fw-bold">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Заказ успешно оформлен!
+                    </h1>
+                    
+                    <p class="text-muted mb-4 lead">
+                        Спасибо за покупку! Ваш заказ №<strong><%= order.orderID %></strong> принят в обработку.
+                    </p>
+                    
+                    <!-- Информация о заказе -->
+                    <div class="bg-light rounded-3 p-4 mb-4 text-start">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-hashtag me-2"></i>Номер заказа
+                                    </label>
+                                    <div class="fw-bold fs-5">#<%= order.orderID %></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-truck me-2"></i>Способ получения
+                                    </label>
+                                    <div class="fw-bold">
+                                        <% if (order.deliveryType === 'pickup') { %>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-store me-1"></i>Самовывоз
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-shipping-fast me-1"></i>Доставка
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <% if (order.deliveryType === 'pickup' && order.pointName) { %>
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Пункт выдачи
+                                    </label>
+                                    <div class="fw-bold"><%= order.pointName %></div>
+                                    <div class="text-muted small"><%= order.pointAddress %></div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-clock me-1"></i><%= order.work_hours %>
+                                    </div>
+                                </div>
+                                <% } else if (order.deliveryAddress) { %>
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-map-pin me-2"></i>Адрес доставки
+                                    </label>
+                                    <div class="fw-bold"><%= order.deliveryAddress %></div>
+                                </div>
+                                <% } %>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-credit-card me-2"></i>Способ оплаты
+                                    </label>
+                                    <div class="fw-bold">
+                                        <% if (order.paymentType === 'online') { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-mobile-alt me-1"></i>СБП / Онлайн
+                                            </span>
+                                        <% } else if (order.paymentType === 'cash') { %>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-money-bill-wave me-1"></i>Наличные / Карта
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-credit-card me-1"></i>Карта
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-calendar-alt me-2"></i>Дата заказа
+                                    </label>
+                                    <div class="fw-bold">
+                                        <%= new Date(order.orderDate).toLocaleDateString('ru-RU', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">
+                                        <i class="fas fa-info-circle me-2"></i>Статус заказа
+                                    </label>
+                                    <div class="fw-bold">
+                                        <span class="badge bg-primary">
+                                            <%= order.statusName %>
+                                        </span>
+                                        <div class="text-muted small mt-1"><%= order.statusDescription %></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Детали заказа -->
+                    <div class="mb-4 text-start">
+                        <h5 class="mb-3 pb-2 border-bottom fw-bold">
+                            <i class="fas fa-boxes text-primary me-2"></i>Детали заказа
+                        </h5>
+                        
+                        <% items.forEach(item => { %>
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="border rounded-3 overflow-hidden" style="width: 80px; height: 80px;">
+                                    <img src="/images/products/<%= item.productThumbnail %>" 
+                                         alt="<%= item.productTitle %>" 
+                                         class="w-100 h-100 object-fit-cover">
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold"><%= item.productTitle %></h6>
+                                <div class="text-muted small mb-1">
+                                    <i class="fas fa-industry me-1"></i><%= item.productManufacturer %>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-secondary"><%= item.quantity %> шт.</span>
+                                    <span class="fw-bold">
+                                        <%= parseFloat(item.discountedPrice || item.price).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                        
+                        <div class="bg-light rounded-3 p-3 mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Товары (<%= items.length %>)</span>
+                                <span class="fw-bold">
+                                    <%= parseFloat(order.totalAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Доставка</span>
+                                <span class="text-success fw-bold">Бесплатно</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <span>Итого:</span>
+                                <span class="text-primary">
+                                    <%= parseFloat(order.totalAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Инструкции по оплате -->
+                    <% if (order.paymentType === 'online') { %>
+                    <div class="alert alert-info rounded-3 mb-4">
+                        <h6 class="mb-2 fw-bold">
+                            <i class="fas fa-info-circle me-2"></i>Инструкция по оплате
+                        </h6>
+                        <p class="mb-0 small">
+                            <i class="fas fa-mobile-alt me-1"></i>
+                            Для оплаты заказа отсканируйте QR-код в приложении вашего банка 
+                            или перейдите по ссылке для оплаты через СБП.
+                        </p>
+                    </div>
+                    <% } else { %>
+                    <div class="alert alert-warning rounded-3 mb-4">
+                        <h6 class="mb-2 fw-bold">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Важная информация
+                        </h6>
+                        <p class="mb-0 small">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            Оплата производится при получении заказа в пункте выдачи или курьеру.
+                        </p>
+                    </div>
+                    <% } %>
+                    
+                    <!-- Кнопки действий -->
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="/my-orders" class="btn btn-custom px-4 py-3">
+                            <i class="fas fa-list me-2"></i>Мои заказы
+                        </a>
+                        <a href="/products" class="btn btn-outline-custom px-4 py-3">
+                            <i class="fas fa-shopping-bag me-2"></i>Продолжить покупки
+                        </a>
+                        <a href="/" class="btn btn-outline-custom px-4 py-3">
+                            <i class="fas fa-home me-2"></i>На главную
+                        </a>
+                    </div>
+                    
+                    <!-- Дополнительная информация -->
+                    <div class="mt-4 pt-3 border-top text-muted small">
+                        <p class="mb-2">
+                            <i class="fas fa-envelope me-1"></i>
+                            На вашу почту <strong><%= order.customerEmail %></strong> отправлена информация о заказе.
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-headset me-1"></i>
+                            Если у вас есть вопросы, свяжитесь с нами по телефону поддержки.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

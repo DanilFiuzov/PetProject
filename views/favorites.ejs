@@ -51,13 +51,13 @@
                     <!-- Действия -->
                     <div class="d-grid gap-2 mb-4">
                         <% if (products.length > 0) { %>
-                            <button class="btn btn-outline-danger" 
+                            <button class="btn btn-outline-custom-danger" 
                                     onclick="clearAllFavorites()">
                                 <i class="fas fa-trash-alt me-2"></i>
                                 Очистить все
                             </button>
                         <% } %>
-                        <a href="/products" class="btn btn-primary">
+                        <a href="/products" class="btn btn-custom">
                             <i class="fas fa-shopping-bag me-2"></i>
                             Перейти в каталог
                         </a>
@@ -98,7 +98,7 @@
                         </div>
                         <h4 class="text-muted mb-3">Избранное пусто</h4>
                         <p class="text-muted mb-4">Добавляйте товары в избранное, чтобы вернуться к ним позже</p>
-                        <a href="/products" class="btn btn-primary px-4 py-2">
+                        <a href="/products" class="btn btn-custom px-4 py-2">
                             <i class="fas fa-shopping-bag me-2"></i>Перейти в каталог
                         </a>
                     </div>
@@ -241,18 +241,18 @@
                             
                             <div class="action-buttons">
                                 <% if (session.userId) { %>
-                                    <button class="btn btn-primary btn-sm" 
+                                    <button class="btn btn-custom btn-sm" 
                                             onclick="addToCart('<%= product.productID %>')">
                                         <i class="fas fa-shopping-cart me-1"></i>Купить
                                     </button>
                                 <% } else { %>
-                                    <a href="/login" class="btn btn-primary btn-sm">
+                                    <a href="/login" class="btn btn-custom btn-sm">
                                         <i class="fas fa-sign-in-alt me-1"></i>Войти
                                     </a>
                                 <% } %>
                                 
                                 <a href="/product/<%= product.productID %>" 
-                                   class="btn btn-outline-primary btn-sm">
+                                   class="btn btn-outline-custom btn-sm">
                                     <i class="fas fa-eye me-1"></i>Подробнее
                                 </a>
                             </div>
@@ -269,7 +269,7 @@
                             Всего сохранено: <%= products.length %> товаров
                         </div>
                         <% if (products.length > 5) { %>
-                            <button class="btn btn-outline-danger btn-sm" onclick="clearAllFavorites()">
+                            <button class="btn btn-outline-custom-danger btn-sm" onclick="clearAllFavorites()">
                                 <i class="fas fa-trash-alt me-1"></i>Очистить все
                             </button>
                         <% } %>

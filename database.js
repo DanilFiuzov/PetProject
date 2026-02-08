@@ -1082,24 +1082,278 @@ function getFavoritesWithProducts(customerID, callback) {
     });
 }
 
+// Получение товаров каталога с информацией о пользователе (избранное + корзина)
+function getCatalogProducts(customerID, filters, callback) {
+    // Сначала получаем товары
+    getProductsFiltered(filters, (err, products) => {
+        if (err) return callback(err);
+        
+        // Если пользователь не авторизован, возвращаем только товары
+        if (!customerID) {
+            return callback(null, {
+                products: products,
+                favorites: [],
+                cart: {},
+                cartCount: 0
+            });
+        }
+        
+        // Получаем избранное пользователя
+        getFavoritesByCustomerID(customerID, (favoritesErr, favorites) => {
+            if (favoritesErr) {
+                favorites = [];
+            }
+            
+            // Получаем корзину пользователя
+            getCartByCustomerID(customerID, (cartErr, cartItems) => {
+                if (cartErr) {
+                    cartItems = [];
+                }
+                
+                // Формируем объект корзины
+                const cart = {};
+                cartItems.forEach(item => {
+                    cart[item.productID] = { sc_count: item.sc_count };
+                });
+                
+                // Подсчитываем общее количество товаров в корзине
+                const cartCount = Object.values(cart).reduce((total, item) => {
+                    return total + (item.sc_count || 0);
+                }, 0);
+                
+                // Возвращаем все данные
+                callback(null, {
+                    products: products,
+                    favorites: favorites.map(item => item.productID),
+                    cart: cart,
+                    cartCount: cartCount
+                });
+            });
+        });
+    });
+}
+
+// ========================================
+// Функции для оформления заказа
+// ========================================
+
+// Получение всех активных пунктов выдачи
+function getDeliveryPoints(callback) {
+    const query = 'SELECT * FROM delivery_points WHERE is_active = 1 ORDER BY pointName';
+    connection.query(query, callback);
+}
+
+// Получение пункта выдачи по ID
+function getDeliveryPointById(pointID, callback) {
+    const query = 'SELECT * FROM delivery_points WHERE pointID = ? AND is_active = 1';
+    connection.query(query, [pointID], callback);
+}
+
+// Создание нового заказа
+function createOrder(orderData, items, callback) {
+    connection.beginTransaction((err) => {
+        if (err) return callback(err);
+
+        // Вставляем заказ
+        const orderQuery = `
+            INSERT INTO orders (
+                customerID, 
+                totalAmount, 
+                deliveryType, 
+                deliveryAddress, 
+                deliveryPointID, 
+                deliveryCost,
+                paymentType, 
+                paymentStatus, 
+                orderStatusID, 
+                customerName, 
+                customerPhone, 
+                customerEmail, 
+                comment,
+                qrCodeData,
+                paymentLink
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        connection.query(orderQuery, [
+            orderData.customerID,
+            orderData.totalAmount,
+            orderData.deliveryType,
+            orderData.deliveryAddress || null,
+            orderData.deliveryPointID || null,
+            orderData.deliveryCost || 0,
+            orderData.paymentType,
+            orderData.paymentStatus || 'pending',
+            orderData.orderStatusID || 1,
+            orderData.customerName,
+            orderData.customerPhone,
+            orderData.customerEmail,
+            orderData.comment || null,
+            orderData.qrCodeData || null,
+            orderData.paymentLink || null
+        ], (err, result) => {
+            if (err) {
+                console.error('Order insert error:', err);
+                return connection.rollback(() => callback(err));
+            }
+
+            const orderID = result.insertId;
+
+            // Вставляем товары в заказ
+            if (items && items.length > 0) {
+                const itemPromises = items.map(item => {
+                    return new Promise((resolve, reject) => {
+                        const itemQuery = `
+                            INSERT INTO order_items (
+                                orderID, 
+                                productID, 
+                                quantity, 
+                                price, 
+                                discountedPrice
+                            ) VALUES (?, ?, ?, ?, ?)
+                        `;
+                        connection.query(itemQuery, [
+                            orderID,
+                            item.productID,
+                            item.quantity,
+                            item.price,
+                            item.discountedPrice || null
+                        ], (err) => {
+                            if (err) reject(err);
+                            else resolve();
+                        });
+                    });
+                });
+
+                Promise.all(itemPromises)
+                    .then(() => {
+                        connection.commit((err) => {
+                            if (err) {
+                                console.error('Commit error:', err);
+                                return connection.rollback(() => callback(err));
+                            }
+                            callback(null, orderID);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Items insert error:', err);
+                        connection.rollback(() => callback(err));
+                    });
+            } else {
+                connection.commit((err) => {
+                    if (err) {
+                        console.error('Commit error:', err);
+                        return connection.rollback(() => callback(err));
+                    }
+                    callback(null, orderID);
+                });
+            }
+        });
+    });
+}
+
+// Получение заказа по ID
+function getOrderById(orderID, callback) {
+    const query = `
+        SELECT o.*, 
+               dp.pointName, 
+               dp.address as pointAddress, 
+               dp.latitude, 
+               dp.longitude,
+               dp.work_hours,
+               dp.phone as pointPhone,
+               os.statusName,
+               os.statusDescription
+        FROM orders o
+        LEFT JOIN delivery_points dp ON o.deliveryPointID = dp.pointID
+        LEFT JOIN order_status os ON o.orderStatusID = os.statusID
+        WHERE o.orderID = ?
+    `;
+    connection.query(query, [orderID], (err, results) => {
+        if (err) return callback(err);
+        if (results.length === 0) return callback(null, null);
+        callback(null, results[0]);
+    });
+}
+
+// Получение товаров заказа
+function getOrderItems(orderID, callback) {
+    const query = `
+        SELECT oi.*, p.productTitle, p.productThumbnail, p.productManufacturer
+        FROM order_items oi
+        JOIN products p ON oi.productID = p.productID
+        WHERE oi.orderID = ?
+    `;
+    connection.query(query, [orderID], callback);
+}
+
+// Получение заказов пользователя
+function getOrdersByCustomer(customerID, callback) {
+    const query = `
+        SELECT o.*, os.statusName, os.statusDescription
+        FROM orders o
+        JOIN order_status os ON o.orderStatusID = os.statusID
+        WHERE o.customerID = ?
+        ORDER BY o.orderDate DESC
+    `;
+    connection.query(query, [customerID], callback);
+}
+
+// Обновление статуса оплаты
+function updatePaymentStatus(orderID, paymentStatus, callback) {
+    const query = 'UPDATE orders SET paymentStatus = ? WHERE orderID = ?';
+    connection.query(query, [paymentStatus, orderID], callback);
+}
+
+// Обновление статуса заказа
+function updateOrderStatus(orderID, statusID, callback) {
+    const query = 'UPDATE orders SET orderStatusID = ? WHERE orderID = ?';
+    connection.query(query, [statusID, orderID], callback);
+}
+
+// Генерация данных для СБП QR-кода (для диплома - симуляция)
+function generateSBPQRCode(orderID, amount, callback) {
+    // Для диплома генерируем тестовые данные
+    // В реальном проекте здесь была бы интеграция с банком/платежной системой
+    const qrData = {
+        orderID: orderID,
+        amount: amount,
+        timestamp: new Date().toISOString(),
+        type: 'SBP',
+        // Тестовые данные для СБП
+        qrCodeUrl: `/images/qr/sbp_${orderID}.png`,
+        paymentLink: `/payment/sbp/${orderID}`
+    };
+    
+    callback(null, qrData);
+}
+
+// Генерация данных для обычного платежа (наличные/карта)
+function generatePaymentData(orderID, amount, callback) {
+    const paymentData = {
+        orderID: orderID,
+        amount: amount,
+        timestamp: new Date().toISOString(),
+        type: 'CASH/CARD',
+        paymentLink: `/payment/confirm/${orderID}`
+    };
+    
+    callback(null, paymentData);
+}
+
 // Экспорт всех функций
 module.exports = {
     connection,
-    // Новые функции для главной страницы
     getAllCategories,
     getPopularProducts,
-    // Новые функции для каталога
     getPriceBounds,
     getProductCount,
     getProductsFiltered,
-    // Новые функции для поиска
     getPopularSearchSuggestions,
     searchProducts,
-    // Новые функции для админки
     getAdminProducts,
     getProductCategoriesForAdmin,
     getProductFeaturesCount,
-    // Существующие функции
     updateProduct,
     calculateDiscountedPrice,
     getDiscountedProducts,
@@ -1134,5 +1388,16 @@ module.exports = {
     getProductsByCategory,
     deleteProduct,
     getCartWithProducts,
-    getFavoritesWithProducts
+    getFavoritesWithProducts,
+    getDeliveryPoints,
+    getDeliveryPointById,
+    createOrder,
+    getOrderById,
+    getOrderItems,
+    getOrdersByCustomer,
+    updatePaymentStatus,
+    updateOrderStatus,
+    generateSBPQRCode,
+    generatePaymentData,
+    getCatalogProducts,
 };

@@ -181,7 +181,7 @@ router.get('/', (req, res) => {
 router.get('/products', (req, res) => {
     connection.getPriceBounds((err, boundsResult) => {
         if (err) console.error('Ошибка получения границ цен:', err);
-        
+
         const dbMin = boundsResult?.[0]?.min_price || 0;
         const dbMax = boundsResult?.[0]?.max_price || 100000;
         
@@ -231,83 +231,39 @@ router.get('/products', (req, res) => {
             const totalProducts = countResult[0].total;
             const totalPages = Math.ceil(totalProducts / limit);
             
-            connection.getProductsFiltered(filters, (err, products) => {
+            // Получаем товары каталога с информацией о пользователе
+            connection.getCatalogProducts(req.session.userId, filters, (err, catalogData) => {
                 if (err) {
                     console.error(err);
                     return res.status(500).send('Ошибка при получении списка продуктов');
                 }
                 
+                // Обновляем сессию
+                req.session.favorites = catalogData.favorites || [];
+                req.session.cart = catalogData.cart || {};
+                req.session.cartCount = catalogData.cartCount || 0;
+                
                 connection.connection.query('SELECT categorieID, categorieName FROM categories ORDER BY categorieName', (err, allCategories) => {
                     if (err) allCategories = [];
                     
-                    if (req.session.userId && products.length > 0) {
-                        const productIDs = products.map(p => p.productID);
-                        const placeholders = productIDs.map(() => '?').join(',');
-                        const favoritesQuery = `
-                            SELECT productID FROM favorites 
-                            WHERE customerID = ? AND productID IN (${placeholders})
-                        `;
-                        const favoritesParams = [req.session.userId, ...productIDs];
-                        
-                        connection.connection.query(favoritesQuery, favoritesParams, (favoritesErr, favoritesResults) => {
-                            if (favoritesErr) favoritesResults = [];
-                            
-                            const favoriteIdsSet = new Set(favoritesResults.map(f => f.productID));
-                            
-                            connection.getCartByCustomerID(req.session.userId, (cartErr, cartItems) => {
-                                if (cartErr) cartItems = [];
-                                
-                                req.session.cart = {};
-                                cartItems.forEach(item => {
-                                    req.session.cart[item.productID] = { sc_count: item.sc_count };
-                                });
-                                
-                                req.session.cartCount = Object.values(req.session.cart).reduce((total, item) => {
-                                    return total + (item.sc_count || 0);
-                                }, 0);
-                                
-                                req.session.favorites = Array.from(favoriteIdsSet);
-                                
-                                res.render('layout', { 
-                                    body: 'products',
-                                    products: products,
-                                    allCategories: allCategories,
-                                    session: req.session,
-                                    searchQuery: searchQuery,
-                                    category: category,
-                                    minPrice: minPrice,
-                                    maxPrice: maxPrice,
-                                    sliderMin: sliderMin,
-                                    sliderMax: sliderMax, 
-                                    onSale: onSale,
-                                    sort: sort,
-                                    currentPage: page,
-                                    totalPages: totalPages,
-                                    totalProducts: totalProducts,
-                                    limit: limit
-                                });
-                            });
-                        });
-                    } else {
-                        res.render('layout', {
-                            body: 'products',
-                            products: products,
-                            allCategories: allCategories,
-                            session: req.session,
-                            searchQuery: searchQuery,
-                            category: category,
-                            minPrice: minPrice,
-                            maxPrice: maxPrice,
-                            sliderMin: sliderMin,
-                            sliderMax: sliderMax,
-                            onSale: onSale,
-                            sort: sort,
-                            currentPage: page,
-                            totalPages: totalPages,
-                            totalProducts: totalProducts,
-                            limit: limit
-                        });
-                    }
+                    res.render('layout', { 
+                        body: 'products',
+                        products: catalogData.products,
+                        allCategories: allCategories,
+                        session: req.session,
+                        searchQuery: searchQuery,
+                        category: category,
+                        minPrice: minPrice,
+                        maxPrice: maxPrice,
+                        sliderMin: sliderMin,
+                        sliderMax: sliderMax,
+                        onSale: onSale,
+                        sort: sort,
+                        currentPage: page,
+                        totalPages: totalPages,
+                        totalProducts: totalProducts,
+                        limit: limit
+                    });
                 });
             });
         });
@@ -503,6 +459,28 @@ router.post('/login', (req, res) => {
         } else {
             return res.render('layout', { error: 'Такого пользователя не существует.', body: 'login' });
         }
+    });
+});
+
+// Очистка всей корзины
+router.post('/cart/clear', (req, res) => {
+    const customerID = req.session.userId;
+    if (!customerID) {
+        return res.redirect('/login');
+    }
+
+    const query = 'DELETE FROM shopping_cart WHERE customerID = ?';
+    connection.connection.query(query, [customerID], (err) => {
+        if (err) {
+            console.error('Ошибка очистки корзины:', err);
+            return res.status(500).send('Ошибка при очистке корзины');
+        }
+        
+        // Обновляем сессию
+        req.session.cart = {};
+        req.session.cartCount = 0;
+        
+        res.redirect('/cart/' + customerID);
     });
 });
 
@@ -897,9 +875,21 @@ router.get('/acc_page', (req, res) => {
         });
     });
     
+    // Получаем заказы пользователя
+    const getOrders = new Promise((resolve, reject) => {
+        connection.getOrdersByCustomer(customerID, (err, orders) => {
+            if (err) {
+                console.error('Orders error:', err);
+                resolve([]);
+            } else {
+                resolve(orders || []);
+            }
+        });
+    });
+    
     // Выполняем все запросы
-    Promise.all([getUserData, getFavorites, getCart])
-        .then(([user, favorites, cartItems]) => {
+    Promise.all([getUserData, getFavorites, getCart, getOrders])
+        .then(([user, favorites, cartItems, orders]) => {
             // Обновляем данные в сессии
             req.session.userId = user.customerID;
             req.session.userThumbnail = user.customerThumbnail;
@@ -925,9 +915,10 @@ router.get('/acc_page', (req, res) => {
             res.render('layout', {
                 body: 'acc_page',
                 session: req.session,
-                user: user, // передаем объект пользователя
+                user: user,
                 favoritesCount: req.session.favorites.length,
-                cartCount: req.session.cartCount
+                cartCount: req.session.cartCount,
+                orders: orders
             });
         })
         .catch(err => {
@@ -1705,6 +1696,367 @@ router.get('/admin/products', checkAdmin, (req, res) => {
                     });
                 });
             });
+        });
+    });
+});
+
+// Страница оформления заказа
+router.get('/checkout', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+
+    // Получаем корзину пользователя
+    connection.getCartWithProducts(req.session.userId, (err, products) => {
+        if (err) {
+            console.error('Ошибка получения корзины:', err);
+            products = [];
+        }
+
+        if (products.length === 0) {
+            return res.redirect('/cart/' + req.session.userId);
+        }
+
+        // Получаем пункты выдачи
+        connection.getDeliveryPoints((err, deliveryPoints) => {
+            if (err) {
+                console.error('Ошибка получения пунктов выдачи:', err);
+                deliveryPoints = [];
+            }
+
+            // Рассчитываем итоговую сумму
+            let totalPrice = 0;
+            products.forEach(product => {
+                const itemPrice = product.isDiscounted ? parseFloat(product.discountedPrice) : parseFloat(product.productPrice);
+                totalPrice += itemPrice * product.sc_count;
+            });
+
+            res.render('layout', {
+                body: 'checkout',
+                products: products,
+                deliveryPoints: deliveryPoints,
+                totalPrice: totalPrice,
+                session: req.session
+            });
+        });
+    });
+});
+
+// Обработка оформления заказа
+router.post('/checkout/process', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ success: false, message: 'Необходим вход в систему' });
+    }
+
+    const {
+        deliveryType,
+        deliveryPointID,
+        deliveryAddress,
+        paymentType,
+        customerName,
+        customerPhone,
+        customerEmail,
+        comment
+    } = req.body;
+
+    // Валидация данных
+    if (!deliveryType || !paymentType || !customerName || !customerPhone || !customerEmail) {
+        return res.status(400).json({ success: false, message: 'Заполните все обязательные поля' });
+    }
+
+    if (deliveryType === 'pickup' && !deliveryPointID) {
+        return res.status(400).json({ success: false, message: 'Выберите пункт выдачи' });
+    }
+
+    if (deliveryType === 'delivery' && (!deliveryAddress || deliveryAddress.trim() === '')) {
+        return res.status(400).json({ success: false, message: 'Укажите адрес доставки' });
+    }
+
+    // Проверяем корзину
+    connection.getCartWithProducts(req.session.userId, (err, products) => {
+        if (err || products.length === 0) {
+            return res.status(400).json({ success: false, message: 'Корзина пуста' });
+        }
+
+        // Рассчитываем итоговую сумму
+        let totalAmount = 0;
+        const orderItems = products.map(product => {
+            const itemPrice = product.isDiscounted ? parseFloat(product.discountedPrice) : parseFloat(product.productPrice);
+            const itemTotal = itemPrice * product.sc_count;
+            totalAmount += itemTotal;
+            
+            return {
+                productID: product.productID,
+                quantity: product.sc_count,
+                price: parseFloat(product.productPrice),
+                discountedPrice: product.isDiscounted ? parseFloat(product.discountedPrice) : null
+            };
+        });
+
+        // Стоимость доставки (для диплома - бесплатно)
+        const deliveryCost = 0;
+
+        // Определяем тип оплаты
+        let finalPaymentType = paymentType;
+        
+        // Если доставка - только онлайн оплата
+        if (deliveryType === 'delivery' && paymentType !== 'online') {
+            finalPaymentType = 'online';
+        }
+
+        // Подготавливаем данные заказа
+        const orderData = {
+            customerID: req.session.userId,
+            totalAmount: totalAmount + deliveryCost,
+            deliveryType: deliveryType,
+            deliveryAddress: deliveryAddress || null,
+            deliveryPointID: deliveryPointID || null,
+            deliveryCost: deliveryCost,
+            paymentType: finalPaymentType,
+            paymentStatus: 'pending',
+            orderStatusID: 1,
+            customerName: customerName.trim(),
+            customerPhone: customerPhone.trim(),
+            customerEmail: customerEmail.trim(),
+            comment: comment ? comment.trim() : null
+        };
+
+        // Создаем заказ
+        connection.createOrder(orderData, orderItems, (err, orderID) => {
+            if (err) {
+                console.error('Ошибка создания заказа:', err);
+                return res.status(500).json({ success: false, message: 'Ошибка при создании заказа' });
+            }
+
+            // Очищаем корзину после успешного заказа
+            const clearCartQuery = 'DELETE FROM shopping_cart WHERE customerID = ?';
+            connection.connection.query(clearCartQuery, [req.session.userId], (cartErr) => {
+                if (cartErr) {
+                    console.error('Ошибка очистки корзины:', cartErr);
+                }
+                
+                // Обновляем сессию
+                req.session.cart = {};
+                req.session.cartCount = 0;
+
+                // Генерируем данные для оплаты
+                if (finalPaymentType === 'online') {
+                    connection.generateSBPQRCode(orderID, orderData.totalAmount, (qrErr, qrData) => {
+                        if (qrErr) {
+                            console.error('Ошибка генерации QR:', qrErr);
+                        }
+                        
+                        res.json({
+                            success: true,
+                            orderID: orderID,
+                            paymentType: 'online',
+                            qrData: qrData,
+                            redirectUrl: `/checkout/success/${orderID}`
+                        });
+                    });
+                } else {
+                    connection.generatePaymentData(orderID, orderData.totalAmount, (payErr, payData) => {
+                        if (payErr) {
+                            console.error('Ошибка генерации данных оплаты:', payErr);
+                        }
+                        
+                        res.json({
+                            success: true,
+                            orderID: orderID,
+                            paymentType: finalPaymentType,
+                            paymentData: payData,
+                            redirectUrl: `/checkout/success/${orderID}`
+                        });
+                    });
+                }
+            });
+        });
+    });
+});
+
+// Страница успешного оформления заказа
+router.get('/checkout/success/:orderID', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+
+    const orderID = req.params.orderID;
+
+    Promise.all([
+        new Promise((resolve) => {
+            connection.getOrderById(orderID, (err, order) => {
+                if (err || !order) {
+                    console.error('Ошибка получения заказа:', err);
+                    resolve(null);
+                } else {
+                    resolve(order);
+                }
+            });
+        }),
+        new Promise((resolve) => {
+            connection.getOrderItems(orderID, (err, items) => {
+                if (err) {
+                    console.error('Ошибка получения товаров заказа:', err);
+                    resolve([]);
+                } else {
+                    resolve(items);
+                }
+            });
+        })
+    ]).then(([order, items]) => {
+        if (!order) {
+            return res.status(404).send('Заказ не найден');
+        }
+
+        // Проверяем, что заказ принадлежит пользователю
+        if (order.customerID !== req.session.userId) {
+            return res.status(403).send('Доступ запрещен');
+        }
+
+        res.render('layout', {
+            body: 'checkout_success',
+            order: order,
+            items: items,
+            session: req.session
+        });
+    }).catch(err => {
+        console.error('Ошибка загрузки страницы успеха:', err);
+        res.status(500).send('Ошибка при загрузке страницы');
+    });
+});
+
+// Страница истории заказов
+router.get('/my-orders', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+
+    connection.getOrdersByCustomer(req.session.userId, (err, orders) => {
+        if (err) {
+            console.error('Ошибка получения заказов:', err);
+            orders = [];
+        }
+
+        res.render('layout', {
+            body: 'my_orders',
+            orders: orders,
+            session: req.session
+        });
+    });
+});
+
+// Страница деталей заказа
+router.get('/order/:orderID', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+
+    const orderID = req.params.orderID;
+
+    Promise.all([
+        new Promise((resolve) => {
+            connection.getOrderById(orderID, (err, order) => {
+                if (err || !order) {
+                    console.error('Ошибка получения заказа:', err);
+                    resolve(null);
+                } else {
+                    resolve(order);
+                }
+            });
+        }),
+        new Promise((resolve) => {
+            connection.getOrderItems(orderID, (err, items) => {
+                if (err) {
+                    console.error('Ошибка получения товаров заказа:', err);
+                    resolve([]);
+                } else {
+                    resolve(items);
+                }
+            });
+        })
+    ]).then(([order, items]) => {
+        if (!order) {
+            return res.status(404).send('Заказ не найден');
+        }
+
+        // Проверяем, что заказ принадлежит пользователю
+        if (order.customerID !== req.session.userId) {
+            return res.status(403).send('Доступ запрещен');
+        }
+
+        res.render('layout', {
+            body: 'order_detail',
+            order: order,
+            items: items,
+            session: req.session
+        });
+    }).catch(err => {
+        console.error('Ошибка загрузки деталей заказа:', err);
+        res.status(500).send('Ошибка при загрузке страницы');
+    });
+});
+
+// Маршрут для оплаты СБП
+router.get('/payment/sbp/:orderID', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+
+    const orderID = req.params.orderID;
+
+    connection.getOrderById(orderID, (err, order) => {
+        if (err || !order) {
+            return res.status(404).send('Заказ не найден');
+        }
+
+        // Проверяем, что заказ принадлежит пользователю
+        if (order.customerID !== req.session.userId) {
+            return res.status(403).send('Доступ запрещен');
+        }
+
+        // Проверяем тип оплаты
+        if (order.paymentType !== 'online') {
+            return res.status(400).send('Неверный тип оплаты');
+        }
+
+        // Для диплома - просто подтверждаем оплату
+        connection.updatePaymentStatus(orderID, 'paid', (updateErr) => {
+            if (updateErr) {
+                console.error('Ошибка обновления статуса оплаты:', updateErr);
+            }
+
+            res.render('layout', {
+                body: 'payment_sbp',
+                order: order,
+                session: req.session
+            });
+        });
+    });
+});
+
+// Маршрут для подтверждения оплаты наличными/картой
+router.get('/payment/confirm/:orderID', (req, res) => {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+
+    const orderID = req.params.orderID;
+
+    connection.getOrderById(orderID, (err, order) => {
+        if (err || !order) {
+            return res.status(404).send('Заказ не найден');
+        }
+
+        // Проверяем, что заказ принадлежит пользователю
+        if (order.customerID !== req.session.userId) {
+            return res.status(403).send('Доступ запрещен');
+        }
+
+        // Для диплома - просто показываем страницу подтверждения
+        res.render('layout', {
+            body: 'payment_confirm',
+            order: order,
+            session: req.session
         });
     });
 });

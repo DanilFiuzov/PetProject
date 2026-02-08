@@ -39,12 +39,12 @@
             </div>
 
             <!-- Основная карточка профиля -->
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4 no-hover">
                 <!-- Верхняя панель с градиентом -->
                 <div class="profile-header-bg" style="height: 120px; background: linear-gradient(135deg, var(--primary-color), var(--primary-light));"></div>
                 
                 <!-- Контент профиля -->
-                <div class="card-body p-4" style="margin-top: -60px;">
+                <div class="card-body p-4 " style="margin-top: -60px;">
                     <!-- Аватар и основная информация -->
                     <div class="text-center mb-5">
                         <div class="position-relative d-inline-block mb-3">
@@ -217,20 +217,27 @@
                                 
                                 <!-- История заказов -->
                                 <div class="col-md-4">
-                                    <div class="card border-0 shadow-sm h-100 text-center hover-lift transition-all">
-                                        <div class="card-body p-4">
-                                            <div class="icon-wrapper mb-3">
-                                                <div class="icon-circle bg-secondary bg-opacity-10 text-secondary p-3 rounded-circle d-inline-flex">
-                                                    <i class="fas fa-history fa-2x"></i>
+                                    <a href="/my-orders" class="text-decoration-none">
+                                        <div class="card border-0 shadow-sm h-100 text-center hover-lift transition-all">
+                                            <div class="card-body p-4">
+                                                <div class="icon-wrapper mb-3">
+                                                    <div class="icon-circle bg-success bg-opacity-10 text-success p-3 rounded-circle d-inline-flex">
+                                                        <i class="fas fa-shopping-bag fa-2x"></i>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <h6 class="fw-bold mb-2">История заказов</h6>
-                                            <p class="text-muted small mb-0">В разработке</p>
-                                            <div class="mt-2">
-                                                <span class="badge bg-light text-muted">Скоро</span>
+                                                <h6 class="fw-bold mb-2">Мои заказы</h6>
+                                                <p class="text-muted small mb-0">
+                                                    <% if (orders && orders.length > 0) { %>
+                                                        <span class="badge bg-success text-white px-2 py-1">
+                                                            <%= orders.length %>
+                                                        </span> заказ(ов)
+                                                    <% } else { %>
+                                                        <span class="text-muted">Пока нет заказов</span>
+                                                    <% } %>
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -241,14 +248,14 @@
                                 <button type="submit" 
                                         name="logoutandchange" 
                                         value="update" 
-                                        class="btn btn-primary px-4 py-3 fw-medium">
+                                        class="btn btn-custom px-4 py-3 fw-medium">
                                     <i class="fas fa-save me-2"></i>Сохранить изменения
                                 </button>
                                 
                                 <button type="submit" 
                                         name="logoutandchange" 
                                         value="logout" 
-                                        class="btn btn-outline-danger px-4 py-3 fw-medium">
+                                        class="btn btn-outline-custom-danger px-4 py-3 fw-medium">
                                     <i class="fas fa-sign-out-alt me-2"></i>Выйти из аккаунта
                                 </button>
                             </div>

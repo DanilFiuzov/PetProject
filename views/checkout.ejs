@@ -1,0 +1,510 @@
+<!-- Хлебные крошки -->
+<nav aria-label="breadcrumb" class="breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb bg-light p-3 rounded-3">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-primary">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/cart/<%= session.userId %>" class="text-decoration-none text-primary">
+                    <i class="fas fa-shopping-cart me-1"></i>Корзина
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-file-invoice me-1"></i>Оформление заказа
+            </li>
+        </ol>
+    </div>
+</nav>
+
+<div class="container def-bg-settings py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Заголовок -->
+            <div class="mb-4">
+                <h1 class="mb-3">
+                    <i class="fas fa-file-invoice text-primary"></i>
+                    Оформление заказа
+                </h1>
+                <p class="text-muted">Пожалуйста, заполните все необходимые поля для оформления заказа</p>
+            </div>
+
+            <!-- Форма оформления заказа -->
+            <form id="checkoutForm" class="bg-white rounded-3 shadow-sm p-4 mb-4">
+                <!-- Контактная информация -->
+                <div class="mb-4">
+                    <h3 class="mb-3 pb-2 border-bottom">
+                        <i class="fas fa-user-circle text-primary"></i>
+                        Контактная информация
+                    </h3>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="customerName" class="form-label fw-bold">
+                                <i class="fas fa-user me-2"></i>ФИО <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="customerName" 
+                                   value="<%= session.userName %>" required>
+                            <div class="form-text">Укажите ваше полное имя</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="customerPhone" class="form-label fw-bold">
+                                <i class="fas fa-phone me-2"></i>Телефон <span class="text-danger">*</span>
+                            </label>
+                            <input type="tel" class="form-control form-control-lg" id="customerPhone" 
+                                   placeholder="+7 (___) ___-__-__" required>
+                            <div class="form-text">Для связи с вами</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="customerEmail" class="form-label fw-bold">
+                                <i class="fas fa-envelope me-2"></i>Email <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control form-control-lg" id="customerEmail" 
+                                   value="<%= session.userEmail %>" required>
+                            <div class="form-text">Для отправки информации о заказе</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Способ получения -->
+                <div class="mb-4">
+                    <h3 class="mb-3 pb-2 border-bottom">
+                        <i class="fas fa-truck text-primary"></i>
+                        Способ получения
+                    </h3>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-check-lg border rounded-3 p-3 mb-2">
+                                <input class="form-check-input" type="radio" name="deliveryType" 
+                                       id="deliveryPickup" value="pickup" checked>
+                                <label class="form-check-label fw-bold" for="deliveryPickup">
+                                    <i class="fas fa-store me-2"></i>Самовывоз
+                                </label>
+                                <div class="form-text">Бесплатно, из пункта выдачи</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-check-lg border rounded-3 p-3 mb-2">
+                                <input class="form-check-input" type="radio" name="deliveryType" 
+                                       id="deliveryCourier" value="delivery">
+                                <label class="form-check-label fw-bold" for="deliveryCourier">
+                                    <i class="fas fa-shipping-fast me-2"></i>Доставка
+                                </label>
+                                <div class="form-text">Бесплатно, курьером</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Пункты выдачи -->
+                    <div id="pickupSection" class="mt-3">
+                        <label class="form-label fw-bold mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>Выберите пункт выдачи
+                        </label>
+                        
+                        <div class="row g-3">
+                            <% deliveryPoints.forEach((point, index) => { %>
+                            <div class="col-md-6">
+                                <div class="form-check border rounded-3 p-3 h-100">
+                                    <input class="form-check-input delivery-point-radio" type="radio" 
+                                           name="deliveryPoint" id="point<%= point.pointID %>" 
+                                           value="<%= point.pointID %>" <%= index === 0 ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="point<%= point.pointID %>">
+                                        <div class="fw-bold mb-1">
+                                            <i class="fas fa-store me-2"></i><%= point.pointName %>
+                                        </div>
+                                        <div class="text-muted small mb-1">
+                                            <i class="fas fa-map-marker me-1"></i><%= point.address %>
+                                        </div>
+                                        <div class="text-muted small">
+                                            <i class="fas fa-clock me-1"></i><%= point.work_hours %>
+                                        </div>
+                                        <% if (point.phone) { %>
+                                        <div class="text-muted small">
+                                            <i class="fas fa-phone me-1"></i><%= point.phone %>
+                                        </div>
+                                        <% } %>
+                                    </label>
+                                </div>
+                            </div>
+                            <% }) %>
+                        </div>
+
+                        <!-- Карта -->
+                        <div class="mt-4">
+                            <label class="form-label fw-bold mb-2">
+                                <i class="fas fa-map me-2"></i>Карта пунктов выдачи
+                            </label>
+                            <div id="deliveryMap" style="height: 400px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div class="d-flex justify-content-center align-items-center h-100 text-muted">
+                                    <div class="text-center">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                        <p>Загрузка карты...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Адрес доставки -->
+                    <div id="deliverySection" class="mt-3 d-none">
+                        <label for="deliveryAddress" class="form-label fw-bold mb-2">
+                            <i class="fas fa-map-pin me-2"></i>Адрес доставки <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control form-control-lg" id="deliveryAddress" 
+                                  rows="3" placeholder="Укажите полный адрес доставки"></textarea>
+                        <div class="form-text">Укажите точный адрес для доставки заказа</div>
+                    </div>
+                </div>
+
+                <!-- Способ оплаты -->
+                <div class="mb-4">
+                    <h3 class="mb-3 pb-2 border-bottom">
+                        <i class="fas fa-credit-card text-primary"></i>
+                        Способ оплаты
+                    </h3>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-check-lg border rounded-3 p-3 mb-2 payment-option" 
+                                 data-type="cash">
+                                <input class="form-check-input" type="radio" name="paymentType" 
+                                       id="paymentCash" value="cash" checked>
+                                <label class="form-check-label fw-bold" for="paymentCash">
+                                    <i class="fas fa-money-bill-wave me-2"></i>Наличные / Карта
+                                </label>
+                                <div class="form-text">Оплата в пункте выдачи</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-check-lg border rounded-3 p-3 mb-2 payment-option" 
+                                 data-type="online">
+                                <input class="form-check-input" type="radio" name="paymentType" 
+                                       id="paymentOnline" value="online">
+                                <label class="form-check-label fw-bold" for="paymentOnline">
+                                    <i class="fas fa-mobile-alt me-2"></i>СБП / Онлайн
+                                </label>
+                                <div class="form-text">Оплата по QR-коду или онлайн</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Комментарий -->
+                <div class="mb-4">
+                    <label for="orderComment" class="form-label fw-bold">
+                        <i class="fas fa-comment-alt me-2"></i>Комментарий к заказу
+                    </label>
+                    <textarea class="form-control form-control-lg" id="orderComment" 
+                              rows="3" placeholder="Дополнительная информация для курьера или менеджера"></textarea>
+                    <div class="form-text">Необязательное поле</div>
+                </div>
+
+                <!-- Кнопка оформления -->
+                <button type="submit" class="btn btn-custom btn-lg w-100 py-3">
+                    <i class="fas fa-check-circle me-2"></i>Оформить заказ
+                </button>
+            </form>
+        </div>
+
+        <!-- Итоги заказа -->
+        <div class="col-lg-4">
+            <div class="order-summary-card no-hover sticky-order-summary">
+                <h3 class="order-summary-header">
+                    <i class="fas fa-receipt text-primary"></i>Итог заказа
+                </h3>
+                
+                <!-- Детали -->
+                <div>
+                    <div class="order-summary-item">
+                        <span>Товары (<%= products.length %>)</span>
+                        <span><%= totalPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
+                    </div>
+                    
+                    <div class="order-summary-item">
+                        <span>Доставка</span>
+                        <span class="text-success">Бесплатно</span>
+                    </div>
+                    
+                    <div class="order-summary-item">
+                        <span>Скидка</span>
+                        <span class="text-danger">0₽</span>
+                    </div>
+                    
+                    <div class="order-summary-total">
+                        <span>Итого к оплате:</span>
+                        <span><%= totalPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
+                    </div>
+                </div>
+                
+                <!-- Дополнительная информация -->
+                <div class="order-summary-info mt-3">
+                    <small class="d-block mb-2">
+                        <i class="fas fa-shield-alt"></i>
+                        Безопасная оплата • Гарантия возврата
+                    </small>
+                    <small class="d-block">
+                        <i class="fas fa-info-circle"></i>
+                        После оформления заказа вы получите уведомление на почту
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Форматирование телефона - простая и надежная версия
+document.getElementById('customerPhone').addEventListener('input', function(e) {
+    const input = e.target;
+    const value = input.value;
+    
+    // Если поле пустое, выходим
+    if (value === '') {
+        return;
+    }
+    
+    // Извлекаем только цифры
+    let digits = value.replace(/\D/g, '');
+    
+    // Если первый символ не 7 или 8, добавляем 7
+    if (digits.length > 0 && digits[0] !== '7' && digits[0] !== '8') {
+        digits = '7' + digits;
+    }
+    
+    // Если начинается с 8, заменяем на 7
+    if (digits.length > 0 && digits[0] === '8') {
+        digits = '7' + digits.substring(1);
+    }
+    
+    // Ограничиваем длину до 11 цифр
+    if (digits.length > 11) {
+        digits = digits.substring(0, 11);
+    }
+    
+    // Форматируем номер
+    let formatted = '+7';
+    if (digits.length > 1) {
+        formatted += ' (' + digits.substring(1, 4);
+    }
+    if (digits.length >= 4) {
+        formatted += ') ' + digits.substring(4, 7);
+    }
+    if (digits.length >= 7) {
+        formatted += '-' + digits.substring(7, 9);
+    }
+    if (digits.length >= 9) {
+        formatted += '-' + digits.substring(9, 11);
+    }
+    
+    // Устанавливаем новое значение
+    input.value = formatted;
+    
+    // Устанавливаем курсор в конец (самый надежный способ)
+    setTimeout(() => {
+        input.setSelectionRange(formatted.length, formatted.length);
+    }, 0);
+});
+
+// Дополнительно: обработка нажатия клавиш для лучшего поведения
+document.getElementById('customerPhone').addEventListener('keydown', function(e) {
+    // Разрешаем управляющие клавиши
+    if (e.key === 'Backspace' || 
+        e.key === 'Delete' || 
+        e.key === 'ArrowLeft' || 
+        e.key === 'ArrowRight' || 
+        e.key === 'Tab' || 
+        e.key === 'Enter' || 
+        e.ctrlKey || 
+        e.metaKey) {
+        return;
+    }
+    
+    // Разрешаем только цифры
+    if (!/^\d$/.test(e.key)) {
+        e.preventDefault();
+    }
+});
+
+// Переключение способа получения
+document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const pickupSection = document.getElementById('pickupSection');
+        const deliverySection = document.getElementById('deliverySection');
+        
+        if (this.value === 'pickup') {
+            pickupSection.classList.remove('d-none');
+            deliverySection.classList.add('d-none');
+        } else {
+            pickupSection.classList.add('d-none');
+            deliverySection.classList.remove('d-none');
+        }
+        
+        // Обновляем доступные способы оплаты
+        updatePaymentOptions();
+    });
+});
+
+// Переключение способа оплаты
+document.querySelectorAll('input[name="paymentType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        updatePaymentOptions();
+    });
+});
+
+// Обновление доступных способов оплаты
+function updatePaymentOptions() {
+    const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
+    const paymentCash = document.getElementById('paymentCash');
+    const paymentCashLabel = document.querySelector('label[for="paymentCash"]');
+    
+    if (deliveryType === 'delivery') {
+        // При доставке только онлайн оплата
+        paymentCash.checked = false;
+        paymentCash.disabled = true;
+        paymentCashLabel.classList.add('text-muted');
+        paymentCashLabel.title = 'При доставке доступна только онлайн оплата';
+        
+        document.getElementById('paymentOnline').checked = true;
+    } else {
+        paymentCash.disabled = false;
+        paymentCashLabel.classList.remove('text-muted');
+        paymentCashLabel.title = '';
+    }
+}
+
+// Инициализация карты
+function initDeliveryMap() {
+    // Заглушка для карты - для диплома достаточно показать интерфейс
+    const mapContainer = document.getElementById('deliveryMap');
+    mapContainer.innerHTML = `
+        <div class="bg-light p-4 h-100">
+            <div class="text-center mb-3">
+                <h5 class="mb-3">
+                    <i class="fas fa-map-marked-alt text-primary"></i>
+                    Карта пунктов выдачи
+                </h5>
+                <p class="text-muted small">Выберите пункт выдачи на карте</p>
+            </div>
+            
+            <div class="position-relative" style="height: 320px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; overflow: hidden;">
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                    <div class="text-white text-center p-4">
+                        <i class="fas fa-map-marked-alt fa-4x mb-3 opacity-75"></i>
+                        <p class="lead mb-0">Карта будет доступна в полной версии</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 small text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                В реальном проекте здесь была бы интерактивная карта с возможностью выбора пункта выдачи
+            </div>
+        </div>
+    `;
+}
+
+// Обработка отправки формы
+document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Собираем данные
+    const formData = {
+        deliveryType: document.querySelector('input[name="deliveryType"]:checked').value,
+        deliveryPointID: document.querySelector('input[name="deliveryPoint"]:checked')?.value,
+        deliveryAddress: document.getElementById('deliveryAddress').value.trim(),
+        paymentType: document.querySelector('input[name="paymentType"]:checked').value,
+        customerName: document.getElementById('customerName').value.trim(),
+        customerPhone: document.getElementById('customerPhone').value.trim(),
+        customerEmail: document.getElementById('customerEmail').value.trim(),
+        comment: document.getElementById('orderComment').value.trim()
+    };
+    
+    // Валидация
+    if (!formData.customerName || !formData.customerPhone || !formData.customerEmail) {
+        showNotification('Заполните все обязательные поля', 'danger');
+        return;
+    }
+    
+    if (formData.deliveryType === 'pickup' && !formData.deliveryPointID) {
+        showNotification('Выберите пункт выдачи', 'danger');
+        return;
+    }
+    
+    if (formData.deliveryType === 'delivery' && !formData.deliveryAddress) {
+        showNotification('Укажите адрес доставки', 'danger');
+        return;
+    }
+    
+    // Отправляем запрос
+    try {
+        const response = await fetch('/checkout/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Показываем уведомление
+            showNotification('Заказ успешно оформлен!', 'success');
+            
+            // Перенаправляем на страницу успеха
+            setTimeout(() => {
+                window.location.href = result.redirectUrl;
+            }, 1500);
+        } else {
+            showNotification(result.message || 'Ошибка при оформлении заказа', 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Ошибка при оформлении заказа', 'danger');
+    }
+});
+
+// Функция показа уведомлений
+function showNotification(message, type = 'info') {
+    const types = {
+        'success': { icon: 'fa-check-circle', color: 'success', bg: 'success' },
+        'danger': { icon: 'fa-exclamation-circle', color: 'danger', bg: 'danger' },
+        'info': { icon: 'fa-info-circle', color: 'primary', bg: 'primary' }
+    };
+    
+    const config = types[type] || types.info;
+    
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${config.bg} alert-dismissible fade show position-fixed bottom-0 end-0 m-3 shadow-lg`;
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas ${config.icon} fa-2x me-3 text-${config.color}"></i>
+            <div>
+                <h6 class="mb-0 fw-bold">${message}</h6>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    initDeliveryMap();
+    updatePaymentOptions();
+});
+</script>
