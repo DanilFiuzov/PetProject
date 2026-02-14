@@ -1,11 +1,15 @@
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'Sport'
-});
+const dbConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'Sport',
+    port: process.env.DB_PORT || 3306
+};
+
+const connection = mysql.createConnection(dbConfig);
+
 
 // Установка часового пояса
 connection.query("SET time_zone = '+08:00'", (err) => {
