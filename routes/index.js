@@ -204,6 +204,7 @@ router.get('/products', (req, res) => {
         const searchQuery = req.query.search || '';
         const category = req.query.category || '';
         const onSale = req.query.onSale === 'true';
+        const inStock = req.query.inStock === 'true';  // ДОБАВЛЕНО
         const sort = req.query.sort || 'newest';
         const page = parseInt(req.query.page) || 1;
         const limit = 12;
@@ -217,6 +218,7 @@ router.get('/products', (req, res) => {
             minPrice: minPrice > sliderMin ? minPrice : null,
             maxPrice: maxPrice < sliderMax ? maxPrice : null,
             onSale,
+            inStock,  // ДОБАВЛЕНО
             sort,
             limit,
             offset
@@ -258,6 +260,7 @@ router.get('/products', (req, res) => {
                         sliderMin: sliderMin,
                         sliderMax: sliderMax,
                         onSale: onSale,
+                        inStock: inStock,  // ДОБАВЛЕНО
                         sort: sort,
                         currentPage: page,
                         totalPages: totalPages,
@@ -1188,19 +1191,21 @@ router.get('/admin/add-product', checkAdmin, (req, res) => {
 
 // Добавление товара (POST)
 router.post('/admin/add-product', checkAdmin, (req, res) => {
-    const formidable = require('formidable');
-    const form = new formidable.IncomingForm();
+    const { IncomingForm } = require('formidable');
+    const form = new IncomingForm({
+        uploadDir: uploadDir,
+        keepExtensions: true,
+        maxFileSize: 5 * 1024 * 1024,
+        multiples: false
+    });
     const uploadDir = path.join(__dirname, '../public/images/products');
-    
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
     }
-    
+
     form.uploadDir = uploadDir;
     form.keepExtensions = true;
     form.maxFileSize = 5 * 1024 * 1024;
-    
-    // В POST /admin/add-product исправьте этот участок кода:
 
     form.parse(req, (err, fields, files) => {
         if (err) {
@@ -1264,15 +1269,8 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
             });
         }
         
-        // 2. Обработка поля is_on_sale - ДОБАВЬТЕ ЭТУ ЧАСТЬ!
-        let isOnSale = '0';
-        if (fields.is_on_sale) {
-            if (Array.isArray(fields.is_on_sale)) {
-                isOnSale = fields.is_on_sale.includes('1') ? '1' : '0';
-            } else {
-                isOnSale = fields.is_on_sale === '1' ? '1' : '0';
-            }
-        }
+        // 2. Обработка поля is_on_sale
+        let isOnSale = fields.is_on_sale === '1' ? '1' : '0';
         
         // 3. Проверка обязательных полей
         if (!fields.productTitle || !fields.productManufacturer || 
@@ -1290,7 +1288,8 @@ router.post('/admin/add-product', checkAdmin, (req, res) => {
             productDescription: Array.isArray(fields.productDescription) ? fields.productDescription[0] : fields.productDescription,
             productPrice: parseFloat(Array.isArray(fields.productPrice) ? fields.productPrice[0] : fields.productPrice),
             productThumbnail: productThumbnail,
-            is_on_sale: isOnSale // Теперь переменная определена!
+            is_on_sale: isOnSale,
+            stock_quantity: parseInt(Array.isArray(fields.stock_quantity) ? fields.stock_quantity[0] : fields.stock_quantity) || 0
         };
         
         // 5. Данные скидки только если включена
@@ -1370,7 +1369,7 @@ router.get('/admin/edit-product/:id', checkAdmin, (req, res) => {
             JOIN categoriesandproducts cp ON c.categorieID = cp.categorieID
             WHERE cp.productID = ?
         `;
-
+        
         connection.connection.query(categoryQuery, [productId], (categoryErr, categoryResults) => {
             if (categoryErr) {
                 return res.status(500).send('Ошибка получения категорий');
@@ -1378,19 +1377,28 @@ router.get('/admin/edit-product/:id', checkAdmin, (req, res) => {
             
             const currentCategories = categoryResults.map(cat => cat.categorieName);
             
-            // Получаем характеристики товара - ИСПРАВЬТЕ ЭТОТ ВЫЗОВ!
+            // Получаем характеристики товара
             connection.getProductFeatures(productId, (featuresErr, features) => {
                 if (featuresErr) {
                     features = [];
                 }
                 
-                // Рендерим страницу с данными
-                res.render('layout', {
-                    body: 'edit_product',
-                    product: product,
-                    currentCategories: currentCategories,
-                    features: features || [], // Гарантируем, что features будет массивом
-                    session: req.session
+                // Получаем ВСЕ категории для отображения в форме (ИСПРАВЛЕНИЕ)
+                const allCategoriesQuery = 'SELECT categorieID, categorieName FROM categories ORDER BY categorieName';
+                connection.connection.query(allCategoriesQuery, (allCategoriesErr, allCategories) => {
+                    if (allCategoriesErr) {
+                        allCategories = [];
+                    }
+                    
+                    // Рендерим страницу с данными
+                    res.render('layout', {
+                        body: 'edit_product',
+                        product: product,
+                        currentCategories: currentCategories,
+                        features: features || [],
+                        categories: allCategories, // ДОБАВЛЕНО: передаем все категории
+                        session: req.session
+                    });
                 });
             });
         });
@@ -1399,29 +1407,28 @@ router.get('/admin/edit-product/:id', checkAdmin, (req, res) => {
 
 // Обновление товара (POST)
 router.post('/admin/update-product', checkAdmin, (req, res) => {
-    const formidable = require('formidable');
-    const form = new formidable.IncomingForm();
     const uploadDir = path.join(__dirname, '../public/images/products');
-    
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
     }
-    
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
-    form.allowEmptyFiles = true;
-    form.minFileSize = 0;
-    form.maxFileSize = 10 * 1024 * 1024;
-    
+
+    const { IncomingForm } = require('formidable');
+    const form = new IncomingForm({
+        uploadDir: uploadDir,
+        keepExtensions: true,
+        allowEmptyFiles: true,
+        minFileSize: 0,
+        maxFileSize: 10 * 1024 * 1024,
+        multiples: false
+    });
     form.parse(req, (err, fields, files) => {
         if (err) {
             console.error('Form parsing error:', err);
             return res.status(500).json({ 
                 success: false, 
-                message: 'Ошибка при обработке формы' 
+                message: 'Ошибка при обработке формы: ' + err.message 
             });
         }
-        
         
         // 1. Получаем productID
         const productID = Array.isArray(fields.productID) ? fields.productID[0] : fields.productID;
@@ -1434,25 +1441,10 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
         }
         
         // 2. Обработка поля is_on_sale
-        // Логируем полученные данные для отладки
-        console.log('fields.is_on_sale:', fields.is_on_sale);
-        console.log('Type:', Array.isArray(fields.is_on_sale) ? 'Array' : typeof fields.is_on_sale);
-        
-        // Обработка is_on_sale
-        let isOnSale = '0';
-        if (fields.is_on_sale) {
-            if (Array.isArray(fields.is_on_sale)) {
-                console.log('Array values:', fields.is_on_sale);
-                isOnSale = fields.is_on_sale.includes('1') ? '1' : '0';
-            } else {
-                isOnSale = fields.is_on_sale === '1' ? '1' : '0';
-            }
-        }
-        
-        console.log('Final is_on_sale value:', isOnSale);
+        let isOnSale = fields.is_on_sale === '1' ? '1' : '0';
 
         // 3. Проверка обязательных полей
-        if (!fields.productTitle || !fields.productManufacturer || 
+        if (!fields.productTitle || !fields.productManufacturer ||  
             !fields.productDescription || !fields.productPrice) {
             return res.status(400).json({ 
                 success: false, 
@@ -1460,10 +1452,11 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             });
         }
         
-        // 4. Обработка изображения
+        // 4. Обработка изображения - УЛУЧШЕННАЯ ЛОГИКА
         let productThumbnail = null;
-        const keepCurrentImage = fields.keepCurrentImage === 'on' || fields.keepCurrentImage === 'true';
+        const keepCurrentImage = fields.keepCurrentImage === 'on' || fields.keepCurrentImage === 'true' || fields.keepCurrentImage === 'true';
         
+        // Обрабатываем файл ТОЛЬКО если не отмечен чекбокс "Оставить текущее изображение"
         if (!keepCurrentImage && files.productImage) {
             try {
                 let productImageFile;
@@ -1471,30 +1464,26 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
                 // Определяем структуру файла
                 if (Array.isArray(files.productImage)) {
                     productImageFile = files.productImage[0];
-                } else if (files.productImage.originalFilename) {
-                    productImageFile = files.productImage;
                 } else {
                     productImageFile = files.productImage;
                 }
                 
-                // Проверяем, что файл существует и имеет размер
-                if (productImageFile && productImageFile.size > 0 && productImageFile.filepath) {
-                    const oldPath = productImageFile.filepath;
+                // Проверяем, что файл существует, имеет размер и путь
+                if (productImageFile && 
+                    productImageFile.filepath && 
+                    productImageFile.size > 0 && 
+                    fs.existsSync(productImageFile.filepath)) {
+                    
                     const newFileName = `${Date.now()}_${productImageFile.originalFilename || 'product.jpg'}`;
                     const newPath = path.join(uploadDir, newFileName);
                     
-                    if (fs.existsSync(oldPath)) {
-                        fs.renameSync(oldPath, newPath);
-                        productThumbnail = newFileName;
-                    } else {
-                        console.error('Source file does not exist:', oldPath);
-                    }
+                    fs.renameSync(productImageFile.filepath, newPath);
+                    productThumbnail = newFileName;
                 } else {
-                    console.log('File is empty or invalid, keeping current image');
+                    console.log('Файл не прошел валидацию: отсутствует или пустой');
                 }
             } catch (fileError) {
                 console.error('File processing error:', fileError);
-                // Если ошибка при обработке файла, оставляем текущее изображение
             }
         }
         
@@ -1504,7 +1493,8 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             productManufacturer: Array.isArray(fields.productManufacturer) ? fields.productManufacturer[0] : fields.productManufacturer,
             productDescription: Array.isArray(fields.productDescription) ? fields.productDescription[0] : fields.productDescription,
             productPrice: parseFloat(Array.isArray(fields.productPrice) ? fields.productPrice[0] : fields.productPrice),
-            is_on_sale: isOnSale
+            is_on_sale: isOnSale,
+            stock_quantity: parseInt(Array.isArray(fields.stock_quantity) ? fields.stock_quantity[0] : fields.stock_quantity) || 0
         };
         
         // Добавляем новое изображение если есть
@@ -1536,7 +1526,6 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
             productData.discount_end_date = null;
         }
         
-        
         // 7. Обработка категорий
         let categories = [];
         if (fields['categories[]']) {
@@ -1547,10 +1536,10 @@ router.post('/admin/update-product', checkAdmin, (req, res) => {
         
         // 8. Обработка характеристик
         const features = [];
-        const keys = Array.isArray(fields['feature_keys[]']) ? fields['feature_keys[]'] : 
+        const keys = Array.isArray(fields['feature_keys[]']) ? fields['feature_keys[]'] :  
                     (fields['feature_keys[]'] ? [fields['feature_keys[]']] : []);
         const values = Array.isArray(fields['feature_values[]']) ? fields['feature_values[]'] : 
-                      (fields['feature_values[]'] ? [fields['feature_values[]']] : []);
+                       (fields['feature_values[]'] ? [fields['feature_values[]']] : []);
         
         keys.forEach((key, index) => {
             if (key && key.trim() && values[index] && values[index].trim()) {

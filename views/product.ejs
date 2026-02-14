@@ -43,6 +43,15 @@
                     </div>
                 <% } %>
                 
+                <!-- Бейдж "Нет в наличии" -->
+                <% if (product.stock_quantity <= 0) { %>
+                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                        <div class="out-of-stock-badge">
+                            SOLD
+                        </div>
+                    </div>
+                <% } %>
+                
                 <!-- Кнопки действий на изображении -->
                 <div class="position-absolute top-0 end-0 m-4 d-flex flex-column gap-2">
                     <% if (session && session.userId) { %>
@@ -117,8 +126,9 @@
                         </div>
                     </div>
                     
-                    <!-- Цена -->
+                    <!-- Цена и наличие -->
                     <div class="mb-5">
+                        <!-- Цена -->
                         <% if (product.isDiscounted) { %>
                             <div class="d-flex align-items-center mb-3">
                                 <span class="original-price-modern me-4">
@@ -140,7 +150,6 @@
                                         class="text-danger fw-medium">
                                         <i class="fas fa-clock me-1"></i>
                                         <span class="timer-text">
-                                            <!-- Текст будет заменен JavaScript -->
                                             Загрузка...
                                         </span>
                                     </div>
@@ -153,21 +162,50 @@
                                 </span>
                             </div>
                         <% } %>
+                        
+                        <!-- Индикатор наличия -->
+                        <div class="mt-4">
+                            <% if (product.stock_quantity <= 0) { %>
+                                <div class="stock-indicator text-danger d-flex align-items-center">
+                                    <i class="fas fa-times-circle me-2"></i>
+                                    <span class="fw-bold">Нет в наличии</span>
+                                </div>
+                            <% } else if (product.stock_quantity <= 5) { %>
+                                <div class="stock-indicator text-warning d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <span class="fw-bold">Только <%= product.stock_quantity %> шт. в наличии</span>
+                                </div>
+                            <% } else { %>
+                                <div class="stock-indicator text-success d-flex align-items-center">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <span class="fw-bold">В наличии: <%= product.stock_quantity %> шт.</span>
+                                </div>
+                            <% } %>
+                        </div>
                     </div>
                     
                     <!-- Кнопки покупки -->
                     <div class="d-grid gap-3">
                         <div class="d-flex gap-2">
-                        <% if (session && session.userId) { %>
-                            <button class="btn btn-custom btn-lg py-3 fw-bold" 
-                                    onclick="addToCart('<%= product.productID %>')">
-                                <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
-                            </button>
-                        <% } else { %>
-                            <a href="/login" class="btn btn-custom btn-lg py-3 fw-bold">
-                                <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
-                            </a>
-                        <% } %>
+                            <% if (product.stock_quantity <= 0) { %>
+                                <!-- Товара нет в наличии -->
+                                <button class="btn btn-outline-secondary btn-lg py-3 fw-bold" disabled>
+                                    <i class="fas fa-times me-2"></i>Нет в наличии
+                                </button>
+                            <% } else if (session && session.userId) { %>
+                                <!-- Товар в наличии, пользователь авторизован -->
+                                <button class="btn btn-custom btn-lg py-3 fw-bold" 
+                                        onclick="addToCart('<%= product.productID %>')"
+                                        data-product-id="<%= product.productID %>"
+                                        data-stock-quantity="<%= product.stock_quantity %>">
+                                    <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
+                                </button>
+                            <% } else { %>
+                                <!-- Товар в наличии, пользователь не авторизован -->
+                                <a href="/login" class="btn btn-custom btn-lg py-3 fw-bold">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Войти для покупки
+                                </a>
+                            <% } %>
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-custom flex-grow-1 py-3">
@@ -367,7 +405,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно для отзыва (остается без изменений) -->
+    <!-- Модальное окно для отзыва -->
     <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4">
@@ -417,12 +455,130 @@
 </div>
 
 <script>
-function printPage() {
-    window.print();
+// ========================================
+// ФУНКЦИИ ДЛЯ СТРАНИЦЫ ТОВАРА
+// ========================================
+
+// Глобальная переменная для рейтинга
+let currentRating = 0;
+
+// Функции для звезд рейтинга
+function hoverStars(rating) {
+    const stars = document.querySelectorAll('#starRating .fa-star');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.remove('text-muted');
+            star.classList.add('text-warning');
+        } else {
+            star.classList.remove('text-warning');
+            star.classList.add('text-muted');
+        }
+    });
 }
-</script>
-<script>
-// Функция для расчета оставшегося времени
+
+function resetStars() {
+    const stars = document.querySelectorAll('#starRating .fa-star');
+    stars.forEach((star, index) => {
+        if (index < currentRating) {
+            star.classList.remove('text-muted');
+            star.classList.add('text-warning');
+        } else {
+            star.classList.remove('text-warning');
+            star.classList.add('text-muted');
+        }
+    });
+}
+
+function setRating(rating) {
+    currentRating = rating;
+    resetStars();
+}
+
+// Открытие модального окна отзыва
+function openReviewModal() {
+    // Сбрасываем состояние модального окна
+    currentRating = 0;
+    document.getElementById('reviewComment').value = '';
+    
+    // Сбрасываем звезды
+    const stars = document.querySelectorAll('#starRating .fa-star');
+    stars.forEach(star => {
+        star.classList.remove('text-warning');
+        star.classList.add('text-muted');
+    });
+    
+    // Скрываем ошибки
+    document.getElementById('rating-error').classList.add('d-none');
+    document.getElementById('comment-error').classList.add('d-none');
+    
+    // Показываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    modal.show();
+}
+
+// Отправка отзыва
+function submitReview() {
+    const comment = document.getElementById('reviewComment').value.trim();
+    let isValid = true;
+    
+    // Валидация рейтинга
+    if (currentRating === 0) {
+        document.getElementById('rating-error').classList.remove('d-none');
+        isValid = false;
+    } else {
+        document.getElementById('rating-error').classList.add('d-none');
+    }
+    
+    // Валидация комментария
+    if (comment.length < 10) {
+        document.getElementById('comment-error').classList.remove('d-none');
+        isValid = false;
+    } else {
+        document.getElementById('comment-error').classList.add('d-none');
+    }
+    
+    if (!isValid) return;
+    
+    // Получаем ID товара
+    const productId = document.getElementById('productId').value;
+    
+    // Отправляем отзыв
+    fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            productID: productId,
+            rating: currentRating,
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+            modal.hide();
+            
+            // Показываем уведомление
+            showNotification('Отзыв успешно добавлен!', 'success');
+            
+            // Обновляем страницу через 1.5 секунды
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showNotification(data.error || 'Ошибка при добавлении отзыва', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting review:', error);
+        showNotification('Произошла ошибка при отправке отзыва', 'error');
+    });
+}
+
+// Функция для расчета оставшегося времени до конца скидки
 function calculateTimeLeft(endDateStr) {
     if (!endDateStr) return '';
     
@@ -435,26 +591,17 @@ function calculateTimeLeft(endDateStr) {
         return 'Акция закончилась';
     }
     
-    // Рассчитываем дни и часы
+    // Рассчитываем дни, часы и минуты
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     
     // Форматируем результат
     if (diffDays > 0) {
-        if (diffHours > 0) {
-            return `Осталось: ${diffDays} дн. ${diffHours} ч.`;
-        } else {
-            return `Осталось: ${diffDays} дн.`;
-        }
+        return `Осталось: ${diffDays} дн. ${diffHours} ч.`;
     } else if (diffHours > 0) {
-        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        if (diffMinutes > 0) {
-            return `Осталось: ${diffHours} ч. ${diffMinutes} мин.`;
-        } else {
-            return `Осталось: ${diffHours} ч.`;
-        }
+        return `Осталось: ${diffHours} ч. ${diffMinutes} мин.`;
     } else {
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
         return `Осталось: ${diffMinutes} мин.`;
     }
 }
@@ -473,13 +620,29 @@ function updateAllTimers() {
     });
 }
 
-// Обновляем таймеры сразу при загрузке страницы
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    updateAllTimers();
+    // Инициализация звезд рейтинга
+    const stars = document.querySelectorAll('#starRating .fa-star');
+    stars.forEach(star => {
+        star.addEventListener('mouseover', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            hoverStars(rating);
+        });
+        
+        star.addEventListener('mouseout', resetStars);
+        
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            setRating(rating);
+        });
+    });
     
-    // Обновляем таймер каждую минуту
-    setInterval(updateAllTimers, 60000); // 60000 мс = 1 минута
-
+    // Инициализация таймера скидки
+    updateAllTimers();
+    setInterval(updateAllTimers, 60000); // Обновляем каждую минуту
+    
+    // Прокрутка к отзывам при клике на рейтинг
     const ratingElement = document.querySelector('.rating.me-3');
     if (ratingElement) {
         ratingElement.addEventListener('click', function(event) {
@@ -490,5 +653,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Инициализация всплывающих подсказок
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 </script>

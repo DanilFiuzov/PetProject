@@ -49,6 +49,44 @@
             </div>
         </div>
     <% } else { %>
+        <!-- Проверка наличия товаров -->
+        <%
+            let hasOutOfStock = false;
+            let lowStockItems = [];
+            products.forEach(product => {
+                if (product.stock_quantity <= 0) {
+                    hasOutOfStock = true;
+                } else if (product.sc_count > product.stock_quantity) {
+                    lowStockItems.push({
+                        productTitle: product.productTitle,
+                        requested: product.sc_count,
+                        available: product.stock_quantity
+                    });
+                }
+            });
+        %>
+        
+        <% if (hasOutOfStock) { %>
+        <div class="alert alert-danger border-0 bg-danger bg-opacity-10 mb-4">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Внимание!</strong> Некоторые товары в вашей корзине отсутствуют на складе. Пожалуйста, удалите их из корзины.
+        </div>
+        <% } else if (lowStockItems.length > 0) { %>
+        <div class="alert alert-warning border-0 bg-warning bg-opacity-10 mb-4">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Внимание!</strong> Недостаточное количество товара на складе:
+            <ul class="mb-0 mt-2">
+                <% lowStockItems.forEach(item => { %>
+                <li>
+                    <strong><%= item.productTitle %></strong> - 
+                    запрошено <%= item.requested %> шт., 
+                    доступно <%= item.available %> шт.
+                </li>
+                <% }) %>
+            </ul>
+        </div>
+        <% } %>
+        
         <div class="row g-4">
             <!-- Список товаров -->
             <div class="col-lg-8">
@@ -65,10 +103,13 @@
                                 <% 
                                     const itemPrice = product.isDiscounted ? parseFloat(product.discountedPrice) : parseFloat(product.productPrice);
                                     const itemTotal = itemPrice * product.sc_count; 
+                                    const isOutOfStock = product.stock_quantity <= 0;
+                                    const isLowStock = product.sc_count > product.stock_quantity;
+                                    const canIncrease = product.sc_count < product.stock_quantity;
                                 %>
                                 <% totalPrice += itemTotal; %>
                                 
-                                <div class="cart-item">
+                                <div class="cart-item <%= isOutOfStock ? 'out-of-stock' : '' %>">
                                     <div class="cart-item-row">
                                         <!-- Изображение -->
                                         <div class="cart-item-image">
@@ -76,13 +117,18 @@
                                                 <img src="/images/products/<%= product.productThumbnail %>" 
                                                      alt="<%= product.productTitle %>">
                                             </a>
+                                            <% if (isOutOfStock) { %>
+                                                <div class="cart-item-sold-overlay">
+                                                    <div class="cart-item-sold-badge">SOLD</div>
+                                                </div>
+                                            <% } %>
                                         </div>
 
                                         <!-- Информация -->
                                         <div class="cart-item-info">
                                             <h6 class="cart-item-title mb-0">
                                                 <a href="/product/<%= product.productID %>" 
-                                                   class="text-decoration-none">
+                                                   class="text-decoration-none <%= isOutOfStock || isLowStock ? 'text-muted' : '' %>">
                                                     <%= product.productTitle %>
                                                 </a>
                                             </h6>
@@ -95,17 +141,38 @@
                                                     <span class="cart-item-price-original">
                                                         <%= parseFloat(product.productPrice).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                                     </span>
-                                                    <span class="cart-item-price-discounted">
+                                                    <span class="cart-item-price-discounted <%= isOutOfStock || isLowStock ? 'text-muted' : '' %>">
                                                         <%= itemPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                                     </span>
                                                 <% } else { %>
-                                                    <span class="cart-item-price-regular">
+                                                    <span class="cart-item-price-regular <%= isOutOfStock || isLowStock ? 'text-muted' : '' %>">
                                                         <%= itemPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                                     </span>
                                                 <% } %>
                                                 <span class="text-muted" style="font-size: 0.9rem;">
                                                     за 1 шт.
                                                 </span>
+                                            </div>
+                                            
+                                            <!-- Индикатор наличия -->
+                                            <div class="mt-2">
+                                                <% if (isOutOfStock) { %>
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle me-1"></i>Нет в наличии
+                                                    </span>
+                                                <% } else if (isLowStock) { %>
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>Только <%= product.stock_quantity %> шт.
+                                                    </span>
+                                                <% } else if (product.stock_quantity <= 5) { %>
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>Мало на складе
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i>В наличии
+                                                    </span>
+                                                <% } %>
                                             </div>
                                         </div>
 
@@ -118,11 +185,12 @@
                                                             name="action" 
                                                             value="decrease" 
                                                             class="quantity-btn"
-                                                            <%= product.sc_count <= 1 ? 'disabled' : '' %>>
+                                                            <%= product.sc_count <= 1 ? 'disabled' : '' %>
+                                                            <%= isOutOfStock ? 'disabled' : '' %>>
                                                         <i class="fas fa-minus"></i>
                                                     </button>
                                                 </form>
-                                                <span class="quantity-display">
+                                                <span class="quantity-display <%= isOutOfStock ? 'text-muted' : '' %>">
                                                     <%= product.sc_count %>
                                                 </span>
                                                 <form action="/cart/update" method="post" class="d-inline">
@@ -130,7 +198,8 @@
                                                     <button type="submit" 
                                                             name="action" 
                                                             value="increase" 
-                                                            class="quantity-btn">
+                                                            class="quantity-btn"
+                                                            <%= !canIncrease || isOutOfStock ? 'disabled' : '' %>>
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                 </form>
@@ -139,7 +208,7 @@
 
                                         <!-- Итого и удаление -->
                                         <div class="cart-item-actions">
-                                            <span class="cart-item-total">
+                                            <span class="cart-item-total <%= isOutOfStock || isLowStock ? 'text-muted' : '' %>">
                                                 <%= itemTotal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
                                             </span>
                                             <form action="/cart/remove" method="post" class="d-inline">
@@ -205,9 +274,15 @@
                     </div>
                     
                     <!-- Кнопка оформления -->
+                    <% if (!hasOutOfStock && lowStockItems.length === 0) { %>
                     <a href="/checkout" class="order-summary-checkout text-decoration-none">
-                        <i class="fas fa-shopping-checkout"></i>&nbspОформить заказ
+                        <i class="fas fa-check-circle"></i>&nbspОформить заказ
                     </a>
+                    <% } else { %>
+                    <button class="order-summary-checkout-disabled" disabled>
+                        <i class="fas fa-times-circle"></i>&nbspНевозможно оформить заказ
+                    </button>
+                    <% } %>
                     
                     <!-- Дополнительная информация -->
                     <div class="order-summary-info">
@@ -272,3 +347,95 @@
     </script>
     <% } %>
 </div>
+
+<style>
+/* Стили для отсутствия товара в корзине */
+.cart-item.out-of-stock {
+    opacity: 0.6;
+    position: relative;
+}
+
+.cart-item.out-of-stock::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+    border-radius: 8px;
+}
+
+.cart-item-sold-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+.cart-item-sold-badge {
+    background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 800;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: pulse 2s infinite;
+    white-space: nowrap;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.cart-item-sold-badge::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 15px;
+    animation: shine 3s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+@keyframes shine {
+    0%, 100% { transform: translateX(-100%); opacity: 0; }
+    50% { transform: translateX(100%); opacity: 0.5; }
+}
+
+.order-summary-checkout-disabled {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>

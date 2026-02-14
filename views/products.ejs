@@ -1,979 +1,1109 @@
 <!-- Хлебные крошки -->
 <nav aria-label="breadcrumb" class="breadcrumb-container">
-  <div class="container">
-    <ol class="breadcrumb bg-light p-3 rounded-3">
-      <li class="breadcrumb-item">
-        <a href="/" class="text-decoration-none text-primary">
-          <i class="fas fa-home me-1"></i>Главная
-        </a>
-      </li>
-      <li class="breadcrumb-item active" aria-current="page">Каталог товаров</li>
-    </ol>
-  </div>
+	<div class="container">
+		<ol class="breadcrumb bg-light p-3 rounded-3">
+			<li class="breadcrumb-item">
+				<a href="/" class="text-decoration-none text-primary">
+					<i class="fas fa-home me-1"></i>Главная
+				</a>
+			</li>
+			<li class="breadcrumb-item active" aria-current="page">Каталог товаров</li>
+		</ol>
+	</div>
 </nav>
 
 <!-- ЦЕНТРАЛЬНЫЙ КОМПАКТНЫЙ ПОИСК -->
 <div class="central-search-wrapper">
-  <div class="central-search-inner">
-    <form method="GET" action="/products" id="centralSearchForm" class="central-search-form">
-      <div class="input-group">
-        <span class="input-group-text">
-          <i class="fas fa-search"></i>
-        </span>
-        <input type="text"
-               class="form-control"
-               name="search"
-               id="centralSearchInput"
-               placeholder="Поиск товаров..."
-               value="<%= searchQuery || '' %>"
-               autocomplete="off">
-        <button class="btn btn-search" type="submit">
-          <i class="fas fa-search"></i>
-        </button>
-      </div>
-    </form>
-    <div id="centralSearchSuggestions" class="search-suggestions-container"></div>
-  </div>
+	<div class="central-search-inner">
+		<form method="GET" action="/products" id="centralSearchForm" class="central-search-form">
+			<div class="input-group">
+				<span class="input-group-text">
+					<i class="fas fa-search"></i>
+				</span>
+				<input type="text"
+					class="form-control"
+					name="search"
+					id="centralSearchInput"
+					placeholder="Поиск товаров..."
+					value="<%= searchQuery || '' %>"
+					autocomplete="off">
+				<button class="btn btn-search" type="submit">
+					<i class="fas fa-search"></i>
+				</button>
+			</div>
+		</form>
+		<div id="centralSearchSuggestions" class="search-suggestions-container"></div>
+	</div>
 </div>
 
 <!-- Оверлей для мобильного меню -->
 <div class="mobile-overlay" onclick="closeFilters()"></div>
 
-
 <!-- Оборачиваем весь контент в центральный контейнер -->
 <div class="container-fluid def-bg-settings py-4">
-    <div class="row">
-        <button class="mobile-filters-btn" onclick="toggleFilters()">
-            <i class="fas fa-filter"></i>
-            <span>Фильтры</span>
-        </button>
-        <!-- Боковая панель с фильтрами -->
-        <div class="col-lg-3 col-lg-3-search col-md-4 filters-sidebar">
-            <div class="card border-0 shadow-sm rounded-3 sticky-sidebar no-hover">
-                <div class="card-body p-4">
-                    <!-- Сортировка - КАСТОМНЫЙ ВЫПАДАЮЩИЙ СПИСОК -->
-                    <h5 class="fw-bold mb-3 text-primary">
-                        <i class="fas fa-sort me-2"></i>Сортировка
-                    </h5>
-                    <div class="custom-select-wrapper mb-3">
-                        <div class="custom-select" id="sortDropdown" tabindex="0">
-                            <div class="custom-select-selected" id="sortSelected">
-                                <% 
-                                    const sortOptions = {
-                                        'newest': 'Сначала новые',
-                                        'name_asc': 'По названию (А-Я)',
-                                        'name_desc': 'По названию (Я-А)',
-                                        'price_asc': 'По цене (дешевле)',
-                                        'price_desc': 'По цене (дороже)',
-                                        'rating': 'По рейтингу',
-                                        'discount': 'По скидке'
-                                    };
-                                    // Выбираем текст для текущего значения
-                                    const selectedText = sortOptions[sort] || 'Сначала новые';
-                                %>
-                                <%= selectedText %>
-                            </div>
-                            <div class="custom-select-arrow">
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="custom-select-options" id="sortOptions">
-                                <div class="custom-select-option <%= sort === 'newest' ? 'active' : '' %>" data-value="newest">
-                                    Сначала новые
-                                </div>
-                                <div class="custom-select-option <%= sort === 'name_asc' ? 'active' : '' %>" data-value="name_asc">
-                                    По названию (А-Я)
-                                </div>
-                                <div class="custom-select-option <%= sort === 'name_desc' ? 'active' : '' %>" data-value="name_desc">
-                                    По названию (Я-А)
-                                </div>
-                                <div class="custom-select-option <%= sort === 'price_asc' ? 'active' : '' %>" data-value="price_asc">
-                                    По цене (дешевле)
-                                </div>
-                                <div class="custom-select-option <%= sort === 'price_desc' ? 'active' : '' %>" data-value="price_desc">
-                                    По цене (дороже)
-                                </div>
-                                <div class="custom-select-option <%= sort === 'rating' ? 'active' : '' %>" data-value="rating">
-                                    По рейтингу
-                                </div>
-                                <div class="custom-select-option <%= sort === 'discount' ? 'active' : '' %>" data-value="discount">
-                                    По скидке
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" name="sort" id="sortHidden" value="<%= sort || 'newest' %>">
-                    </div>
+	<div class="row">
+		<button class="mobile-filters-btn" onclick="toggleFilters()">
+			<i class="fas fa-filter"></i>
+			<span>Фильтры</span>
+		</button>
 
-                    <!-- Фильтр по цене -->
-                    <h5 class="fw-bold mb-3 text-primary mt-4">
-                        <i class="fas fa-tag me-2"></i>Цена
-                    </h5>
-                    <div class="price-range-container">
-                        <!-- Слайдер будет инициализирован через JavaScript -->
-                    </div>
+		<!-- Боковая панель с фильтрами -->
+		<div class="col-lg-3 col-lg-3-search col-md-4 filters-sidebar">
+			<div class="card border-0 shadow-sm rounded-3 sticky-sidebar no-hover">
+				<div class="card-body p-4">
+					<!-- Сортировка - КАСТОМНЫЙ ВЫПАДАЮЩИЙ СПИСОК -->
+					<h5 class="fw-bold mb-3 text-primary">
+						<i class="fas fa-sort me-2"></i>Сортировка
+					</h5>
+					<div class="custom-select-wrapper mb-3">
+						<div class="custom-select" id="sortDropdown" tabindex="0">
+							<div class="custom-select-selected" id="sortSelected">
+								<%
+								const sortOptions = {
+									'newest': 'Сначала новые',
+									'name_asc': 'По названию (А-Я)',
+									'name_desc': 'По названию (Я-А)',
+									'price_asc': 'По цене (дешевле)',
+									'price_desc': 'По цене (дороже)',
+									'rating': 'По рейтингу',
+									'discount': 'По скидке',
+									'stock_asc': 'По наличию (меньше)',
+									'stock_desc': 'По наличию (больше)'
+								};
+								// Выбираем текст для текущего значения
+								const selectedText = sortOptions[sort] || 'Сначала новые';
+								%>
+								<%= selectedText %>
+							</div>
+							<div class="custom-select-arrow">
+								<i class="fas fa-chevron-down"></i>
+							</div>
+							<div class="custom-select-options" id="sortOptions">
+								<div class="custom-select-option <%= sort === 'newest' ? 'active' : '' %>" data-value="newest">
+									Сначала новые
+								</div>
+								<div class="custom-select-option <%= sort === 'name_asc' ? 'active' : '' %>" data-value="name_asc">
+									По названию (А-Я)
+								</div>
+								<div class="custom-select-option <%= sort === 'name_desc' ? 'active' : '' %>" data-value="name_desc">
+									По названию (Я-А)
+								</div>
+								<div class="custom-select-option <%= sort === 'price_asc' ? 'active' : '' %>" data-value="price_asc">
+									По цене (дешевле)
+								</div>
+								<div class="custom-select-option <%= sort === 'price_desc' ? 'active' : '' %>" data-value="price_desc">
+									По цене (дороже)
+								</div>
+								<div class="custom-select-option <%= sort === 'rating' ? 'active' : '' %>" data-value="rating">
+									По рейтингу
+								</div>
+								<div class="custom-select-option <%= sort === 'discount' ? 'active' : '' %>" data-value="discount">
+									По скидке
+								</div>
+								<div class="custom-select-option <%= sort === 'stock_asc' ? 'active' : '' %>" data-value="stock_asc">
+									По наличию (меньше)
+								</div>
+								<div class="custom-select-option <%= sort === 'stock_desc' ? 'active' : '' %>" data-value="stock_desc">
+									По наличию (больше)
+								</div>
+							</div>
+						</div>
+						<input type="hidden" name="sort" id="sortHidden" value="<%= sort || 'newest' %>">
+					</div>
 
-                    <!-- Категории -->
-                    <h5 class="fw-bold mb-3 text-primary mt-4">
-                        <i class="fas fa-list me-2"></i>Категории
-                        <button class="btn btn-sm btn-link text-primary p-0 ms-2" 
-                                type="button" 
-                                onclick="toggleCategories()" 
-                                id="toggleCategoriesBtn"
-                                aria-expanded="true">
-                            <i class="fas fa-chevron-down ms-1" id="categoriesToggleIcon" style="font-size: 2vh;"></i>
-                        </button>
-                    </h5>
-                    <div class="categories-filter mb-3 d-none" id="categoriesFilterContainer">
-                        <div class="categories-list" id="categoriesList">
-                            <% 
-                                // Парсим строку категорий в массив для правильной проверки
-                                const selectedCategories = category ? category.toString().split(',').filter(id => id.trim() !== '') : [];
-                            %>
-                            <% allCategories.forEach(cat => { %>
-                                <div class="form-check category-item" data-category-id="<%= cat.categorieID %>">
-                                    <input class="form-check-input" 
-                                        type="checkbox" 
-                                        id="category_<%= cat.categorieID %>" 
-                                        value="<%= cat.categorieID %>"
-                                        <%= selectedCategories.includes(cat.categorieID.toString()) ? 'checked' : '' %>
-                                        onchange="updateCategoryFilter()">
-                                    <label class="form-check-label" for="category_<%= cat.categorieID %>">
-                                        <%= cat.categorieName %>
-                                    </label>
-                                </div>
-                            <% }) %>
-                        </div>
-                        
-                        <div class="categories-footer d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                            <button class="btn btn-sm btn-outline-primary" 
-                                    type="button" 
-                                    onclick="clearCategories()">
-                                <i class="fas fa-times me-1"></i>
-                            </button>
-                            <span class="text-muted small" id="selectedCategoriesCount">
-                                Выбрано: <span class="fw-bold"><%= selectedCategories.length %></span>
-                            </span>
-                        </div>
-                    </div>
+					<!-- Фильтр по цене -->
+					<h5 class="fw-bold mb-3 text-primary mt-4">
+						<i class="fas fa-tag me-2"></i>Цена
+					</h5>
+					<div class="price-range-container">
+						<!-- Слайдер будет инициализирован через JavaScript -->
+					</div>
 
-                    <input type="hidden" name="category" id="categoriesHidden" value="<%= category || '' %>">
+					<!-- Категории -->
+					<h5 class="fw-bold mb-3 text-primary mt-4">
+						<i class="fas fa-list me-2"></i>Категории
+						<button class="btn btn-sm btn-link text-primary p-0 ms-2"
+							type="button"
+							onclick="toggleCategories()"
+							id="toggleCategoriesBtn"
+							aria-expanded="true">
+							<i class="fas fa-chevron-down ms-1" id="categoriesToggleIcon" style="font-size: 2vh;"></i>
+						</button>
+					</h5>
+					<div class="categories-filter mb-3 d-none" id="categoriesFilterContainer">
+						<div class="categories-list" id="categoriesList">
+							<%
+							// Парсим строку категорий в массив для правильной проверки
+							const selectedCategories = category ? category.toString().split(',').filter(id => id.trim() !== '') : [];
+							%>
+							<% allCategories.forEach(cat => { %>
+							<div class="form-check category-item" data-category-id="<%= cat.categorieID %>">
+								<input class="form-check-input"
+									type="checkbox"
+									id="category_<%= cat.categorieID %>"
+									value="<%= cat.categorieID %>"
+									<%= selectedCategories.includes(cat.categorieID.toString()) ? 'checked' : '' %>
+									onchange="updateCategoryFilter()">
+								<label class="form-check-label" for="category_<%= cat.categorieID %>">
+									<%= cat.categorieName %>
+								</label>
+							</div>
+							<% }) %>
+						</div>
+						<div class="categories-footer d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+							<button class="btn btn-sm btn-outline-primary"
+								type="button"
+								onclick="clearCategories()">
+								<i class="fas fa-times me-1"></i>
+							</button>
+							<span class="text-muted small" id="selectedCategoriesCount">
+								Выбрано: <span class="fw-bold"><%= selectedCategories.length %></span>
+							</span>
+						</div>
+					</div>
+					<input type="hidden" name="category" id="categoriesHidden" value="<%= category || '' %>">
 
-                    <!-- Акционные товары -->
+					<!-- Акционные товары -->
+					<div class="form-check mb-3">
+						<input class="form-check-input"
+							type="checkbox"
+							name="onSale"
+							id="onSale"
+							value="true"
+							<%= onSale ? 'checked' : '' %>>
+						<label class="form-check-label" for="onSale">
+							<i class="fas fa-fire text-danger me-1"></i>Только акционные товары
+						</label>
+					</div>
+
+                    <!-- Фильтр по наличию -->
                     <div class="form-check mb-3">
-                        <input class="form-check-input" 
-                               type="checkbox" 
-                               name="onSale" 
-                               id="onSale" 
-                               value="true"
-                               <%= onSale ? 'checked' : '' %>>
-                        <label class="form-check-label" for="onSale">
-                            <i class="fas fa-fire text-danger me-1"></i>Только акционные товары
+                        <input class="form-check-input"
+                            type="checkbox"
+                            name="inStock"
+                            id="inStock"
+                            value="true"
+                            <%= inStock ? 'checked' : '' %>>
+                        <label class="form-check-label" for="inStock">
+                            <i class="fas fa-check-circle text-success me-1"></i>Только в наличии
                         </label>
                     </div>
 
-                    <!-- Кнопка "Применить фильтры" -->
-                    <button class="btn apply-filters-btn" onclick="applyFilters()">
-                        <i class="fas fa-check-circle me-2"></i>Применить фильтры
-                    </button>
+					<!-- Кнопка "Применить фильтры" -->
+					<button class="btn apply-filters-btn" onclick="applyFilters()">
+						<i class="fas fa-check-circle me-2"></i>Применить фильтры
+					</button>
 
-                    <!-- Информация о результатах -->
-                    <div class="mt-4 pt-3 border-top">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted">Найдено:</span>
-                            <span class="fw-bold"><%= totalProducts || 0 %> товаров</span>
-                        </div>
-                        <% if (searchQuery || category || onSale) { %>
-                            <div class="alert alert-info border-0 bg-primary bg-opacity-10 text-primary small p-2 rounded-2">
-                                <i class="fas fa-filter me-1"></i>
-                                Применены фильтры
-                                <a href="/products" class="text-primary fw-bold ms-2">
-                                    <i class="fas fa-times"></i> Сбросить
-                                </a>
-                            </div>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-        </div>
+					<!-- Информация о результатах -->
+					<div class="mt-4 pt-3 border-top">
+						<div class="d-flex justify-content-between align-items-center mb-2">
+							<span class="text-muted">Найдено:</span>
+							<span class="fw-bold"><%= totalProducts || 0 %> товаров</span>
+						</div>
+						<% if (searchQuery || category || onSale || inStock) { %>
+						<div class="alert alert-info border-0 bg-primary bg-opacity-10 text-primary small p-2 rounded-2">
+							<i class="fas fa-filter me-1"></i>
+							Применены фильтры
+							<a href="/products" class="text-primary fw-bold ms-2">
+								<i class="fas fa-times"></i> Сбросить
+							</a>
+						</div>
+						<% } %>
+					</div>
+				</div>
+			</div>
+		</div>
 
-        <!-- Основной контент каталога -->
-        <div class="col-lg-9 col-lg-9-products col-md-8 catalog-main-content">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 fw-bold mb-0">
-                    <i class="fas fa-shopping-bag text-primary me-2"></i>
-                    Каталог товаров
-                    <% if (category && allCategories.find(c => c.categorieID == category)) { %>
-                        <span class="text-muted fs-5 ms-2">
-                            / <%= allCategories.find(c => c.categorieID == category).categorieName %>
-                        </span>
-                    <% } %>
-                </h1>
-                <div class="text-muted small">
-                    Страница <%= currentPage %> из <%= totalPages %>
-                </div>
-            </div>
+		<!-- Основной контент каталога -->
+		<div class="col-lg-9 col-lg-9-products col-md-8 catalog-main-content">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h1 class="h3 fw-bold mb-0">
+					<i class="fas fa-shopping-bag text-primary me-2"></i>
+					Каталог товаров
+					<% if (category && allCategories.find(c => c.categorieID == category)) { %>
+					<span class="text-muted fs-5 ms-2">
+						/ <%= allCategories.find(c => c.categorieID == category).categorieName %>
+					</span>
+					<% } %>
+				</h1>
+				<div class="text-muted small">
+					Страница <%= currentPage %> из <%= totalPages %>
+				</div>
+			</div>
 
-            <% if (products.length === 0) { %>
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body text-center py-5">
-                        <div class="empty-icon mb-4">
-                            <i class="fas fa-search fa-4x text-muted opacity-50"></i>
-                        </div>
-                        <h4 class="text-muted mb-3">Товары не найдены</h4>
-                        <p class="text-muted mb-4">Попробуйте изменить поисковый запрос или параметры фильтрации</p>
-                        <a href="/products" class="btn btn-primary px-4 py-2">
-                            <i class="fas fa-times me-2"></i>Сбросить фильтры
-                        </a>
-                    </div>
-                </div>
-            <% } else { %>
-                <!-- Список товаров в горизонтальных карточках -->
-                <div class="products-list">
-                    <% products.forEach((product) => { %>
-                    <div class="horizontal-product-card">
-                    <!-- Изображение -->
-                    <div class="product-image position-relative">
-                        <a href="/product/<%= product.productID %>" class="text-decoration-none">
-                            <img src="/images/products/<%= product.productThumbnail %>" 
-                                alt="<%= product.productTitle %>">
-                        </a>
-                        
-                        <!-- Бейджи на изображении -->
-                        <div class="image-badges">
-                            <% if (product.isDiscounted) { %>
-                                <div class="badge-discount-horizontal">
-                                    <i class="fas fa-percentage me-1"></i>
-                                    -<%= product.discountPercentage %>%
-                                </div>
-                            <% } %>
-                        </div>
-                        
-                        <!-- Кнопка избранного -->
-                        <% if (session.userId) { %>
-                            <% 
-                                const productIdNum = parseInt(product.productID);
-                                const isFavorited = session.favorites && session.favorites.some(favId => parseInt(favId) === productIdNum);
-                            %>
-                            <button class="btn btn-light btn-sm favorite-btn rounded-circle" 
-                                    onclick="toggleFavorite(event, <%= product.productID %>)"
-                                    title="<%= isFavorited ? 'Убрать из избранного' : 'Добавить в избранное' %>"
-                                    style="position: absolute; right: 10px; z-index: 2;">
-                                <i class="<%= isFavorited ? 'fas fa-heart text-danger' : 'far fa-heart' %>"></i>
-                            </button>
-                        <% } %>
-                    </div>
+			<% if (products.length === 0) { %>
+			<div class="card border-0 shadow-sm rounded-3">
+				<div class="card-body text-center py-5">
+					<div class="empty-icon mb-4">
+						<i class="fas fa-search fa-4x text-muted opacity-50"></i>
+					</div>
+					<h4 class="text-muted mb-3">Товары не найдены</h4>
+					<p class="text-muted mb-4">Попробуйте изменить поисковый запрос или параметры фильтрации</p>
+					<a href="/products" class="btn btn-primary px-4 py-2">
+						<i class="fas fa-times me-2"></i>Сбросить фильтры
+					</a>
+				</div>
+			</div>
+			<% } else { %>
+			<!-- Список товаров в горизонтальных карточках -->
+			<div class="products-list">
+				<% products.forEach((product) => { %>
+				<div class="horizontal-product-card <%= product.stock_quantity <= 0 ? 'out-of-stock' : '' %>"
+					data-product-id="<%= product.productID %>"
+					data-stock-quantity="<%= product.stock_quantity %>">
 
-                    <!-- Заголовок и мета-информация -->
-                    <div style="padding: 1vh;">
-                      <h5 class="product-title">
-                        <a href="/product/<%= product.productID %>">
-                          <%= product.productTitle %>
-                        </a>
-                      </h5>
-                      <!-- Категории - НОВАЯ СТРОКА -->
-                      <% if (product.categories && product.categories.length > 0) { %>
-                        <div class="categories-container">
-                          <% product.categories.slice(0, 3).forEach((cat) => { %>
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
-                              <%= cat %>
-                            </span>
-                          <% }) %>
-                          <% if (product.categories.length > 3) { %>
-                            <span class="badge bg-light text-muted border">
-                              +<%= product.categories.length - 3 %>
-                            </span>
-                          <% } %>
-                        </div>
-                      <% } %>
-                      <!-- Производитель -->
-                      <div class="manufacturer">
-                        <i class="fas fa-industry me-1"></i><%= product.productManufacturer %>
-                      </div>
-                      <!-- Рейтинг -->
-                      <div class="product-rating">
-                        <div class="rating">
-                          <% for (let j = 0; j < 5; j++) { %>
-                            <span class="star-wrapper position-relative">
-                              <i class="far fa-star text-muted"></i>
-                              <% if (product.productRating > j) { %>
-                                <%
-                                let width = 100;
-                                if (product.productRating - j < 1) {
-                                  width = (product.productRating - j) * 100;
-                                }
-                                %>
-                                <span class="position-absolute top-0 start-0 overflow-hidden" style="width: <%= width %>%">
-                                  <i class="fas fa-star text-warning"></i>
-                                </span>
-                              <% } %>
-                            </span>
-                          <% } %>
-                        </div>
-                        <span class="text-muted small">
-                          <%= product.productRating ? product.productRating.toFixed(1) : '0.0' %>
-                        </span>
-                      </div>
-                      <!-- Описание -->
-                      <p class="product-description">
-                        <%
-                        const description = product.productDescription || '';
-                        const maxLength = 120;
-                        if (description.length > maxLength) {
-                        %>
-                          <%= description.substring(0, maxLength) %>...
-                        <% } else { %>
-                          <%= description %>
-                        <% } %>
-                      </p>
-                    </div>
+					<!-- Изображение -->
+					<div class="product-image position-relative">
+						<a href="/product/<%= product.productID %>" class="text-decoration-none">
+							<img src="/images/products/<%= product.productThumbnail %>"
+								alt="<%= product.productTitle %>">
+						</a>
 
-                        <!-- Правая часть с ценой и кнопками -->
-                        <div class="product-actions">
-                            <div class="price-container">
-                                <% if (product.isDiscounted) { %>
-                                    <div class="current-price discount-price-new">
-                                        <%= parseFloat(product.discountedPrice || product.displayPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
-                                    </div>
-                                    <div class="original-price">
-                                        <%= parseFloat(product.originalPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
-                                    </div>
-                                <% } else { %>
-                                    <div class="current-price">
-                                        <%= parseFloat(product.displayPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
-                                    </div>
-                                <% } %>
-                            </div>
-                            
-                            <div class="action-buttons">
-                                <% if (session.userId) { %>
-                                    <button class="btn btn-custom btn-sm"
-                                            onclick="addToCart('<%= product.productID %>')">
-                                        <i class="fas fa-shopping-cart me-1"></i>Купить
-                                    </button>
-                                <% } else { %>
-                                    <a href="/login" class="btn btn-custom btn-sm">
-                                        <i class="fas fa-sign-in-alt me-1"></i>Войти
-                                    </a>
-                                <% } %>
-                                
-                                <a href="/product/<%= product.productID %>"
-                                class="btn btn-outline-custom btn-sm">
-                                    <i class="fas fa-eye me-1"></i>Подробнее
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <% }) %>
-                </div>
+						<!-- Бейджи на изображении -->
+						<div class="image-badges">
+							<% if (product.isDiscounted) { %>
+							<div class="badge-discount-horizontal">
+								<i class="fas fa-percentage me-1"></i>
+								-<%= product.discountPercentage %>%
+							</div>
+							<% } %>
 
-                <!-- Пагинация -->
-                <% if (totalPages > 1) { %>
-                    <nav aria-label="Навигация по страницам" class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            <!-- Назад -->
-                            <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
-                                <a class="page-link border-0 rounded-circle mx-1" 
-                                   href="?<%= new URLSearchParams({
-                                        search: searchQuery || '',
-                                        category: category || '',
-                                        minPrice: minPrice || '',
-                                        maxPrice: maxPrice || '',
-                                        onSale: onSale ? 'true' : '',
-                                        sort: sort || '',
-                                        page: currentPage - 1
-                                    }) %>">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            </li>
-                            
-                            <!-- Страницы -->
-                            <% for (let i = 1; i <= totalPages; i++) { %>
-                                <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
-                                    <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                                        <a class="page-link border-0 rounded-circle mx-1" 
-                                           href="?<%= new URLSearchParams({
-                                                search: searchQuery || '',
-                                                category: category || '',
-                                                minPrice: minPrice || '',
-                                                maxPrice: maxPrice || '',
-                                                onSale: onSale ? 'true' : '',
-                                                sort: sort || '',
-                                                page: i
-                                            }) %>">
-                                            <%= i %>
-                                        </a>
-                                    </li>
-                                <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
-                                    <li class="page-item disabled">
-                                        <span class="page-link border-0 rounded-circle mx-1">...</span>
-                                    </li>
-                                <% } %>
-                            <% } %>
-                            
-                            <!-- Вперед -->
-                            <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
-                                <a class="page-link border-0 rounded-circle mx-1" 
-                                   href="?<%= new URLSearchParams({
-                                        search: searchQuery || '',
-                                        category: category || '',
-                                        minPrice: minPrice || '',
-                                        maxPrice: maxPrice || '',
-                                        onSale: onSale ? 'true' : '',
-                                        sort: sort || '',
-                                        page: currentPage + 1
-                                    }) %>">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                <% } %>
-            <% } %>
-        </div>
-    </div>
+							<!-- Бейдж "Нет в наличии" -->
+							<% if (product.stock_quantity <= 0) { %>
+							<div class="out-of-stock-overlay">
+								<div class="out-of-stock-badge">
+									SOLD
+								</div>
+							</div>
+							<% } %>
+						</div>
+
+						<!-- Кнопка избранного -->
+						<% if (session.userId) { %>
+							<%
+							const productIdNum = parseInt(product.productID);
+							const isFavorited = session.favorites && session.favorites.some(favId => parseInt(favId) === productIdNum);
+							%>
+							<button class="btn btn-light btn-sm favorite-btn rounded-circle"
+								onclick="toggleFavorite(event, <%= product.productID %>)"
+								title="<%= isFavorited ? 'Убрать из избранного' : 'Добавить в избранное' %>"
+								style="position: absolute; right: 10px; z-index: 2;">
+								<i class="<%= isFavorited ? 'fas fa-heart text-danger' : 'far fa-heart' %>"></i>
+							</button>
+						<% } %>
+					</div>
+
+					<!-- Заголовок и мета-информация -->
+					<div style="padding: 1vh;">
+						<h5 class="product-title">
+							<a href="/product/<%= product.productID %>">
+								<%= product.productTitle %>
+							</a>
+						</h5>
+
+						<!-- Категории - НОВАЯ СТРОКА -->
+						<% if (product.categories && product.categories.length > 0) { %>
+						<div class="categories-container">
+							<% product.categories.slice(0, 3).forEach((cat) => { %>
+							<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+								<%= cat %>
+							</span>
+							<% }) %>
+							<% if (product.categories.length > 3) { %>
+							<span class="badge bg-light text-muted border">
+								+<%= product.categories.length - 3 %>
+							</span>
+							<% } %>
+						</div>
+						<% } %>
+
+						<!-- Производитель -->
+						<div class="manufacturer">
+							<i class="fas fa-industry me-1"></i><%= product.productManufacturer %>
+						</div>
+
+						<!-- Рейтинг -->
+						<div class="product-rating">
+							<div class="rating">
+								<% for (let j = 0; j < 5; j++) { %>
+								<span class="star-wrapper position-relative">
+									<i class="far fa-star text-muted"></i>
+									<% if (product.productRating > j) { %>
+										<%
+										let width = 100;
+										if (product.productRating - j < 1) {
+											width = (product.productRating - j) * 100;
+										}
+										%>
+										<span class="position-absolute top-0 start-0 overflow-hidden" style="width: <%= width %>%">
+											<i class="fas fa-star text-warning"></i>
+										</span>
+									<% } %>
+								</span>
+								<% } %>
+							</div>
+							<span class="text-muted small">
+								<%= product.productRating ? product.productRating.toFixed(1) : '0.0' %>
+							</span>
+						</div>
+
+						<!-- Описание -->
+						<p class="product-description">
+							<%
+							const description = product.productDescription || '';
+							const maxLength = 120;
+							if (description.length > maxLength) {
+							%>
+								<%= description.substring(0, maxLength) %>...
+							<% } else { %>
+								<%= description %>
+							<% } %>
+						</p>
+					</div>
+
+					<!-- Правая часть с ценой и кнопками -->
+					<div class="product-actions">
+						<div class="price-container">
+							<% if (product.isDiscounted) { %>
+							<div class="current-price discount-price-new">
+								<%= parseFloat(product.discountedPrice || product.displayPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+							</div>
+							<div class="original-price">
+								<%= parseFloat(product.originalPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+							</div>
+							<% } else { %>
+							<div class="current-price">
+								<%= parseFloat(product.displayPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+							</div>
+							<% } %>
+
+							<!-- Индикатор наличия -->
+							<% if (product.stock_quantity <= 0) { %>
+							<div class="stock-indicator text-danger mt-2">
+								<i class="fas fa-times-circle me-1"></i>Нет в наличии
+							</div>
+							<% } else if (product.stock_quantity <= 5) { %>
+							<div class="stock-indicator text-warning mt-2">
+								<i class="fas fa-exclamation-triangle me-1"></i>Только <%= product.stock_quantity %> шт.
+							</div>
+							<% } else { %>
+							<div class="stock-indicator text-success mt-2">
+								<i class="fas fa-check-circle me-1"></i>В наличии
+							</div>
+							<% } %>
+						</div>
+
+						<div class="action-buttons">
+							<% if (product.stock_quantity <= 0) { %>
+							<!-- Товара нет в наличии -->
+							<button class="btn btn-outline-secondary btn-sm" disabled>
+								<i class="fas fa-times me-1"></i>Нет в наличии
+							</button>
+							<% } else if (session.userId) { %>
+							<!-- Товар в наличии, пользователь авторизован -->
+							<button class="btn btn-custom btn-sm"
+								onclick="addToCart('<%= product.productID %>')">
+								<i class="fas fa-shopping-cart me-1"></i>Купить
+							</button>
+							<% } else { %>
+							<!-- Товар в наличии, пользователь не авторизован -->
+							<a href="/login" class="btn btn-custom btn-sm">
+								<i class="fas fa-sign-in-alt me-1"></i>Войти
+							</a>
+							<% } %>
+
+							<a href="/product/<%= product.productID %>"
+								class="btn btn-outline-custom btn-sm">
+								<i class="fas fa-eye me-1"></i>Подробнее
+							</a>
+						</div>
+					</div>
+				</div>
+				<% }) %>
+			</div>
+
+			<!-- Пагинация -->
+			<% if (totalPages > 1) { %>
+			<nav aria-label="Навигация по страницам" class="mt-4">
+				<ul class="pagination justify-content-center">
+					<!-- Назад -->
+					<li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
+						<a class="page-link border-0 rounded-circle mx-1"
+							href="?<%= new URLSearchParams({
+								search: searchQuery || '',
+								category: category || '',
+								minPrice: minPrice || '',
+								maxPrice: maxPrice || '',
+								onSale: onSale ? 'true' : '',
+								inStock: inStock ? 'true' : '',
+								sort: sort || '',
+								page: currentPage - 1
+							}) %>">
+							<i class="fas fa-chevron-left"></i>
+						</a>
+					</li>
+
+					<!-- Страницы -->
+					<% for (let i = 1; i <= totalPages; i++) { %>
+						<% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+						<li class="page-item <%= i === currentPage ? 'active' : '' %>">
+							<a class="page-link border-0 rounded-circle mx-1"
+								href="?<%= new URLSearchParams({
+									search: searchQuery || '',
+									category: category || '',
+									minPrice: minPrice || '',
+									maxPrice: maxPrice || '',
+									onSale: onSale ? 'true' : '',
+									inStock: inStock ? 'true' : '',
+									sort: sort || '',
+									page: i
+								}) %>">
+								<%= i %>
+							</a>
+						</li>
+						<% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+						<li class="page-item disabled">
+							<span class="page-link border-0 rounded-circle mx-1">...</span>
+						</li>
+						<% } %>
+					<% } %>
+
+					<!-- Вперед -->
+					<li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
+						<a class="page-link border-0 rounded-circle mx-1"
+							href="?<%= new URLSearchParams({
+								search: searchQuery || '',
+								category: category || '',
+								minPrice: minPrice || '',
+								maxPrice: maxPrice || '',
+								onSale: onSale ? 'true' : '',
+								inStock: inStock ? 'true' : '',
+								sort: sort || '',
+								page: currentPage + 1
+							}) %>">
+							<i class="fas fa-chevron-right"></i>
+						</a>
+					</li>
+				</ul>
+			</nav>
+			<% } %>
+			<% } %>
+		</div>
+	</div>
 </div>
 
 <script>
-// Глобальные переменные для слайдера
-let minPriceValue = <%= minPrice %>;
-let maxPriceValue = <%= maxPrice %>;
-const sliderMin = <%= sliderMin %>;
-const sliderMax = <%= sliderMax %>;
-const step = 100;
+	// Глобальные переменные для слайдера
+	let minPriceValue = <%= minPrice %>;
+	let maxPriceValue = <%= maxPrice %>;
+	const sliderMin = <%= sliderMin %>;
+	const sliderMax = <%= sliderMax %>;
+	const step = 100;
 
-// Кастомный выпадающий список для сортировки
-document.addEventListener('DOMContentLoaded', function() {
-    const sortDropdown = document.getElementById('sortDropdown');
-    const sortSelected = document.getElementById('sortSelected');
-    const sortOptions = document.getElementById('sortOptions');
-    const sortHidden = document.getElementById('sortHidden');
-    
-    if (sortDropdown) {
-        // Открытие/закрытие выпадающего списка
-        sortDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('open');
-        });
-        
-        // Выбор опции - БЕЗ автоматического применения
-        document.querySelectorAll('.custom-select-option').forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const value = this.getAttribute('data-value');
-                const text = this.textContent.trim();
-                
-                // Обновляем выбранное значение
-                sortSelected.textContent = text;
-                sortHidden.value = value;
-                
-                // Убираем активный класс со всех
-                document.querySelectorAll('.custom-select-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                
-                // Добавляем активный класс к выбранному
-                this.classList.add('active');
-                
-                // Закрываем список
-                sortDropdown.classList.remove('open');
-                
-                // НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
-            });
-        });
-        
-        // Закрытие при клике вне списка
-        document.addEventListener('click', function(e) {
-            if (!sortDropdown.contains(e.target)) {
-                sortDropdown.classList.remove('open');
-            }
-        });
-        
-        // Закрытие при нажатии на клавишу ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                sortDropdown.classList.remove('open');
-            }
-        });
-    }
-    
-    initPriceSlider();
-    initCategoryFilters();
-    initSearchForm();
-});
+	// Кастомный выпадающий список для сортировки
+	document.addEventListener('DOMContentLoaded', function() {
+		const sortDropdown = document.getElementById('sortDropdown');
+		const sortSelected = document.getElementById('sortSelected');
+		const sortOptions = document.getElementById('sortOptions');
+		const sortHidden = document.getElementById('sortHidden');
 
-// Инициализация слайдера цен
-function initPriceSlider() {
-    const sliderContainer = document.querySelector('.price-range-container');
-    if (!sliderContainer) return;
-    
-    // Создаём слайдер
-    const sliderHTML = `
-        <div class="price-range-values">
-            <span id="minValueDisplay">${minPriceValue.toLocaleString()}₽</span>
-            <span id="maxValueDisplay">${maxPriceValue.toLocaleString()}₽</span>
-        </div>
-        <div class="price-slider" id="priceSlider">
-            <div class="slider-thumb min" id="minThumb">
-                <span class="range-slider-value" id="minValueLabel"></span>
-            </div>
-            <div class="slider-thumb max" id="maxThumb">
-                <span class="range-slider-value" id="maxValueLabel"></span>
-            </div>
-        </div>
-        <div class="price-inputs">
-            <div class="price-input-wrapper">
-                <span class="price-input-badge">От</span>
-                <input type="number" class="price-input" id="minPriceInput" value="${minPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
-            </div>
-            <div class="price-input-wrapper">
-                <span class="price-input-badge">До</span>
-                <input type="number" class="price-input" id="maxPriceInput" value="${maxPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
-            </div>
-        </div>
-        <input type="hidden" id="minPriceHidden" value="${minPriceValue}">
-        <input type="hidden" id="maxPriceHidden" value="${maxPriceValue}">
-    `;
-    
-    // Заменяем старый блок цен на новый слайдер
-    const priceSection = document.querySelector('.price-range-container');
-    if (priceSection) {
-        priceSection.innerHTML = sliderHTML;
-    }
-    
-    // Обновляем стили слайдера
-    updateSliderStyle();
-    
-    // Добавляем обработчики событий
-    const minThumb = document.getElementById('minThumb');
-    const maxThumb = document.getElementById('maxThumb');
-    const minInput = document.getElementById('minPriceInput');
-    const maxInput = document.getElementById('maxPriceInput');
+		if (sortDropdown) {
+			// Открытие/закрытие выпадающего списка
+			sortDropdown.addEventListener('click', function(e) {
+				e.stopPropagation();
+				this.classList.toggle('open');
+			});
 
-        // Обработчик для минимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
-    minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
-    minThumb.addEventListener('touchstart', (e) => startDrag(e, 'min'));
+			// Выбор опции - БЕЗ автоматического применения
+			document.querySelectorAll('.custom-select-option').forEach(option => {
+				option.addEventListener('click', function(e) {
+					e.stopPropagation();
+					const value = this.getAttribute('data-value');
+					const text = this.textContent.trim();
 
-    // Обработчик для максимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
-    maxThumb.addEventListener('mousedown', (e) => startDrag(e, 'max'));
-    maxThumb.addEventListener('touchstart', (e) => startDrag(e, 'max'));
-    
-    // Обработчик для минимума
-    minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
-    minInput.addEventListener('input', (e) => {
-        let value = Math.floor(parseInt(e.target.value) / step) * step;
-        value = Math.max(sliderMin, Math.min(value, maxPriceValue - step));
-        minPriceValue = value;
-        e.target.value = value;
-        document.getElementById('minPriceHidden').value = value;
-        updateSliderStyle();
-    });
-    
-    // Обработчик для максимума
-    maxThumb.addEventListener('mousedown', (e) => startDrag(e, 'max'));
-    maxInput.addEventListener('input', (e) => {
-        let value = Math.ceil(parseInt(e.target.value) / step) * step;
-        value = Math.min(sliderMax, Math.max(value, minPriceValue + step));
-        maxPriceValue = value;
-        e.target.value = value;
-        document.getElementById('maxPriceHidden').value = value;
-        updateSliderStyle();
-    });
-    
-    // Обработчик фокуса для инпутов
-    minInput.addEventListener('focus', () => {
-        document.querySelector('.price-input-wrapper:nth-child(1)').classList.add('active');
-    });
-    minInput.addEventListener('blur', () => {
-        document.querySelector('.price-input-wrapper:nth-child(1)').classList.remove('active');
-    });
-    maxInput.addEventListener('focus', () => {
-        document.querySelector('.price-input-wrapper:nth-child(2)').classList.add('active');
-    });
-    maxInput.addEventListener('blur', () => {
-        document.querySelector('.price-input-wrapper:nth-child(2)').classList.remove('active');
-    });
-}
+					// Обновляем выбранное значение
+					sortSelected.textContent = text;
+					sortHidden.value = value;
 
-function updateSliderStyle() {
-    const minPercentage = ((minPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
-    const maxPercentage = ((maxPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
-    const slider = document.getElementById('priceSlider');
-    
-    if (slider) {
-        // Добавляем плавный переход для градиента
-        slider.style.transition = 'background 0.1s ease';
-        slider.style.setProperty('--min-percentage', minPercentage + '%');
-        slider.style.setProperty('--max-percentage', maxPercentage + '%');
-    }
-    
-    const minThumb = document.getElementById('minThumb');
-    const maxThumb = document.getElementById('maxThumb');
-    
-    if (minThumb && maxThumb) {
-        // УБРАЛИ transition для ползунков - теперь двигаются мгновенно
-        minThumb.style.transition = 'none';
-        maxThumb.style.transition = 'none';
-        minThumb.style.left = minPercentage + '%';
-        maxThumb.style.right = (100 - maxPercentage) + '%';
-    }
-}
+					// Убираем активный класс со всех
+					document.querySelectorAll('.custom-select-option').forEach(opt => {
+						opt.classList.remove('active');
+					});
 
-// Функция для перетаскивания ползунков - УБРАНА ЗАДЕРЖКА
-function startDrag(e, type) {
-  e.preventDefault();
-  
-  // Определяем, это тач-событие или мышиное
-  const isTouch = e.type === 'touchstart';
-  
-  // Получаем координаты в зависимости от типа события
-  const startX = isTouch ? e.touches[0].clientX : e.clientX;
-  
-  const startValue = type === 'min' ? minPriceValue : maxPriceValue;
-  const thumb = e.target.closest('.slider-thumb');
-  
-  if (thumb) {
-    thumb.classList.add('active');
-  }
-  
-  // Отключаем плавность в начале перетаскивания
-  const slider = document.getElementById('priceSlider');
-  if (slider) {
-    slider.style.transition = 'none';
-  }
-  
-  // Функция для обработки движения
-  function handleMove(e) {
-    // Предотвращаем прокрутку страницы при перетаскивании на мобильных
-    e.preventDefault();
-    
-    // Получаем текущую координату X
-    const currentX = isTouch ? e.touches[0].clientX : e.clientX;
-    
-    const deltaX = currentX - startX;
-    const sliderWidth = document.getElementById('priceSlider').offsetWidth;
-    const pixelsPerStep = (sliderWidth / (sliderMax - sliderMin)) * step;
-    
-    // Вычисляем новое значение
-    let newValue = startValue + Math.round(deltaX / pixelsPerStep) * step;
-    
-    // Обновляем значение в зависимости от типа ползунка
-    if (type === 'min') {
-      newValue = Math.max(sliderMin, Math.min(newValue, maxPriceValue - step));
-      minPriceValue = newValue;
-      document.getElementById('minPriceInput').value = newValue;
-      document.getElementById('minPriceHidden').value = newValue;
-    } else {
-      newValue = Math.min(sliderMax, Math.max(newValue, minPriceValue + step));
-      maxPriceValue = newValue;
-      document.getElementById('maxPriceInput').value = newValue;
-      document.getElementById('maxPriceHidden').value = newValue;
-    }
-    
-    // Обновляем стиль слайдера
-    updateSliderStyle();
-  }
-  
-  // Функция для обработки окончания перетаскивания
-  function handleEnd() {
-    // Удаляем все обработчики событий
-    document.removeEventListener('mousemove', handleMove);
-    document.removeEventListener('mouseup', handleEnd);
-    document.removeEventListener('touchmove', handleMove, { passive: false });
-    document.removeEventListener('touchend', handleEnd);
-    document.removeEventListener('touchcancel', handleEnd);
-    
-    // Убираем активный класс с ползунка
-    if (thumb) {
-      thumb.classList.remove('active');
-    }
-    
-    // Включаем плавность обратно после отпускания
-    const slider = document.getElementById('priceSlider');
-    if (slider) {
-      slider.style.transition = 'background 0.1s ease';
-    }
-  }
-  
-  // Добавляем обработчики для мыши
-  document.addEventListener('mousemove', handleMove);
-  document.addEventListener('mouseup', handleEnd);
-  
-  // Добавляем обработчики для тач-устройств
-  document.addEventListener('touchmove', handleMove, { passive: false });
-  document.addEventListener('touchend', handleEnd);
-  document.addEventListener('touchcancel', handleEnd);
-}
+					// Добавляем активный класс к выбранному
+					this.classList.add('active');
 
-// Функция для обновления фильтров категорий - БЕЗ автоматического применения
-function initCategoryFilters() {
-    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
-    updateCategoriesCount(checkboxes.length);
-    
-    // Добавляем обработчик клика на лейблы
-    document.querySelectorAll('.category-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            if (e.target.classList.contains('form-check-input') ||
-                e.target.classList.contains('form-check-label')) {
-                return;
-            }
-            const checkbox = this.querySelector('.form-check-input');
-            if (checkbox) {
-                checkbox.checked = !checkbox.checked;
-                const event = new Event('change', { bubbles: true });
-                checkbox.dispatchEvent(event);
-            }
-        });
-    });
-}
+					// Закрываем список
+					sortDropdown.classList.remove('open');
 
-// Функция для стики фильтров
+					// НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
+				});
+			});
 
+			// Закрытие при клике вне списка
+			document.addEventListener('click', function(e) {
+				if (!sortDropdown.contains(e.target)) {
+					sortDropdown.classList.remove('open');
+				}
+			});
 
-// Функция для формы поиска - обновленная версия
-function initSearchForm() {
-    const centralSearchInput = document.getElementById('centralSearchInput');
-    const suggestionsContainer = document.getElementById('centralSearchSuggestions');
-    
-    if (!centralSearchInput || !suggestionsContainer) {
-        console.warn('Search elements not found');
-        return;
-    }
-    
-    let debounceTimer;
-    let isMouseOverSuggestions = false;
-    
-    // Показ подсказок при фокусе
-    centralSearchInput.addEventListener('focus', function(e) {
-        const query = this.value.trim();
-        if (query.length === 0) {
-            fetchPopularSuggestions();
-        } else if (query.length >= 2) {
-            fetchSuggestions(query);
-        }
-    });
-    
-    // Обработчик ввода
-    centralSearchInput.addEventListener('input', function(e) {
-        clearTimeout(debounceTimer);
-        const query = this.value.trim();
-        
-        if (query.length < 2) {
-            if (query.length === 0) {
-                fetchPopularSuggestions();
-            } else {
-                hideSuggestions();
-            }
-            return;
-        }
-        
-        debounceTimer = setTimeout(() => {
-            fetchSuggestions(query);
-        }, 300);
-    });
-    
-    // Скрыть подсказки при потере фокуса
-    centralSearchInput.addEventListener('blur', function() {
-        setTimeout(() => {
-            if (!isMouseOverSuggestions) {
-                hideSuggestions();
-            }
-        }, 200);
-    });
-    
-    // Обработчик клика по подсказке
-    suggestionsContainer.addEventListener('click', function(e) {
-        const item = e.target.closest('.search-suggestion-item');
-        if (item) {
-            const productId = item.dataset.productId;
-            window.location.href = `/product/${productId}`;
-        }
-    });
-    
-    // Отслеживание наведения на подсказки
-    suggestionsContainer.addEventListener('mouseenter', () => {
-        isMouseOverSuggestions = true;
-    });
-    suggestionsContainer.addEventListener('mouseleave', () => {
-        isMouseOverSuggestions = false;
-        setTimeout(() => {
-            if (document.activeElement !== centralSearchInput) {
-                hideSuggestions();
-            }
-        }, 200);
-    });
-    
-    // Обработчик клавиш
-    centralSearchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const form = document.getElementById('centralSearchForm');
-            if (form) {
-                form.submit();
-            }
-        }
-        if (e.key === 'Escape') {
-            hideSuggestions();
-        }
-    });
-}
+			// Закрытие при нажатии на клавишу ESC
+			document.addEventListener('keydown', function(e) {
+				if (e.key === 'Escape') {
+					sortDropdown.classList.remove('open');
+				}
+			});
+		}
 
-function displaySuggestions(suggestions) {
-    const suggestionsContainer = document.getElementById('centralSearchSuggestions');
-    if (!suggestionsContainer) return;
-    
-    if (!Array.isArray(suggestions) || suggestions.length === 0) {
-        suggestionsContainer.innerHTML = `
-            <div class="search-suggestions-empty">
-                <i class="fas fa-search"></i>
-                <p>Ничего не найдено</p>
-            </div>
-        `;
-        suggestionsContainer.classList.add('show');
-        return;
-    }
-    
-    let html = '';
-    suggestions.forEach(suggestion => {
-        const discountBadge = suggestion.isDiscounted ? `
-            <div class="search-suggestion-discount-badge">
-                <i class="fas fa-tag"></i>-${suggestion.discountPercentage}%
-            </div>
-        ` : '';
-        
-        html += `
-            <div class="search-suggestion-item" data-product-id="${suggestion.id}">
-                <div style="position: relative;">
-                    <img src="/images/products/${suggestion.thumbnail}" alt="${suggestion.title}">
-                    ${discountBadge}
-                </div>
-                <div class="search-suggestion-info">
-                    <div class="search-suggestion-title">${suggestion.title}</div>
-                    <div class="search-suggestion-price-container">
-                        <span class="search-suggestion-price">${suggestion.price.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
-                        ${suggestion.isDiscounted ? `
-                            <span class="search-suggestion-original-price">${suggestion.originalPrice.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    suggestionsContainer.innerHTML = html;
-    suggestionsContainer.classList.add('show');
-}
+		initPriceSlider();
+		initCategoryFilters();
+		initSearchForm();
+	});
 
-function hideSuggestions() {
-    const suggestionsContainer = document.getElementById('centralSearchSuggestions');
-    if (suggestionsContainer) {
-        suggestionsContainer.classList.remove('show');
-    }
-}
+	// Инициализация слайдера цен
+	function initPriceSlider() {
+		const sliderContainer = document.querySelector('.price-range-container');
+		if (!sliderContainer) return;
 
-function fetchSuggestions(query) {
-    fetch(`/api/search-suggestions?query=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(suggestions => {
-            displaySuggestions(suggestions);
-        })
-        .catch(error => {
-            console.error('Error fetching suggestions:', error);
-            hideSuggestions();
-        });
-}
+		// Создаём слайдер
+		const sliderHTML = `
+		<div class="price-range-values">
+			<span id="minValueDisplay">${minPriceValue.toLocaleString()}₽</span>
+			<span id="maxValueDisplay">${maxPriceValue.toLocaleString()}₽</span>
+		</div>
+		<div class="price-slider" id="priceSlider">
+			<div class="slider-thumb min" id="minThumb">
+				<span class="range-slider-value" id="minValueLabel"></span>
+			</div>
+			<div class="slider-thumb max" id="maxThumb">
+				<span class="range-slider-value" id="maxValueLabel"></span>
+			</div>
+		</div>
+		<div class="price-inputs">
+			<div class="price-input-wrapper">
+				<span class="price-input-badge">От</span>
+				<input type="number" class="price-input" id="minPriceInput" value="${minPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
+			</div>
+			<div class="price-input-wrapper">
+				<span class="price-input-badge">До</span>
+				<input type="number" class="price-input" id="maxPriceInput" value="${maxPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
+			</div>
+		</div>
+		<input type="hidden" id="minPriceHidden" value="${minPriceValue}">
+		<input type="hidden" id="maxPriceHidden" value="${maxPriceValue}">
+		`;
 
-function fetchPopularSuggestions() {
-    fetch('/api/search-suggestions?popular=true')
-        .then(response => response.json())
-        .then(suggestions => {
-            displaySuggestions(suggestions);
-        })
-        .catch(error => {
-            console.error('Error fetching popular suggestions:', error);
-            hideSuggestions();
-        });
-}
+		// Заменяем старый блок цен на новый слайдер
+		const priceSection = document.querySelector('.price-range-container');
+		if (priceSection) {
+			priceSection.innerHTML = sliderHTML;
+		}
 
-// Функция для применения фильтров - ВЫЗЫВАЕТСЯ ТОЛЬКО ПРИ НАЖАТИИ КНОПКИ
-function applyFilters() {
-    const search = document.querySelector('#centralSearchInput')?.value || '';
-    const category = document.getElementById('categoriesHidden').value;
-    const minPrice = document.getElementById('minPriceHidden').value;
-    const maxPrice = document.getElementById('maxPriceHidden').value;
-    const onSale = document.getElementById('onSale').checked ? 'true' : '';
-    const sort = document.getElementById('sortHidden').value;
-    
-    const params = new URLSearchParams();
-    
-    if (search) params.set('search', search);
-    if (category) params.set('category', category);
-    if (minPrice !== sliderMin.toString()) params.set('minPrice', minPrice);
-    if (maxPrice !== sliderMax.toString()) params.set('maxPrice', maxPrice);
-    if (onSale) params.set('onSale', onSale);
-    if (sort) params.set('sort', sort);
-    
-    window.location.href = `/products?${params.toString()}`;
-}
+		// Обновляем стили слайдера
+		updateSliderStyle();
 
-// Обновление фильтра категорий - БЕЗ автоматического применения
-function updateCategoryFilter() {
-    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
-    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
-    const hiddenInput = document.getElementById('categoriesHidden');
-    hiddenInput.value = selectedIds.join(',');
-    updateCategoriesCount(selectedIds.length);
-    
-    // НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
-}
+		// Добавляем обработчики событий
+		const minThumb = document.getElementById('minThumb');
+		const maxThumb = document.getElementById('maxThumb');
+		const minInput = document.getElementById('minPriceInput');
+		const maxInput = document.getElementById('maxPriceInput');
 
-// Очистка выбранных категорий
-function clearCategories() {
-    const checkboxes = document.querySelectorAll('#categoriesList .form-check-input');
-    checkboxes.forEach(cb => {
-        cb.checked = false;
-    });
-    const hiddenInput = document.getElementById('categoriesHidden');
-    hiddenInput.value = '';
-    updateCategoriesCount(0);
-    
-    // НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
-}
+		// Обработчик для минимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
+		minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
+		minThumb.addEventListener('touchstart', (e) => startDrag(e, 'min'));
 
-// Обновление счётчика категорий
-function updateCategoriesCount(count) {
-    const countEl = document.querySelector('#selectedCategoriesCount .fw-bold');
-    if (countEl) {
-        countEl.textContent = count;
-    }
-}
+		// Обработчик для максимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
+		maxThumb.addEventListener('mousedown', (e) => startDrag(e, 'max'));
+		maxThumb.addEventListener('touchstart', (e) => startDrag(e, 'max'));
 
-// Функция для сворачивания/разворачивания категорий
-function toggleCategories() {
-    const container = document.getElementById('categoriesFilterContainer');
-    const icon = document.getElementById('categoriesToggleIcon');
-    const btn = document.getElementById('toggleCategoriesBtn');
-    
-    if (container && icon && btn) {
-        container.classList.toggle('d-none');
-        if (container.classList.contains('d-none')) {
-            icon.classList.remove('fa-chevron-up');
-            icon.classList.add('fa-chevron-down');
-            btn.setAttribute('aria-expanded', 'false');
-        } else {
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-up');
-            btn.setAttribute('aria-expanded', 'true');
-        }
-    }
-}
+		// Обработчик для минимума
+		minInput.addEventListener('input', (e) => {
+			let value = Math.floor(parseInt(e.target.value) / step) * step;
+			value = Math.max(sliderMin, Math.min(value, maxPriceValue - step));
+			minPriceValue = value;
+			e.target.value = value;
+			document.getElementById('minPriceHidden').value = value;
+			updateSliderStyle();
+		});
 
-// Функции для мобильного меню
-function toggleFilters() {
-    document.querySelector('.filters-sidebar').classList.toggle('active');
-    document.querySelector('.mobile-overlay').classList.toggle('active');
-}
+		// Обработчик для максимума
+		maxInput.addEventListener('input', (e) => {
+			let value = Math.ceil(parseInt(e.target.value) / step) * step;
+			value = Math.min(sliderMax, Math.max(value, minPriceValue + step));
+			maxPriceValue = value;
+			e.target.value = value;
+			document.getElementById('maxPriceHidden').value = value;
+			updateSliderStyle();
+		});
 
-function closeFilters() {
-    document.querySelector('.filters-sidebar').classList.remove('active');
-    document.querySelector('.mobile-overlay').classList.remove('active');
-}
+		// Обработчик фокуса для инпутов
+		minInput.addEventListener('focus', () => {
+			document.querySelector('.price-input-wrapper:nth-child(1)').classList.add('active');
+		});
+		minInput.addEventListener('blur', () => {
+			document.querySelector('.price-input-wrapper:nth-child(1)').classList.remove('active');
+		});
+		maxInput.addEventListener('focus', () => {
+			document.querySelector('.price-input-wrapper:nth-child(2)').classList.add('active');
+		});
+		maxInput.addEventListener('blur', () => {
+			document.querySelector('.price-input-wrapper:nth-child(2)').classList.remove('active');
+		});
+	}
+
+	function updateSliderStyle() {
+		const minPercentage = ((minPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
+		const maxPercentage = ((maxPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
+		const slider = document.getElementById('priceSlider');
+		if (slider) {
+			// Добавляем плавный переход для градиента
+			slider.style.transition = 'background 0.1s ease';
+			slider.style.setProperty('--min-percentage', minPercentage + '%');
+			slider.style.setProperty('--max-percentage', maxPercentage + '%');
+		}
+
+		const minThumb = document.getElementById('minThumb');
+		const maxThumb = document.getElementById('maxThumb');
+		if (minThumb && maxThumb) {
+			// УБРАЛИ transition для ползунков - теперь двигаются мгновенно
+			minThumb.style.transition = 'none';
+			maxThumb.style.transition = 'none';
+			minThumb.style.left = minPercentage + '%';
+			maxThumb.style.right = (100 - maxPercentage) + '%';
+		}
+	}
+
+	// Функция для перетаскивания ползунков - УБРАНА ЗАДЕРЖКА
+	function startDrag(e, type) {
+		e.preventDefault();
+
+		// Определяем, это тач-событие или мышиное
+		const isTouch = e.type === 'touchstart';
+
+		// Получаем координаты в зависимости от типа события
+		const startX = isTouch ? e.touches[0].clientX : e.clientX;
+		const startValue = type === 'min' ? minPriceValue : maxPriceValue;
+		const thumb = e.target.closest('.slider-thumb');
+
+		if (thumb) {
+			thumb.classList.add('active');
+		}
+
+		// Отключаем плавность в начале перетаскивания
+		const slider = document.getElementById('priceSlider');
+		if (slider) {
+			slider.style.transition = 'none';
+		}
+
+		// Функция для обработки движения
+		function handleMove(e) {
+			// Предотвращаем прокрутку страницы при перетаскивании на мобильных
+			e.preventDefault();
+
+			// Получаем текущую координату X
+			const currentX = isTouch ? e.touches[0].clientX : e.clientX;
+			const deltaX = currentX - startX;
+			const sliderWidth = document.getElementById('priceSlider').offsetWidth;
+			const pixelsPerStep = (sliderWidth / (sliderMax - sliderMin)) * step;
+
+			// Вычисляем новое значение
+			let newValue = startValue + Math.round(deltaX / pixelsPerStep) * step;
+
+			// Обновляем значение в зависимости от типа ползунка
+			if (type === 'min') {
+				newValue = Math.max(sliderMin, Math.min(newValue, maxPriceValue - step));
+				minPriceValue = newValue;
+				document.getElementById('minPriceInput').value = newValue;
+				document.getElementById('minPriceHidden').value = newValue;
+			} else {
+				newValue = Math.min(sliderMax, Math.max(newValue, minPriceValue + step));
+				maxPriceValue = newValue;
+				document.getElementById('maxPriceInput').value = newValue;
+				document.getElementById('maxPriceHidden').value = newValue;
+			}
+
+			// Обновляем стиль слайдера
+			updateSliderStyle();
+		}
+
+		// Функция для обработки окончания перетаскивания
+		function handleEnd() {
+			// Удаляем все обработчики событий
+			document.removeEventListener('mousemove', handleMove);
+			document.removeEventListener('mouseup', handleEnd);
+			document.removeEventListener('touchmove', handleMove, { passive: false });
+			document.removeEventListener('touchend', handleEnd);
+			document.removeEventListener('touchcancel', handleEnd);
+
+			// Убираем активный класс с ползунка
+			if (thumb) {
+				thumb.classList.remove('active');
+			}
+
+			// Включаем плавность обратно после отпускания
+			const slider = document.getElementById('priceSlider');
+			if (slider) {
+				slider.style.transition = 'background 0.1s ease';
+			}
+		}
+
+		// Добавляем обработчики для мыши
+		document.addEventListener('mousemove', handleMove);
+		document.addEventListener('mouseup', handleEnd);
+
+		// Добавляем обработчики для тач-устройств
+		document.addEventListener('touchmove', handleMove, { passive: false });
+		document.addEventListener('touchend', handleEnd);
+		document.addEventListener('touchcancel', handleEnd);
+	}
+
+	// Функция для обновления фильтров категорий - БЕЗ автоматического применения
+	function initCategoryFilters() {
+		const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
+		updateCategoriesCount(checkboxes.length);
+
+		// Добавляем обработчик клика на лейблы
+		document.querySelectorAll('.category-item').forEach(item => {
+			item.addEventListener('click', function(e) {
+				if (e.target.classList.contains('form-check-input') ||
+					e.target.classList.contains('form-check-label')) {
+					return;
+				}
+				const checkbox = this.querySelector('.form-check-input');
+				if (checkbox) {
+					checkbox.checked = !checkbox.checked;
+					const event = new Event('change', { bubbles: true });
+					checkbox.dispatchEvent(event);
+				}
+			});
+		});
+	}
+
+	// Функция для формы поиска - обновленная версия
+	function initSearchForm() {
+		const centralSearchInput = document.getElementById('centralSearchInput');
+		const suggestionsContainer = document.getElementById('centralSearchSuggestions');
+
+		if (!centralSearchInput || !suggestionsContainer) {
+			console.warn('Search elements not found');
+			return;
+		}
+
+		let debounceTimer;
+		let isMouseOverSuggestions = false;
+
+		// Показ подсказок при фокусе
+		centralSearchInput.addEventListener('focus', function(e) {
+			const query = this.value.trim();
+			if (query.length === 0) {
+				fetchPopularSuggestions();
+			} else if (query.length >= 2) {
+				fetchSuggestions(query);
+			}
+		});
+
+		// Обработчик ввода
+		centralSearchInput.addEventListener('input', function(e) {
+			clearTimeout(debounceTimer);
+			const query = this.value.trim();
+
+			if (query.length < 2) {
+				if (query.length === 0) {
+					fetchPopularSuggestions();
+				} else {
+					hideSuggestions();
+				}
+				return;
+			}
+
+			debounceTimer = setTimeout(() => {
+				fetchSuggestions(query);
+			}, 300);
+		});
+
+		// Скрыть подсказки при потере фокуса
+		centralSearchInput.addEventListener('blur', function() {
+			setTimeout(() => {
+				if (!isMouseOverSuggestions) {
+					hideSuggestions();
+				}
+			}, 200);
+		});
+
+		// Обработчик клика по подсказке
+		suggestionsContainer.addEventListener('click', function(e) {
+			const item = e.target.closest('.search-suggestion-item');
+			if (item) {
+				const productId = item.dataset.productId;
+				window.location.href = `/product/${productId}`;
+			}
+		});
+
+		// Отслеживание наведения на подсказки
+		suggestionsContainer.addEventListener('mouseenter', () => {
+			isMouseOverSuggestions = true;
+		});
+		suggestionsContainer.addEventListener('mouseleave', () => {
+			isMouseOverSuggestions = false;
+			setTimeout(() => {
+				if (document.activeElement !== centralSearchInput) {
+					hideSuggestions();
+				}
+			}, 200);
+		});
+
+		// Обработчик клавиш
+		centralSearchInput.addEventListener('keydown', function(e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				const form = document.getElementById('centralSearchForm');
+				if (form) {
+					form.submit();
+				}
+			}
+			if (e.key === 'Escape') {
+				hideSuggestions();
+			}
+		});
+	}
+
+	function displaySuggestions(suggestions) {
+		const suggestionsContainer = document.getElementById('centralSearchSuggestions');
+		if (!suggestionsContainer) return;
+
+		if (!Array.isArray(suggestions) || suggestions.length === 0) {
+			suggestionsContainer.innerHTML = `
+			<div class="search-suggestions-empty">
+				<i class="fas fa-search"></i>
+				<p>Ничего не найдено</p>
+			</div>
+			`;
+			suggestionsContainer.classList.add('show');
+			return;
+		}
+
+		let html = '';
+		suggestions.forEach(suggestion => {
+			const discountBadge = suggestion.isDiscounted ? `
+			<div class="search-suggestion-discount-badge">
+				<i class="fas fa-tag"></i>-${suggestion.discountPercentage}%
+			</div>
+			` : '';
+
+			html += `
+			<div class="search-suggestion-item" data-product-id="${suggestion.id}">
+				<div style="position: relative;">
+					<img src="/images/products/${suggestion.thumbnail}" alt="${suggestion.title}">
+					${discountBadge}
+				</div>
+				<div class="search-suggestion-info">
+					<div class="search-suggestion-title">${suggestion.title}</div>
+					<div class="search-suggestion-price-container">
+						<span class="search-suggestion-price">${suggestion.price.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
+						${suggestion.isDiscounted ? `
+						<span class="search-suggestion-original-price">${suggestion.originalPrice.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
+						` : ''}
+					</div>
+				</div>
+			</div>
+			`;
+		});
+
+		suggestionsContainer.innerHTML = html;
+		suggestionsContainer.classList.add('show');
+	}
+
+	function hideSuggestions() {
+		const suggestionsContainer = document.getElementById('centralSearchSuggestions');
+		if (suggestionsContainer) {
+			suggestionsContainer.classList.remove('show');
+		}
+	}
+
+	function fetchSuggestions(query) {
+		fetch(`/api/search-suggestions?query=${encodeURIComponent(query)}`)
+			.then(response => response.json())
+			.then(suggestions => {
+				displaySuggestions(suggestions);
+			})
+			.catch(error => {
+				console.error('Error fetching suggestions:', error);
+				hideSuggestions();
+			});
+	}
+
+	function fetchPopularSuggestions() {
+		fetch('/api/search-suggestions?popular=true')
+			.then(response => response.json())
+			.then(suggestions => {
+				displaySuggestions(suggestions);
+			})
+			.catch(error => {
+				console.error('Error fetching popular suggestions:', error);
+				hideSuggestions();
+			});
+	}
+
+	// Функция для применения фильтров - ВЫЗЫВАЕТСЯ ТОЛЬКО ПРИ НАЖАТИИ КНОПКИ
+	function applyFilters() {
+		const search = document.querySelector('#centralSearchInput')?.value || '';
+		const category = document.getElementById('categoriesHidden').value;
+		const minPrice = document.getElementById('minPriceHidden').value;
+		const maxPrice = document.getElementById('maxPriceHidden').value;
+		const onSale = document.getElementById('onSale').checked ? 'true' : '';
+		const inStock = document.getElementById('inStock').checked ? 'true' : '';
+		const sort = document.getElementById('sortHidden').value;
+
+		const params = new URLSearchParams();
+
+		if (search) params.set('search', search);
+		if (category) params.set('category', category);
+		if (minPrice !== sliderMin.toString()) params.set('minPrice', minPrice);
+		if (maxPrice !== sliderMax.toString()) params.set('maxPrice', maxPrice);
+		if (onSale) params.set('onSale', onSale);
+		if (inStock) params.set('inStock', inStock);
+		if (sort) params.set('sort', sort);
+
+		window.location.href = `/products?${params.toString()}`;
+	}
+
+	// Обновление фильтра категорий - БЕЗ автоматического применения
+	function updateCategoryFilter() {
+		const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
+		const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+		const hiddenInput = document.getElementById('categoriesHidden');
+		hiddenInput.value = selectedIds.join(',');
+		updateCategoriesCount(selectedIds.length);
+
+		// НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
+	}
+
+	// Очистка выбранных категорий
+	function clearCategories() {
+		const checkboxes = document.querySelectorAll('#categoriesList .form-check-input');
+		checkboxes.forEach(cb => {
+			cb.checked = false;
+		});
+		const hiddenInput = document.getElementById('categoriesHidden');
+		hiddenInput.value = '';
+		updateCategoriesCount(0);
+
+		// НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
+	}
+
+	// Обновление счётчика категорий
+	function updateCategoriesCount(count) {
+		const countEl = document.querySelector('#selectedCategoriesCount .fw-bold');
+		if (countEl) {
+			countEl.textContent = count;
+		}
+	}
+
+	// Функция для сворачивания/разворачивания категорий
+	function toggleCategories() {
+		const container = document.getElementById('categoriesFilterContainer');
+		const icon = document.getElementById('categoriesToggleIcon');
+		const btn = document.getElementById('toggleCategoriesBtn');
+
+		if (container && icon && btn) {
+			container.classList.toggle('d-none');
+			if (container.classList.contains('d-none')) {
+				icon.classList.remove('fa-chevron-up');
+				icon.classList.add('fa-chevron-down');
+				btn.setAttribute('aria-expanded', 'false');
+			} else {
+				icon.classList.remove('fa-chevron-down');
+				icon.classList.add('fa-chevron-up');
+				btn.setAttribute('aria-expanded', 'true');
+			}
+		}
+	}
+
+	// Функции для мобильного меню
+	function toggleFilters() {
+		document.querySelector('.filters-sidebar').classList.toggle('active');
+		document.querySelector('.mobile-overlay').classList.toggle('active');
+	}
+
+	function closeFilters() {
+		document.querySelector('.filters-sidebar').classList.remove('active');
+		document.querySelector('.mobile-overlay').classList.remove('active');
+	}
+
+	// Функция добавления в корзину с проверкой наличия
+	function addToCart(productID) {
+		// Получаем количество товара из атрибута
+		const productElement = document.querySelector(`.horizontal-product-card[data-product-id="${productID}"]`);
+		const stockQuantity = parseInt(productElement?.dataset.stockQuantity || 0);
+
+		if (stockQuantity <= 0) {
+			showToast('Товара нет в наличии', 'error');
+			return;
+		}
+
+		// Проверяем, есть ли товар уже в корзине
+		const cart = <%= JSON.stringify(session.cart || {}) %>;
+		const currentCount = cart[productID] ? cart[productID].sc_count : 0;
+
+		if (currentCount >= stockQuantity) {
+			showToast(`Нельзя добавить больше ${stockQuantity} шт.`, 'warning');
+			return;
+		}
+
+		// Отправляем запрос на сервер
+		fetch('/cart/add', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ productID: productID })
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success) {
+				showToast('Товар добавлен в корзину', 'success');
+
+				// Обновляем счетчик корзины
+				if (data.cartCount !== undefined) {
+					const cartBadge = document.querySelector('.nav-badge');
+					if (cartBadge) {
+						cartBadge.textContent = data.cartCount;
+					}
+				}
+			} else {
+				showToast(data.message || 'Ошибка добавления в корзину', 'error');
+			}
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			showToast('Ошибка добавления в корзину', 'error');
+		});
+	}
+
+	// Функция показа уведомлений
+	function showToast(message, type = 'info') {
+		const toast = document.createElement('div');
+		toast.className = `toast align-items-center text-white bg-${type} border-0`;
+		toast.setAttribute('role', 'alert');
+		toast.setAttribute('aria-live', 'assertive');
+		toast.setAttribute('aria-atomic', 'true');
+		toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1100; min-width: 250px;';
+
+		toast.innerHTML = `
+		<div class="d-flex">
+			<div class="toast-body">${message}</div>
+			<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+		</div>
+		`;
+
+		document.body.appendChild(toast);
+
+		const bsToast = new bootstrap.Toast(toast);
+		bsToast.show();
+
+		// Удаляем тост через 3 секунды
+		setTimeout(() => {
+			toast.remove();
+		}, 3000);
+	}
 </script>

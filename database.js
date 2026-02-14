@@ -3,8 +3,8 @@ const mysql = require('mysql2');
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
-    database: 'SportI'
+    password: 'root',
+    database: 'Sport'
 });
 
 // Установка часового пояса
@@ -87,12 +87,7 @@ function getPriceBounds(callback) {
 
 // Подсчет количества товаров с фильтрами
 function getProductCount(filters, callback) {
-    let query = `
-        SELECT COUNT(DISTINCT p.productID) as total 
-        FROM products p
-        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
-        WHERE 1=1
-    `;
+    let query = `SELECT COUNT(DISTINCT p.productID) as total FROM products p LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID WHERE 1=1`;
     const params = [];
     
     // Фильтр поиска
@@ -113,7 +108,7 @@ function getProductCount(filters, callback) {
         const searchPattern = `%${filters.searchQuery}%`;
         params.push(searchPattern, searchPattern, searchPattern, searchPattern);
     }
-    
+
     // Фильтр по категории
     if (filters.categoryIds && filters.categoryIds.length > 0) {
         const placeholders = filters.categoryIds.map(() => '?').join(',');
@@ -126,18 +121,18 @@ function getProductCount(filters, callback) {
         `;
         params.push(...filters.categoryIds);
     }
-    
+
     // Фильтр по цене
     if (filters.minPrice) {
         query += ` AND p.productPrice >= ?`;
         params.push(filters.minPrice);
     }
-    
+
     if (filters.maxPrice) {
         query += ` AND p.productPrice <= ?`;
         params.push(filters.maxPrice);
     }
-    
+
     // Фильтр акционных товаров
     if (filters.onSale) {
         query += ` 
@@ -148,21 +143,34 @@ function getProductCount(filters, callback) {
         `;
     }
     
+    // Фильтр по наличию товара - ДОБАВЛЕНО
+    if (filters.inStock) {
+        query += ` AND p.stock_quantity > 0`;
+    }
+
     connection.query(query, params, callback);
+}
+
+// Проверка наличия товара на складе
+function checkProductAvailability(productID, quantity, callback) {
+    const query = 'SELECT stock_quantity FROM products WHERE productID = ?';
+    connection.query(query, [productID], (err, results) => {
+        if (err) return callback(err);
+        if (results.length === 0) return callback(null, { available: false, message: 'Товар не найден' });
+        
+        const available = results[0].stock_quantity >= quantity;
+        callback(null, {
+            available: available,
+            currentStock: results[0].stock_quantity,
+            requested: quantity,
+            message: available ? 'Товар в наличии' : `Недостаточно товара на складе. Доступно: ${results[0].stock_quantity}`
+        });
+    });
 }
 
 // Получение товаров с фильтрами и пагинацией
 function getProductsFiltered(filters, callback) {
-    let query = `
-        SELECT 
-            p.*,
-            GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list,
-            GROUP_CONCAT(DISTINCT c.categorieID ORDER BY c.categorieID SEPARATOR ',') as categories_ids
-        FROM products p
-        LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID
-        LEFT JOIN categories c ON cp.categorieID = c.categorieID
-        WHERE 1=1
-    `;
+    let query = `SELECT p.*, GROUP_CONCAT(DISTINCT c.categorieName ORDER BY c.categorieName SEPARATOR ', ') as categories_list, GROUP_CONCAT(DISTINCT c.categorieID ORDER BY c.categorieID SEPARATOR ',') as categories_ids FROM products p LEFT JOIN categoriesandproducts cp ON p.productID = cp.productID LEFT JOIN categories c ON cp.categorieID = c.categorieID WHERE 1=1`;
     const params = [];
     
     // Фильтр поиска
@@ -183,7 +191,7 @@ function getProductsFiltered(filters, callback) {
         const searchPattern = `%${filters.searchQuery}%`;
         params.push(searchPattern, searchPattern, searchPattern, searchPattern);
     }
-    
+
     // Фильтр по категории
     if (filters.categoryIds && filters.categoryIds.length > 0) {
         const placeholders = filters.categoryIds.map(() => '?').join(',');
@@ -196,18 +204,18 @@ function getProductsFiltered(filters, callback) {
         `;
         params.push(...filters.categoryIds);
     }
-    
+
     // Фильтр по цене
     if (filters.minPrice) {
         query += ` AND p.productPrice >= ?`;
         params.push(filters.minPrice);
     }
-    
+
     if (filters.maxPrice) {
         query += ` AND p.productPrice <= ?`;
         params.push(filters.maxPrice);
     }
-    
+
     // Фильтр акционных товаров
     if (filters.onSale) {
         query += ` 
@@ -218,6 +226,11 @@ function getProductsFiltered(filters, callback) {
         `;
     }
     
+    // Фильтр по наличию товара - ДОБАВЛЕНО
+    if (filters.inStock) {
+        query += ` AND p.stock_quantity > 0`;
+    }
+
     // Сортировка
     let orderBy = 'p.created_at DESC';
     switch(filters.sort) {
@@ -252,11 +265,17 @@ function getProductsFiltered(filters, callback) {
                 p.created_at DESC
             `;
             break;
+        case 'stock_asc':
+            orderBy = 'p.stock_quantity ASC, p.created_at DESC';
+            break;
+        case 'stock_desc':
+            orderBy = 'p.stock_quantity DESC, p.created_at DESC';
+            break;
     }
-    
+
     query += ` GROUP BY p.productID ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
     params.push(filters.limit, filters.offset);
-    
+
     connection.query(query, params, (err, results) => {
         if (err) return callback(err);
         
@@ -274,6 +293,8 @@ function getProductsFiltered(filters, callback) {
                 productManufacturer: row.productManufacturer,
                 productRating: row.productRating || 0,
                 created_at: row.created_at,
+                stock_quantity: row.stock_quantity || 0,
+                is_available: (row.stock_quantity || 0) > 0,
                 categories: row.categories_list ? row.categories_list.split(', ') : [],
                 categories_ids: row.categories_ids ? row.categories_ids.split(',') : [],
                 category: row.categories_list ? row.categories_list.split(', ')[0] : 'Uncategorized',
@@ -654,6 +675,7 @@ function addProductWithFeatures(productData, categories, features, callback) {
         
         const discountPercentage = productData.discount_percentage ? parseFloat(productData.discount_percentage) : 0;
         const isOnSale = (productData.is_on_sale && discountPercentage > 0) ? 1 : 0;
+        const stockQuantity = productData.stock_quantity ? parseInt(productData.stock_quantity) : 0;
         
         const productQuery = `
             INSERT INTO products (
@@ -666,8 +688,9 @@ function addProductWithFeatures(productData, categories, features, callback) {
                 discount_start_date,
                 discount_end_date,
                 is_on_sale,
+                stock_quantity,
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
         
         connection.query(productQuery, [
@@ -679,7 +702,8 @@ function addProductWithFeatures(productData, categories, features, callback) {
             discountPercentage,
             productData.discount_start_date || null,
             productData.discount_end_date || null,
-            isOnSale
+            isOnSale,
+            stockQuantity
         ], (err, result) => {
             if (err) {
                 console.error('Product insert error:', err);
@@ -825,6 +849,7 @@ function updateProduct(productID, productData, categories, features, callback) {
         const discountStartDate = updateData.discount_start_date || null;
         const discountEndDate = updateData.discount_end_date || null;
         const isOnSale = updateData.is_on_sale || 0;
+        const stockQuantity = updateData.stock_quantity !== undefined ? parseInt(updateData.stock_quantity) : null;
         
         let discountPrice = null;
         if (isOnSale == 1 && discountPercentage > 0) {
@@ -843,11 +868,13 @@ function updateProduct(productID, productData, categories, features, callback) {
                 discount_start_date = ?,
                 discount_end_date = ?,
                 is_on_sale = ?,
-                discount_price = ?
+                discount_price = ?,
+                ${stockQuantity !== null ? 'stock_quantity = ?,' : ''}
+                created_at = created_at
             WHERE productID = ?
         `;
         
-        connection.query(updateProductQuery, [
+        const queryParams = [
             updateData.productTitle,
             updateData.productManufacturer,
             updateData.productDescription,
@@ -858,8 +885,11 @@ function updateProduct(productID, productData, categories, features, callback) {
             discountEndDate,
             isOnSale,
             discountPrice,
+            ...(stockQuantity !== null ? [stockQuantity] : []),
             productID
-        ], (err, result) => {
+        ];
+        
+        connection.query(updateProductQuery, queryParams, (err, result) => {
             if (err) {
                 console.error('Ошибка обновления товара:', err);
                 return connection.rollback(() => callback(err));
@@ -1153,80 +1183,130 @@ function getDeliveryPointById(pointID, callback) {
 function createOrder(orderData, items, callback) {
     connection.beginTransaction((err) => {
         if (err) return callback(err);
-
-        // Вставляем заказ
-        const orderQuery = `
-            INSERT INTO orders (
-                customerID, 
-                totalAmount, 
-                deliveryType, 
-                deliveryAddress, 
-                deliveryPointID, 
-                deliveryCost,
-                paymentType, 
-                paymentStatus, 
-                orderStatusID, 
-                customerName, 
-                customerPhone, 
-                customerEmail, 
-                comment,
-                qrCodeData,
-                paymentLink
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        connection.query(orderQuery, [
-            orderData.customerID,
-            orderData.totalAmount,
-            orderData.deliveryType,
-            orderData.deliveryAddress || null,
-            orderData.deliveryPointID || null,
-            orderData.deliveryCost || 0,
-            orderData.paymentType,
-            orderData.paymentStatus || 'pending',
-            orderData.orderStatusID || 1,
-            orderData.customerName,
-            orderData.customerPhone,
-            orderData.customerEmail,
-            orderData.comment || null,
-            orderData.qrCodeData || null,
-            orderData.paymentLink || null
-        ], (err, result) => {
-            if (err) {
-                console.error('Order insert error:', err);
-                return connection.rollback(() => callback(err));
-            }
-
-            const orderID = result.insertId;
-
-            // Вставляем товары в заказ
-            if (items && items.length > 0) {
-                const itemPromises = items.map(item => {
-                    return new Promise((resolve, reject) => {
-                        const itemQuery = `
-                            INSERT INTO order_items (
-                                orderID, 
-                                productID, 
-                                quantity, 
-                                price, 
-                                discountedPrice
-                            ) VALUES (?, ?, ?, ?, ?)
-                        `;
-                        connection.query(itemQuery, [
-                            orderID,
-                            item.productID,
-                            item.quantity,
-                            item.price,
-                            item.discountedPrice || null
-                        ], (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        });
-                    });
+        
+        // Сначала проверяем наличие всех товаров на складе
+        const availabilityChecks = items.map(item => {
+            return new Promise((resolve, reject) => {
+                checkProductAvailability(item.productID, item.quantity, (err, result) => {
+                    if (err) return reject(err);
+                    if (!result.available) {
+                        return reject(new Error(result.message));
+                    }
+                    resolve();
                 });
+            });
+        });
+        
+        Promise.all(availabilityChecks)
+            .then(() => {
+                // Вставляем заказ
+                const orderQuery = `
+                    INSERT INTO orders (
+                        customerID, 
+                        totalAmount, 
+                        deliveryType, 
+                        deliveryAddress, 
+                        deliveryPointID, 
+                        deliveryCost,
+                        paymentType, 
+                        paymentStatus, 
+                        orderStatusID, 
+                        customerName, 
+                        customerPhone, 
+                        customerEmail, 
+                        comment,
+                        qrCodeData,
+                        paymentLink
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `;
 
-                Promise.all(itemPromises)
-                    .then(() => {
+                connection.query(orderQuery, [
+                    orderData.customerID,
+                    orderData.totalAmount,
+                    orderData.deliveryType,
+                    orderData.deliveryAddress || null,
+                    orderData.deliveryPointID || null,
+                    orderData.deliveryCost || 0,
+                    orderData.paymentType,
+                    orderData.paymentStatus || 'pending',
+                    orderData.orderStatusID || 1,
+                    orderData.customerName,
+                    orderData.customerPhone,
+                    orderData.customerEmail,
+                    orderData.comment || null,
+                    orderData.qrCodeData || null,
+                    orderData.paymentLink || null
+                ], (err, result) => {
+                    if (err) {
+                        console.error('Order insert error:', err);
+                        return connection.rollback(() => callback(err));
+                    }
+
+                    const orderID = result.insertId;
+
+                    // Вставляем товары в заказ
+                    if (items && items.length > 0) {
+                        const itemPromises = items.map(item => {
+                            return new Promise((resolve, reject) => {
+                                const itemQuery = `
+                                    INSERT INTO order_items (
+                                        orderID, 
+                                        productID, 
+                                        quantity, 
+                                        price, 
+                                        discountedPrice
+                                    ) VALUES (?, ?, ?, ?, ?)
+                                `;
+                                connection.query(itemQuery, [
+                                    orderID,
+                                    item.productID,
+                                    item.quantity,
+                                    item.price,
+                                    item.discountedPrice || null
+                                ], (err) => {
+                                    if (err) reject(err);
+                                    else resolve();
+                                });
+                            });
+                        });
+
+                        Promise.all(itemPromises)
+                            .then(() => {
+                                // Уменьшаем количество товара на складе
+                                const stockUpdatePromises = items.map(item => {
+                                    return new Promise((resolve, reject) => {
+                                        const updateStockQuery = `
+                                            UPDATE products 
+                                            SET stock_quantity = stock_quantity - ?
+                                            WHERE productID = ?
+                                        `;
+                                        connection.query(updateStockQuery, [item.quantity, item.productID], (err) => {
+                                            if (err) reject(err);
+                                            else resolve();
+                                        });
+                                    });
+                                });
+
+                                Promise.all(stockUpdatePromises)
+                                    .then(() => {
+                                        connection.commit((err) => {
+                                            if (err) {
+                                                console.error('Commit error:', err);
+                                                return connection.rollback(() => callback(err));
+                                            }
+                                            callback(null, orderID);
+                                        });
+                                    })
+                                    .catch(err => {
+                                        console.error('Stock update error:', err);
+                                        connection.rollback(() => callback(err));
+                                    });
+                            })
+                            .catch(err => {
+                                console.error('Items insert error:', err);
+                                connection.rollback(() => callback(err));
+                            });
+                    } else {
                         connection.commit((err) => {
                             if (err) {
                                 console.error('Commit error:', err);
@@ -1234,21 +1314,13 @@ function createOrder(orderData, items, callback) {
                             }
                             callback(null, orderID);
                         });
-                    })
-                    .catch(err => {
-                        console.error('Items insert error:', err);
-                        connection.rollback(() => callback(err));
-                    });
-            } else {
-                connection.commit((err) => {
-                    if (err) {
-                        console.error('Commit error:', err);
-                        return connection.rollback(() => callback(err));
                     }
-                    callback(null, orderID);
                 });
-            }
-        });
+            })
+            .catch(err => {
+                console.error('Availability check error:', err);
+                connection.rollback(() => callback(err));
+            });
     });
 }
 
@@ -1400,4 +1472,5 @@ module.exports = {
     generateSBPQRCode,
     generatePaymentData,
     getCatalogProducts,
+    checkProductAvailability
 };

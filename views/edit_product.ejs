@@ -74,114 +74,143 @@
                                         <span class="input-group-text">₽</span>
                                     </div>
                                 </div>
-                                <!-- Скидка -->
-                                <div class="mb-4">
-                                    <h5 class="text-primary mb-3 pb-2 border-bottom">
-                                        <i class="fas fa-percentage me-2"></i>
-                                        Скидка и акции
-                                    </h5>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" 
-                                                    type="checkbox" 
-                                                    name="is_on_sale" 
-                                                    id="is_on_sale"
-                                                    value="1"
-                                                    <%= product.is_on_sale ? 'checked' : '' %>>
-                                                <input type="hidden" name="is_on_sale" value="0">
-                                                <label class="form-check-label fw-semibold" for="is_on_sale">
-                                                    Включить скидку на товар
-                                                </label>
-                                            </div>
-                                        </div>
+                                
+                                <!-- Наличие на складе - НОВОЕ ПОЛЕ -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Количество на складе *</label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               name="stock_quantity" 
+                                               min="0" 
+                                               required 
+                                               value="<%= product.stock_quantity || 0 %>"
+                                               placeholder="Например: 10">
+                                        <span class="input-group-text">шт.</span>
                                     </div>
-                                    
-                                    <div id="discountFields" style="<%= product.is_on_sale ? '' : 'display: none;' %>">
-                                        <div class="row">
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-semibold">Процент скидки</label>
-                                                <div class="input-group">
-                                                    <input type="number" 
-                                                        class="form-control" 
-                                                        name="discount_percentage" 
-                                                        min="1" 
-                                                        max="99" 
-                                                        step="1"
-                                                        value="<%= product.discount_percentage || '' %>"
-                                                        placeholder="Например: 20">
-                                                    <span class="input-group-text">%</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-semibold">Дата начала</label>
-                                                <input type="datetime-local" 
-                                                    class="form-control" 
-                                                    name="discount_start_date"
-                                                    id="discount_start_date"
-                                                    value="<%= product.discount_start_date ? new Date(product.discount_start_date).toISOString().slice(0,16) : '' %>">
-                                            </div>
-                                            
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-semibold">Дата окончания</label>
-                                                <input type="datetime-local" 
-                                                    class="form-control" 
-                                                    name="discount_end_date"
-                                                    id="discount_end_date"
-                                                    value="<%= product.discount_end_date ? new Date(product.discount_end_date).toISOString().slice(0,16) : '' %>">
-                                            </div>
-                                        </div>
-                                        
-                                        <% if (product.is_on_sale && product.discount_percentage) { %>
-                                            <%
-                                                const discountPrice = (product.productPrice * (1 - product.discount_percentage / 100)).toFixed(2);
-                                                const savings = (product.productPrice - discountPrice).toFixed(2);
-                                            %>
-                                            <div class="alert alert-success">
-                                                <i class="fas fa-check-circle me-2"></i>
-                                                <strong>Текущая скидка:</strong><br>
-                                                • Скидка: <strong><%= product.discount_percentage %>%</strong><br>
-                                                • Старая цена: <span class="text-decoration-line-through"><%= product.productPrice %>₽</span><br>
-                                                • Новая цена: <strong class="text-danger"><%= discountPrice %>₽</strong><br>
-                                                • Экономия: <strong><%= savings %>₽</strong>
-                                            </div>
+                                    <div class="form-text text-success">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Текущее количество: <strong><%= product.stock_quantity || 0 %></strong> шт.
+                                        <% if (product.stock_quantity <= 0) { %>
+                                            <span class="text-danger ms-2">Товар отсутствует на складе!</span>
                                         <% } %>
                                     </div>
                                 </div>
-
+                            </div>
+                        </div>
+                        
+                        <!-- Скидка -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-percentage me-2"></i>
+                                Скидка и акции
+                            </h5>
+                            
+                            <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-semibold">Текущий рейтинг</label>
-                                    <div class="d-flex align-items-center border rounded p-3 bg-light">
-                                        <div class="rating me-3">
-                                            <% for (let j = 0; j < 5; j++) { %>
-                                                <span class="star-wrapper" style="font-size: 1.2rem;">
-                                                    <i class="far fa-star empty-star"></i>
-                                                    <% if (product.productRating > j) { %>
-                                                        <%
-                                                            let width = 100;
-                                                            if (product.productRating - j < 1) {
-                                                                width = (product.productRating - j) * 100;
-                                                            }
-                                                        %>
-                                                        <span class="filled-star" style="width: <%= width %>%">
-                                                            <i class="fas fa-star"></i>
-                                                        </span>
-                                                    <% } %>
-                                                </span>
-                                            <% } %>
-                                        </div>
-                                        <div>
-                                            <strong class="text-primary"><%= product.productRating ? product.productRating.toFixed(1) : '0.0' %></strong>
-                                            <div class="text-muted small">из 5 на основе отзывов</div>
-                                        </div>
-                                    </div>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Рейтинг рассчитывается автоматически на основе отзывов пользователей
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="is_on_sale" 
+                                               id="is_on_sale"
+                                               value="1"
+                                               <%= product.is_on_sale ? 'checked' : '' %>
+                                               onchange="toggleDiscountFields()">
+                                        <label class="form-check-label fw-semibold" for="is_on_sale">
+                                            Включить скидку на товар
+                                        </label>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div id="discountFields" style="<%= product.is_on_sale ? '' : 'display: none;' %>">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-semibold">Процент скидки</label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="discount_percentage" 
+                                                   min="1" 
+                                                   max="99" 
+                                                   step="1"
+                                                   value="<%= product.discount_percentage || '' %>"
+                                                   placeholder="Например: 20">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="form-text">От 1% до 99%</div>
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-semibold">Дата начала</label>
+                                        <input type="datetime-local" 
+                                               class="form-control" 
+                                               name="discount_start_date"
+                                               id="discount_start_date"
+                                               value="<%= product.discount_start_date ? new Date(product.discount_start_date).toISOString().slice(0,16) : '' %>">
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-semibold">Дата окончания</label>
+                                        <input type="datetime-local" 
+                                               class="form-control" 
+                                               name="discount_end_date"
+                                               id="discount_end_date"
+                                               value="<%= product.discount_end_date ? new Date(product.discount_end_date).toISOString().slice(0,16) : '' %>">
+                                    </div>
+                                </div>
+                                
+                                <% if (product.is_on_sale && product.discount_percentage) { %>
+                                    <%
+                                        const discountPrice = (product.productPrice * (1 - product.discount_percentage / 100)).toFixed(2);
+                                        const savings = (product.productPrice - discountPrice).toFixed(2);
+                                    %>
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong>Текущая скидка:</strong><br>
+                                        • Скидка: <strong><%= product.discount_percentage %>%</strong><br>
+                                        • Старая цена: <span class="text-decoration-line-through"><%= product.productPrice %>₽</span><br>
+                                        • Новая цена: <strong class="text-danger"><%= discountPrice %>₽</strong><br>
+                                        • Экономия: <strong><%= savings %>₽</strong>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <!-- Рейтинг товара -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3 pb-2 border-bottom">
+                                <i class="fas fa-star me-2"></i>
+                                Рейтинг товара
+                            </h5>
+                            
+                            <div class="d-flex align-items-center border rounded p-3 bg-light">
+                                <div class="rating me-3">
+                                    <% for (let j = 0; j < 5; j++) { %>
+                                        <span class="star-wrapper" style="font-size: 1.2rem;">
+                                            <i class="far fa-star empty-star"></i>
+                                            <% if (product.productRating > j) { %>
+                                                <%
+                                                    let width = 100;
+                                                    if (product.productRating - j < 1) {
+                                                        width = (product.productRating - j) * 100;
+                                                    }
+                                                %>
+                                                <span class="filled-star" style="width: <%= width %>%">
+                                                    <i class="fas fa-star"></i>
+                                                </span>
+                                            <% } %>
+                                        </span>
+                                    <% } %>
+                                </div>
+                                <div>
+                                    <strong class="text-primary"><%= product.productRating ? product.productRating.toFixed(1) : '0.0' %></strong>
+                                    <div class="text-muted small">из 5 на основе отзывов</div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Рейтинг рассчитывается автоматически на основе отзывов пользователей
                             </div>
                         </div>
                         
@@ -200,7 +229,7 @@
                                         <img src="/images/products/<%= product.productThumbnail %>" 
                                              alt="<%= product.productTitle %>" 
                                              class="img-fluid rounded" 
-                                             style="max-height: 200px;">
+                                             style="max-height: 200px; max-width: 100%;">
                                         <p class="mt-2 text-muted">
                                             <small>Текущее изображение</small>
                                         </p>
@@ -215,7 +244,8 @@
                                        type="checkbox" 
                                        name="keepCurrentImage" 
                                        id="keepCurrentImage" 
-                                       checked>
+                                       checked
+                                       onchange="toggleNewImageField()">
                                 <label class="form-check-label" for="keepCurrentImage">
                                     Оставить текущее изображение
                                 </label>
@@ -226,8 +256,21 @@
                                 <input type="file" 
                                        class="form-control" 
                                        name="productImage" 
-                                       accept=".jpg,.jpeg,.png">
+                                       accept="image/jpeg,image/jpg,image/png"
+                                       onchange="previewImage(this)">
                                 <div class="form-text">Оставьте пустым, чтобы использовать текущее изображение</div>
+                                
+                                <!-- Предпросмотр нового изображения -->
+                                <div class="image-preview-container text-center mt-3" id="imagePreviewContainer" style="display: none;">
+                                    <div class="border rounded p-3 bg-light d-inline-block">
+                                        <img id="imagePreview" 
+                                             src="#" 
+                                             alt="Предпросмотр" 
+                                             class="img-fluid rounded" 
+                                             style="max-height: 200px; max-width: 100%;">
+                                    </div>
+                                    <div class="mt-2 text-muted small">Предпросмотр нового изображения</div>
+                                </div>
                             </div>
                         </div>
                         
@@ -242,23 +285,29 @@
                                 <label class="form-label fw-semibold">Выберите категории *</label>
                                 <div class="categories-checkbox">
                                     <% 
-                                        const allCategories = ['Гантели', 'Гири', 'Блины', 'Фитнес'];
-                                        // Используем другое имя переменной, чтобы избежать конфликта
+                                        // Используем переданные категории из сервера
                                         const productCategories = currentCategories || [];
                                     %>
-                                    <% allCategories.forEach((category, index) => { %>
-                                        <div class="form-check form-check-inline me-4 mb-2">
-                                            <input class="form-check-input" 
-                                                   type="checkbox" 
-                                                   name="categories[]" 
-                                                   value="<%= category %>" 
-                                                   id="category<%= index + 1 %>"
-                                                   <%= productCategories.includes(category) ? 'checked' : '' %>>
-                                            <label class="form-check-label" for="category<%= index + 1 %>">
-                                                <%= category %>
-                                            </label>
+                                    <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                                        <% categories.forEach((category) => { %>
+                                            <div class="form-check form-check-inline me-4 mb-2">
+                                                <input class="form-check-input" 
+                                                       type="checkbox" 
+                                                       name="categories[]" 
+                                                       value="<%= category.categorieName %>" 
+                                                       id="category<%= category.categorieID %>"
+                                                       <%= productCategories.includes(category.categorieName) ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="category<%= category.categorieID %>">
+                                                    <%= category.categorieName %>
+                                                </label>
+                                            </div>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            Категории не найдены. Сначала добавьте категории в систему.
                                         </div>
-                                    <% }); %>
+                                    <% } %>
                                 </div>
                                 <div class="form-text">Можно выбрать несколько категорий</div>
                             </div>
@@ -289,14 +338,16 @@
                                                            class="form-control" 
                                                            name="feature_keys[]" 
                                                            value="<%= feature.key %>"
-                                                           placeholder="Характеристика (например: Вес)">
+                                                           placeholder="Характеристика (например: Вес)"
+                                                           required>
                                                 </div>
                                                 <div class="col-md-5">
                                                     <input type="text" 
                                                            class="form-control" 
                                                            name="feature_values[]" 
                                                            value="<%= feature.value %>"
-                                                           placeholder="Значение (например: 5 кг)">
+                                                           placeholder="Значение (например: 5 кг)"
+                                                           required>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <button type="button" 
@@ -315,17 +366,20 @@
                                                 <input type="text" 
                                                        class="form-control" 
                                                        name="feature_keys[]" 
-                                                       placeholder="Характеристика (например: Вес)">
+                                                       placeholder="Характеристика (например: Вес)"
+                                                       required>
                                             </div>
                                             <div class="col-md-5">
                                                 <input type="text" 
                                                        class="form-control" 
                                                        name="feature_values[]" 
-                                                       placeholder="Значение (например: 5 кг)">
+                                                       placeholder="Значение (например: 5 кг)"
+                                                       required>
                                             </div>
                                             <div class="col-md-2">
                                                 <button type="button" 
-                                                        class="btn btn-outline-danger w-100 remove-feature-btn">
+                                                        class="btn btn-outline-danger w-100 remove-feature-btn"
+                                                        disabled>
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             </div>
@@ -372,3 +426,249 @@
         </div>
     </div>
 </div>
+
+<script>
+// Предпросмотр изображения
+function previewImage(input) {
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImage = document.getElementById('imagePreview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewContainer.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        previewContainer.style.display = 'none';
+    }
+}
+
+// Переключение поля нового изображения
+function toggleNewImageField() {
+    const newImageField = document.getElementById('newImageField');
+    const keepCurrent = document.getElementById('keepCurrentImage').checked;
+    
+    if (keepCurrent) {
+        newImageField.style.display = 'none';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+    } else {
+        newImageField.style.display = 'block';
+    }
+}
+
+// Переключение полей скидки
+function toggleDiscountFields() {
+    const discountFields = document.getElementById('discountFields');
+    const isOnSale = document.getElementById('is_on_sale').checked;
+    
+    if (isOnSale) {
+        discountFields.style.display = 'block';
+        // Автозаполнение текущей даты для начала скидки, если поле пустое
+        const startDateInput = document.getElementById('discount_start_date');
+        if (!startDateInput.value) {
+            const now = new Date();
+            const local = new Date(now);
+            local.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            startDateInput.value = local.toISOString().slice(0, 16);
+        }
+    } else {
+        discountFields.style.display = 'none';
+    }
+}
+
+// Добавление новой характеристики
+document.getElementById('addFeatureBtn').addEventListener('click', function() {
+    const container = document.getElementById('featuresContainer');
+    const newItem = document.createElement('div');
+    newItem.className = 'feature-item mb-3 border rounded p-3 bg-light';
+    newItem.innerHTML = `
+        <div class="row g-2">
+            <div class="col-md-5">
+                <input type="text" 
+                       class="form-control" 
+                       name="feature_keys[]" 
+                       placeholder="Характеристика (например: Вес)"
+                       required>
+            </div>
+            <div class="col-md-5">
+                <input type="text" 
+                       class="form-control" 
+                       name="feature_values[]" 
+                       placeholder="Значение (например: 5 кг)"
+                       required>
+            </div>
+            <div class="col-md-2">
+                <button type="button" 
+                        class="btn btn-outline-danger w-100 remove-feature-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newItem);
+    
+    // Обновляем состояние кнопок удаления
+    updateRemoveButtons();
+});
+
+// Удаление характеристики
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-feature-btn') || e.target.classList.contains('fa-times')) {
+        const item = e.target.closest('.feature-item');
+        if (item) {
+            item.remove();
+            updateRemoveButtons();
+        }
+    }
+});
+
+// Обновление состояния кнопок удаления
+function updateRemoveButtons() {
+    const items = document.querySelectorAll('.feature-item');
+    items.forEach((item, index) => {
+        const removeBtn = item.querySelector('.remove-feature-btn');
+        if (items.length === 1) {
+            removeBtn.disabled = true;
+            removeBtn.classList.add('disabled');
+        } else {
+            removeBtn.disabled = false;
+            removeBtn.classList.remove('disabled');
+        }
+    });
+}
+
+// Валидация и отправка формы
+document.getElementById('editProductForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Проверка количества на складе
+    const stockQuantity = parseInt(document.querySelector('[name="stock_quantity"]').value);
+    if (isNaN(stockQuantity) || stockQuantity < 0) {
+        showNotification('Количество на складе должно быть неотрицательным числом', 'error');
+        return;
+    }
+    
+    // Проверка категорий
+    const categories = document.querySelectorAll('[name="categories[]"]:checked');
+    if (categories.length === 0) {
+        showNotification('Выберите хотя бы одну категорию', 'error');
+        return;
+    }
+    
+    // Проверка характеристик
+    const featureKeys = document.querySelectorAll('[name="feature_keys[]"]');
+    const featureValues = document.querySelectorAll('[name="feature_values[]"]');
+    
+    for (let i = 0; i < featureKeys.length; i++) {
+        if (featureKeys[i].value.trim() === '' || featureValues[i].value.trim() === '') {
+            showNotification('Заполните все поля характеристик', 'error');
+            return;
+        }
+    }
+    
+    // Отправка формы
+    const formData = new FormData(this);
+    
+    // Добавляем скрытое значение is_on_sale если чекбокс не отмечен
+    if (!document.getElementById('is_on_sale').checked) {
+        formData.set('is_on_sale', '0');
+    }
+    
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
+    
+    fetch('/admin/update-product', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Товар успешно обновлен!', 'success');
+            setTimeout(() => {
+                window.location.href = '/admin/products';
+            }, 1500);
+        } else {
+            showNotification(data.message || 'Ошибка при обновлении товара', 'error');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-2"></i>Сохранить изменения';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Произошла ошибка при обновлении товара', 'error');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-2"></i>Сохранить изменения';
+    });
+});
+
+// Удаление товара
+document.getElementById('deleteProductBtn').addEventListener('click', function() {
+    const productId = this.getAttribute('data-product-id');
+    
+    if (confirm('Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить!')) {
+        fetch(`/admin/delete-product/${productId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Товар успешно удален!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/products';
+                }, 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при удалении товара', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Произошла ошибка при удалении товара', 'error');
+        });
+    }
+});
+
+// Показ уведомлений
+function showNotification(message, type) {
+    const container = document.getElementById('notificationContainer');
+    const alertType = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertType} alert-dismissible fade show`;
+    alert.role = 'alert';
+    alert.innerHTML = `
+        <i class="fas ${icon} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(alert);
+    
+    // Автоматическое скрытие через 5 секунд
+    setTimeout(() => {
+        alert.classList.remove('show');
+        alert.classList.add('fade');
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 300);
+    }, 5000);
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    // Установка минимальной даты для окончания скидки
+    const now = new Date();
+    const local = new Date(now);
+    local.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('discount_end_date').min = local.toISOString().slice(0, 16);
+    
+    // Обновление кнопок удаления при загрузке
+    updateRemoveButtons();
+});
+</script>

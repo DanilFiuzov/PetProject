@@ -31,6 +31,54 @@
                 <p class="text-muted">Пожалуйста, заполните все необходимые поля для оформления заказа</p>
             </div>
 
+            <!-- Предупреждение о наличии товаров -->
+            <% 
+                // Проверяем наличие товаров в корзине с безопасным преобразованием типов
+                let hasOutOfStock = false;
+                let lowStockItems = [];
+                products.forEach(product => {
+                    const stockQuantity = parseInt(product.stock_quantity) || 0;
+                    const quantity = parseInt(product.sc_count) || 0;
+                    
+                    if (stockQuantity <= 0) {
+                        hasOutOfStock = true;
+                    } else if (quantity > stockQuantity) {
+                        lowStockItems.push({
+                            productTitle: product.productTitle,
+                            requested: quantity,
+                            available: stockQuantity
+                        });
+                    }
+                });
+            %>
+            
+            <% if (hasOutOfStock) { %>
+            <div class="alert alert-danger border-0 bg-danger bg-opacity-10 mb-4">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Внимание!</strong> Некоторые товары в вашей корзине отсутствуют на складе. Пожалуйста, удалите их из корзины перед оформлением заказа.
+                <a href="/cart/<%= session.userId %>" class="btn btn-danger btn-sm ms-3">
+                    <i class="fas fa-shopping-cart me-1"></i>Перейти в корзину
+                </a>
+            </div>
+            <% } else if (lowStockItems.length > 0) { %>
+            <div class="alert alert-warning border-0 bg-warning bg-opacity-10 mb-4">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Внимание!</strong> Недостаточное количество товара на складе:
+                <ul class="mb-0 mt-2">
+                    <% lowStockItems.forEach(item => { %>
+                    <li>
+                        <strong><%= item.productTitle %></strong> - 
+                        запрошено <%= item.requested %> шт., 
+                        доступно <%= item.available %> шт.
+                    </li>
+                    <% }) %>
+                </ul>
+                <a href="/cart/<%= session.userId %>" class="btn btn-warning btn-sm mt-2">
+                    <i class="fas fa-shopping-cart me-1"></i>Изменить корзину
+                </a>
+            </div>
+            <% } %>
+
             <!-- Форма оформления заказа -->
             <form id="checkoutForm" class="bg-white rounded-3 shadow-sm p-4 mb-4">
                 <!-- Контактная информация -->
@@ -207,9 +255,15 @@
                 </div>
 
                 <!-- Кнопка оформления -->
+                <% if (!hasOutOfStock && lowStockItems.length === 0) { %>
                 <button type="submit" class="btn btn-custom btn-lg w-100 py-3">
                     <i class="fas fa-check-circle me-2"></i>Оформить заказ
                 </button>
+                <% } else { %>
+                <button type="button" class="btn btn-secondary btn-lg w-100 py-3" disabled>
+                    <i class="fas fa-times-circle me-2"></i>Невозможно оформить заказ
+                </button>
+                <% } %>
             </form>
         </div>
 
@@ -220,11 +274,44 @@
                     <i class="fas fa-receipt text-primary"></i>Итог заказа
                 </h3>
                 
-                <!-- Детали -->
+            <!-- Детали товаров -->
+            <div class="mb-3">
+                <% products.forEach((product, index) => { %>
+                <%
+                    // Безопасное преобразование цен и количества в числа
+                    const productPriceNum = parseFloat(product.productPrice) || 0;
+                    const discountedPriceNum = parseFloat(product.discountedPrice) || 0;
+                    const price = product.isDiscounted && discountedPriceNum > 0 ? discountedPriceNum : productPriceNum;
+                    const quantity = parseInt(product.sc_count) || 0;
+                    const stockQuantity = parseInt(product.stock_quantity) || 0;
+                    const itemTotal = price * quantity;
+                    const isOutOfStock = stockQuantity <= 0;
+                    const isLowStock = quantity > stockQuantity;
+                %>
+                <div class="order-summary-item <%= isOutOfStock || isLowStock ? 'text-danger' : '' %>">
+                    <div>
+                        <span class="fw-bold"><%= product.productTitle %></span>
+                        <span class="text-muted d-block small">
+                            <%= quantity %> шт. × <%= price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                            <% if (isOutOfStock) { %>
+                                <span class="badge bg-danger ms-2">Нет в наличии</span>
+                            <% } else if (isLowStock) { %>
+                                <span class="badge bg-warning text-dark ms-2">
+                                    Доступно: <%= stockQuantity %> шт.
+                                </span>
+                            <% } %>
+                        </span>
+                    </div>
+                    <span><%= itemTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
+                </div>
+                <% }) %>
+            </div>
+                
+                <!-- Итоги -->
                 <div>
                     <div class="order-summary-item">
                         <span>Товары (<%= products.length %>)</span>
-                        <span><%= totalPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
+                        <span><%= totalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
                     </div>
                     
                     <div class="order-summary-item">
@@ -239,7 +326,7 @@
                     
                     <div class="order-summary-total">
                         <span>Итого к оплате:</span>
-                        <span><%= totalPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
+                        <span><%= totalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
                     </div>
                 </div>
                 
