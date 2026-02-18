@@ -1,15 +1,15 @@
 const mysql = require('mysql2');
 
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'root',
-    database: process.env.DB_NAME || 'Sport',
-    port: process.env.DB_PORT || 3306
-};
 
-const connection = mysql.createConnection(dbConfig);
-
+// ✅ Подключение через переменные окружения Railway
+const connection = mysql.createConnection({
+  host: process.env.MYSQLHOST || 'localhost',
+  port: process.env.MYSQLPORT || 3306,
+  user: process.env.MYSQLUSER || 'root',
+  password: process.env.MYSQLPASSWORD || 'root',
+  database: process.env.MYSQLDATABASE || 'Sport', // ✅ Исправлено на "Sport"!
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
+});
 
 // Установка часового пояса
 connection.query("SET time_zone = '+08:00'", (err) => {
