@@ -24,58 +24,74 @@
     <!-- Основная информация -->
     <div class="row g-5">
         <!-- Изображение товара -->
-        <div class="col-lg-4">
-            <div class="position-relative">
-                <div class="product-image-container rounded-4 overflow-hidden shadow-lg mb-4">
-                    <img src="/images/products/<%= product.productThumbnail %>" 
-                         class="img-fluid w-100" 
-                         alt="<%= product.productTitle %>"
-                         style="max-height: 500px; object-fit: contain;">
+        <div class="col-lg-5">
+            <div class="d-flex gap-2">
+                <!-- Вертикальные миниатюры слева (если изображений > 1) -->
+                <% if (product.images && product.images.length > 1) { %>
+                <div class="product-thumbnails-vertical d-flex flex-column gap-2 overflow-auto" style="max-height: 500px;">
+                    <% product.images.forEach((img, idx) => { %>
+                        <div class="product-thumbnail-item <%= idx === 0 ? 'active' : '' %>" data-index="<%= idx %>" onclick="setMainImage(<%= idx %>)">
+                            <img src="/images/products/<%= img.imageUrl %>" alt="<%= product.productTitle %>" class="img-fluid rounded-2" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer;">
+                        </div>
+                    <% }); %>
                 </div>
-                
-                <!-- Бейдж скидки -->
-                <% if (product.isDiscounted) { %>
-                    <div class="position-absolute top-0 start-0 m-4">
-                        <div class="discount-badge-modern">
-                            <i class="fas fa-bolt"></i>
-                            <span>-<%= product.discountPercentage %>%</span>
+                <% } %>
+
+                <!-- Главное изображение с бейджами -->
+                <div class="flex-grow-1 position-relative">
+                    <!-- Обертка для зума -->
+                    <div class="position-relative" style="cursor: zoom-in;" onclick="openGalleryModal(currentImageIndex)">
+                        <img id="mainProductImage" 
+                             src="/images/products/<%= product.images && product.images.length > 0 ? product.images[0].imageUrl : product.productThumbnail %>" 
+                             class="img-fluid w-100 rounded-4 shadow" 
+                             alt="<%= product.productTitle %>" 
+                             style="max-height: 500px; object-fit: contain; background: #f8f9fa;">
+                        <!-- Иконка лупы -->
+                        <div class="image-zoom-icon position-absolute top-50 start-50 translate-middle rounded-circle bg-dark bg-opacity-50 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; opacity: 0; transition: opacity 0.3s;">
+                            <i class="fas fa-search-plus fa-2x text-white"></i>
                         </div>
                     </div>
-                <% } %>
-                
-                <!-- Бейдж "Нет в наличии" -->
-                <% if (product.stock_quantity <= 0) { %>
-                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                        <div class="out-of-stock-badge">
-                            SOLD
+
+                    <!-- Бейдж скидки -->
+                    <% if (product.isDiscounted) { %>
+                        <div class="position-absolute top-0 start-0 m-4" style="z-index:2;">
+                            <div class="discount-badge-modern">
+                                <i class="fas fa-bolt"></i>
+                                <span>-<%= product.discountPercentage %>%</span>
+                            </div>
                         </div>
+                    <% } %>
+
+                    <!-- Бейдж "Нет в наличии" -->
+                    <% if (product.stock_quantity <= 0) { %>
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index:2;">
+                            <div class="out-of-stock-badge">SOLD</div>
+                        </div>
+                    <% } %>
+
+                    <!-- Кнопки действий -->
+                    <div class="position-absolute top-0 end-0 m-4 d-flex flex-column gap-2" style="z-index:2;">
+                        <% if (session && session.userId) { %>
+                            <button class="btn btn-light rounded-circle shadow-lg" 
+                                    onclick="toggleFavorite(event, '<%= product.productID %>')"
+                                    title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
+                                <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %> fa-lg"></i>
+                            </button>
+                        <% } %>
+                        <% if (session && session.userRank === 'admin') { %>
+                            <a href="/admin/edit-product/<%= product.productID %>" 
+                               class="btn btn-custom-warning rounded-circle shadow-lg"
+                               title="Редактировать товар">
+                                <i class="fas fa-edit fa-lg"></i>
+                            </a>
+                        <% } %>
                     </div>
-                <% } %>
-                
-                <!-- Кнопки действий на изображении -->
-                <div class="position-absolute top-0 end-0 m-4 d-flex flex-column gap-2">
-                    <% if (session && session.userId) { %>
-                        <button class="btn btn-light rounded-circle shadow-lg" 
-                                onclick="toggleFavorite(event, '<%= product.productID %>')"
-                                title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
-                            <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %> fa-lg"></i>
-                        </button>
-                    <% } %>
-                    
-                    <!-- Кнопка редактирования товара (желтая) -->
-                    <% if (session && session.userRank === 'admin') { %>
-                        <a href="/admin/edit-product/<%= product.productID %>" 
-                        class="btn btn-custom-warning rounded-circle shadow-lg"
-                        title="Редактировать товар">
-                            <i class="fas fa-edit fa-lg"></i>
-                        </a>
-                    <% } %>
                 </div>
             </div>
         </div>
 
         <!-- Информация о товаре -->
-        <div class="col-lg-8">
+        <div class="col-lg-7">
             <!-- Основная информация -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 no-hover">
                 <div class="card-body p-4">
@@ -256,6 +272,50 @@
                             <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
                             <p class="text-muted mb-0">Характеристики не указаны</p>
                         </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно галереи изображений -->
+    <div class="modal fade" id="imageGalleryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 bg-dark rounded-4 overflow-hidden">
+                <div class="modal-header border-0 p-3">
+                    <h5 class="modal-title text-white"><%= product.productTitle %></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0 position-relative">
+                    <!-- Карусель Bootstrap -->
+                    <div id="galleryCarousel" class="carousel slide">
+                        <div class="carousel-inner">
+                            <% product.images.forEach((img, idx) => { %>
+                                <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
+                                    <img src="/images/products/<%= img.imageUrl %>" class="d-block w-100" alt="<%= product.productTitle %>" style="max-height: 70vh; object-fit: contain; background: #f4f4f4;">
+                                </div>
+                            <% }); %>
+                        </div>
+                        <!-- Кнопки навигации -->
+                        <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon bg-dark bg-opacity-50 rounded-circle p-4" aria-hidden="true"></span>
+                            <span class="visually-hidden">Предыдущее</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon bg-dark bg-opacity-50 rounded-circle p-4" aria-hidden="true"></span>
+                            <span class="visually-hidden">Следующее</span>
+                        </button>
+                    </div>
+
+                    <!-- Миниатюры-индикаторы снизу -->
+                    <% if (product.images && product.images.length > 1) { %>
+                    <div class="d-flex justify-content-center gap-2 p-3 bg-dark bg-opacity-75">
+                        <% product.images.forEach((img, idx) => { %>
+                            <div class="gallery-thumbnail <%= idx === 0 ? 'active' : '' %>" data-slide-to="<%= idx %>" onclick="goToSlide(<%= idx %>)">
+                                <img src="/images/products/<%= img.imageUrl %>" class="rounded-2" style="width: 60px; height: 60px; object-fit: cover; border: 2px solid <%= idx === 0 ? '#fff' : 'transparent' %>; cursor: pointer;">
+                            </div>
+                        <% }); %>
+                    </div>
                     <% } %>
                 </div>
             </div>
@@ -459,33 +519,22 @@
 // ФУНКЦИИ ДЛЯ СТРАНИЦЫ ТОВАРА
 // ========================================
 
-// Глобальная переменная для рейтинга
 let currentRating = 0;
+let currentImageIndex = 0;
+const productImages = <%- JSON.stringify(product.images) %>;
 
-// Функции для звезд рейтинга
+// ------------------------- Звёзды рейтинга -------------------------
 function hoverStars(rating) {
-    const stars = document.querySelectorAll('#starRating .fa-star');
-    stars.forEach((star, index) => {
-        if (index < rating) {
-            star.classList.remove('text-muted');
-            star.classList.add('text-warning');
-        } else {
-            star.classList.remove('text-warning');
-            star.classList.add('text-muted');
-        }
+    document.querySelectorAll('#starRating .fa-star').forEach((star, index) => {
+        star.classList.toggle('text-warning', index < rating);
+        star.classList.toggle('text-muted', index >= rating);
     });
 }
 
 function resetStars() {
-    const stars = document.querySelectorAll('#starRating .fa-star');
-    stars.forEach((star, index) => {
-        if (index < currentRating) {
-            star.classList.remove('text-muted');
-            star.classList.add('text-warning');
-        } else {
-            star.classList.remove('text-warning');
-            star.classList.add('text-muted');
-        }
+    document.querySelectorAll('#starRating .fa-star').forEach((star, index) => {
+        star.classList.toggle('text-warning', index < currentRating);
+        star.classList.toggle('text-muted', index >= currentRating);
     });
 }
 
@@ -494,170 +543,127 @@ function setRating(rating) {
     resetStars();
 }
 
-// Открытие модального окна отзыва
+// ------------------------- Модальное окно отзыва -------------------------
 function openReviewModal() {
-    // Сбрасываем состояние модального окна
     currentRating = 0;
     document.getElementById('reviewComment').value = '';
-    
-    // Сбрасываем звезды
-    const stars = document.querySelectorAll('#starRating .fa-star');
-    stars.forEach(star => {
-        star.classList.remove('text-warning');
-        star.classList.add('text-muted');
-    });
-    
-    // Скрываем ошибки
+    document.querySelectorAll('#starRating .fa-star').forEach(s => { s.classList.remove('text-warning'); s.classList.add('text-muted'); });
     document.getElementById('rating-error').classList.add('d-none');
     document.getElementById('comment-error').classList.add('d-none');
-    
-    // Показываем модальное окно
-    const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
-    modal.show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('reviewModal')).show();
 }
 
-// Отправка отзыва
 function submitReview() {
     const comment = document.getElementById('reviewComment').value.trim();
     let isValid = true;
-    
-    // Валидация рейтинга
-    if (currentRating === 0) {
-        document.getElementById('rating-error').classList.remove('d-none');
-        isValid = false;
-    } else {
-        document.getElementById('rating-error').classList.add('d-none');
-    }
-    
-    // Валидация комментария
-    if (comment.length < 10) {
-        document.getElementById('comment-error').classList.remove('d-none');
-        isValid = false;
-    } else {
-        document.getElementById('comment-error').classList.add('d-none');
-    }
-    
+    if (currentRating === 0) { document.getElementById('rating-error').classList.remove('d-none'); isValid = false; }
+    else document.getElementById('rating-error').classList.add('d-none');
+    if (comment.length < 10) { document.getElementById('comment-error').classList.remove('d-none'); isValid = false; }
+    else document.getElementById('comment-error').classList.add('d-none');
     if (!isValid) return;
-    
-    // Получаем ID товара
+
     const productId = document.getElementById('productId').value;
-    
-    // Отправляем отзыв
     fetch('/api/reviews', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            productID: productId,
-            rating: currentRating,
-            comment: comment
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productID: productId, rating: currentRating, comment: comment })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Закрываем модальное окно
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
-            modal.hide();
-            
-            // Показываем уведомление
+            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
             showNotification('Отзыв успешно добавлен!', 'success');
-            
-            // Обновляем страницу через 1.5 секунды
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-        } else {
-            showNotification(data.error || 'Ошибка при добавлении отзыва', 'error');
-        }
+            setTimeout(() => location.reload(), 1500);
+        } else showNotification(data.error || 'Ошибка', 'error');
     })
-    .catch(error => {
-        console.error('Error submitting review:', error);
-        showNotification('Произошла ошибка при отправке отзыва', 'error');
-    });
+    .catch(err => { console.error(err); showNotification('Ошибка при отправке', 'error'); });
 }
 
-// Функция для расчета оставшегося времени до конца скидки
+// ------------------------- Таймер скидки -------------------------
 function calculateTimeLeft(endDateStr) {
     if (!endDateStr) return '';
-    
-    const endDate = new Date(endDateStr);
-    const now = new Date();
-    const diffMs = endDate - now;
-    
-    // Если акция уже закончилась
-    if (diffMs <= 0) {
-        return 'Акция закончилась';
-    }
-    
-    // Рассчитываем дни, часы и минуты
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    // Форматируем результат
-    if (diffDays > 0) {
-        return `Осталось: ${diffDays} дн. ${diffHours} ч.`;
-    } else if (diffHours > 0) {
-        return `Осталось: ${diffHours} ч. ${diffMinutes} мин.`;
-    } else {
-        return `Осталось: ${diffMinutes} мин.`;
-    }
+    const diff = new Date(endDateStr) - new Date();
+    if (diff <= 0) return 'Акция закончилась';
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    if (days > 0) return `Осталось: ${days} дн. ${hours} ч.`;
+    if (hours > 0) return `Осталось: ${hours} ч. ${minutes} мин.`;
+    return `Осталось: ${minutes} мин.`;
 }
 
-// Функция для обновления всех таймеров на странице
 function updateAllTimers() {
-    const timerElements = document.querySelectorAll('[id^="timer-"]');
-    timerElements.forEach(element => {
-        const endDate = element.getAttribute('data-end-date');
-        if (endDate) {
-            const timerText = element.querySelector('.timer-text');
-            if (timerText) {
-                timerText.textContent = calculateTimeLeft(endDate);
-            }
-        }
+    document.querySelectorAll('[id^="timer-"]').forEach(el => {
+        const end = el.getAttribute('data-end-date');
+        if (end) { const span = el.querySelector('.timer-text'); if (span) span.textContent = calculateTimeLeft(end); }
     });
 }
 
-// Инициализация при загрузке страницы
+// ------------------------- Миниатюры и главное изображение -------------------------
+function setMainImage(index) {
+    if (!productImages || index >= productImages.length) return;
+    document.getElementById('mainProductImage').src = `/images/products/${productImages[index].imageUrl}`;
+    currentImageIndex = index;
+    document.querySelectorAll('.product-thumbnail-item').forEach(item => item.classList.remove('active'));
+    const active = document.querySelector(`.product-thumbnail-item[data-index="${index}"]`);
+    if (active) active.classList.add('active');
+}
+
+// ------------------------- Модальная галерея -------------------------
+function openGalleryModal(startIndex) {
+    const modalEl = document.getElementById('imageGalleryModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+
+    modalEl.addEventListener('shown.bs.modal', function handler() {
+        modalEl.removeEventListener('shown.bs.modal', handler);
+        const carouselEl = document.getElementById('galleryCarousel');
+        if (carouselEl) {
+            let carousel = bootstrap.Carousel.getInstance(carouselEl);
+            if (!carousel) {
+                carousel = new bootstrap.Carousel(carouselEl, { interval: false, wrap: true });
+                carouselEl.addEventListener('slid.bs.carousel', () => updateGalleryThumbnails());
+            }
+            carousel.to(startIndex);
+        }
+        updateGalleryThumbnails(startIndex);
+    }, { once: true });
+}
+
+function updateGalleryThumbnails(index) {
+    const thumbs = document.querySelectorAll('.gallery-thumbnail');
+    const activeIndex = index !== undefined ? index :
+        (document.querySelector('#galleryCarousel .carousel-item.active') ?
+            Array.from(document.querySelectorAll('#galleryCarousel .carousel-item')).indexOf(document.querySelector('#galleryCarousel .carousel-item.active')) : 0);
+    thumbs.forEach((thumb, idx) => thumb.classList.toggle('active', idx === activeIndex));
+}
+
+function goToSlide(index) {
+    const carousel = bootstrap.Carousel.getInstance(document.getElementById('galleryCarousel'));
+    if (carousel) carousel.to(index);
+}
+
+// ------------------------- Инициализация при загрузке -------------------------
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация звезд рейтинга
-    const stars = document.querySelectorAll('#starRating .fa-star');
-    stars.forEach(star => {
-        star.addEventListener('mouseover', function() {
-            const rating = parseInt(this.getAttribute('data-rating'));
-            hoverStars(rating);
-        });
-        
+    // Рейтинг
+    document.querySelectorAll('#starRating .fa-star').forEach(star => {
+        star.addEventListener('mouseover', () => hoverStars(parseInt(star.dataset.rating)));
         star.addEventListener('mouseout', resetStars);
-        
-        star.addEventListener('click', function() {
-            const rating = parseInt(this.getAttribute('data-rating'));
-            setRating(rating);
-        });
+        star.addEventListener('click', () => setRating(parseInt(star.dataset.rating)));
     });
-    
-    // Инициализация таймера скидки
+
     updateAllTimers();
-    setInterval(updateAllTimers, 60000); // Обновляем каждую минуту
-    
-    // Прокрутка к отзывам при клике на рейтинг
+    setInterval(updateAllTimers, 60000);
+
     const ratingElement = document.querySelector('.rating.me-3');
     if (ratingElement) {
-        ratingElement.addEventListener('click', function(event) {
-            const reviewsSection = document.getElementById('reviews-section');
-            if (reviewsSection) {
-                event.preventDefault();
-                reviewsSection.scrollIntoView({ behavior: 'smooth' });
-            }
+        ratingElement.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
         });
     }
-    
-    // Инициализация всплывающих подсказок
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 });
 </script>

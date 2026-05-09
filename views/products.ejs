@@ -190,7 +190,7 @@
                     </div>
 
 					<!-- Кнопка "Применить фильтры" -->
-					<button class="btn apply-filters-btn" onclick="applyFilters()">
+					<button class="btn apply-filters-btn" onclick="applyFiltersLocal()">
 						<i class="fas fa-check-circle me-2"></i>Применить фильтры
 					</button>
 
@@ -384,7 +384,7 @@
 							</div>
 							<% } else if (product.stock_quantity <= 5) { %>
 							<div class="stock-indicator text-warning mt-2">
-								<i class="fas fa-exclamation-triangle me-1"></i>Только <%= product.stock_quantity %> шт.
+								<i class="fas fa-exclamation-triangle me-1"></i>Осталось <%= product.stock_quantity %> шт.
 							</div>
 							<% } else { %>
 							<div class="stock-indicator text-success mt-2">
@@ -493,617 +493,226 @@
 </div>
 
 <script>
-	// Глобальные переменные для слайдера
-	let minPriceValue = <%= minPrice %>;
-	let maxPriceValue = <%= maxPrice %>;
-	const sliderMin = <%= sliderMin %>;
-	const sliderMax = <%= sliderMax %>;
-	const step = 100;
-
-	// Кастомный выпадающий список для сортировки
-	document.addEventListener('DOMContentLoaded', function() {
-		const sortDropdown = document.getElementById('sortDropdown');
-		const sortSelected = document.getElementById('sortSelected');
-		const sortOptions = document.getElementById('sortOptions');
-		const sortHidden = document.getElementById('sortHidden');
-
-		if (sortDropdown) {
-			// Открытие/закрытие выпадающего списка
-			sortDropdown.addEventListener('click', function(e) {
-				e.stopPropagation();
-				this.classList.toggle('open');
-			});
-
-			// Выбор опции - БЕЗ автоматического применения
-			document.querySelectorAll('.custom-select-option').forEach(option => {
-				option.addEventListener('click', function(e) {
-					e.stopPropagation();
-					const value = this.getAttribute('data-value');
-					const text = this.textContent.trim();
-
-					// Обновляем выбранное значение
-					sortSelected.textContent = text;
-					sortHidden.value = value;
-
-					// Убираем активный класс со всех
-					document.querySelectorAll('.custom-select-option').forEach(opt => {
-						opt.classList.remove('active');
-					});
-
-					// Добавляем активный класс к выбранному
-					this.classList.add('active');
-
-					// Закрываем список
-					sortDropdown.classList.remove('open');
-
-					// НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
-				});
-			});
-
-			// Закрытие при клике вне списка
-			document.addEventListener('click', function(e) {
-				if (!sortDropdown.contains(e.target)) {
-					sortDropdown.classList.remove('open');
-				}
-			});
-
-			// Закрытие при нажатии на клавишу ESC
-			document.addEventListener('keydown', function(e) {
-				if (e.key === 'Escape') {
-					sortDropdown.classList.remove('open');
-				}
-			});
-		}
-
-		initPriceSlider();
-		initCategoryFilters();
-		initSearchForm();
-	});
-
-	// Инициализация слайдера цен
-	function initPriceSlider() {
-		const sliderContainer = document.querySelector('.price-range-container');
-		if (!sliderContainer) return;
-
-		// Создаём слайдер
-		const sliderHTML = `
-		<div class="price-range-values">
-			<span id="minValueDisplay">${minPriceValue.toLocaleString()}₽</span>
-			<span id="maxValueDisplay">${maxPriceValue.toLocaleString()}₽</span>
-		</div>
-		<div class="price-slider" id="priceSlider">
-			<div class="slider-thumb min" id="minThumb">
-				<span class="range-slider-value" id="minValueLabel"></span>
-			</div>
-			<div class="slider-thumb max" id="maxThumb">
-				<span class="range-slider-value" id="maxValueLabel"></span>
-			</div>
-		</div>
-		<div class="price-inputs">
-			<div class="price-input-wrapper">
-				<span class="price-input-badge">От</span>
-				<input type="number" class="price-input" id="minPriceInput" value="${minPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
-			</div>
-			<div class="price-input-wrapper">
-				<span class="price-input-badge">До</span>
-				<input type="number" class="price-input" id="maxPriceInput" value="${maxPriceValue}" min="${sliderMin}" max="${sliderMax}" step="${step}">
-			</div>
-		</div>
-		<input type="hidden" id="minPriceHidden" value="${minPriceValue}">
-		<input type="hidden" id="maxPriceHidden" value="${maxPriceValue}">
-		`;
-
-		// Заменяем старый блок цен на новый слайдер
-		const priceSection = document.querySelector('.price-range-container');
-		if (priceSection) {
-			priceSection.innerHTML = sliderHTML;
-		}
-
-		// Обновляем стили слайдера
-		updateSliderStyle();
-
-		// Добавляем обработчики событий
-		const minThumb = document.getElementById('minThumb');
-		const maxThumb = document.getElementById('maxThumb');
-		const minInput = document.getElementById('minPriceInput');
-		const maxInput = document.getElementById('maxPriceInput');
-
-		// Обработчик для минимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
-		minThumb.addEventListener('mousedown', (e) => startDrag(e, 'min'));
-		minThumb.addEventListener('touchstart', (e) => startDrag(e, 'min'));
-
-		// Обработчик для максимума - ДОБАВЛЯЕМ ТАЧ-СОБЫТИЯ
-		maxThumb.addEventListener('mousedown', (e) => startDrag(e, 'max'));
-		maxThumb.addEventListener('touchstart', (e) => startDrag(e, 'max'));
-
-		// Обработчик для минимума
-		minInput.addEventListener('input', (e) => {
-			let value = Math.floor(parseInt(e.target.value) / step) * step;
-			value = Math.max(sliderMin, Math.min(value, maxPriceValue - step));
-			minPriceValue = value;
-			e.target.value = value;
-			document.getElementById('minPriceHidden').value = value;
-			updateSliderStyle();
-		});
-
-		// Обработчик для максимума
-		maxInput.addEventListener('input', (e) => {
-			let value = Math.ceil(parseInt(e.target.value) / step) * step;
-			value = Math.min(sliderMax, Math.max(value, minPriceValue + step));
-			maxPriceValue = value;
-			e.target.value = value;
-			document.getElementById('maxPriceHidden').value = value;
-			updateSliderStyle();
-		});
-
-		// Обработчик фокуса для инпутов
-		minInput.addEventListener('focus', () => {
-			document.querySelector('.price-input-wrapper:nth-child(1)').classList.add('active');
-		});
-		minInput.addEventListener('blur', () => {
-			document.querySelector('.price-input-wrapper:nth-child(1)').classList.remove('active');
-		});
-		maxInput.addEventListener('focus', () => {
-			document.querySelector('.price-input-wrapper:nth-child(2)').classList.add('active');
-		});
-		maxInput.addEventListener('blur', () => {
-			document.querySelector('.price-input-wrapper:nth-child(2)').classList.remove('active');
-		});
-	}
-
-	function updateSliderStyle() {
-		const minPercentage = ((minPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
-		const maxPercentage = ((maxPriceValue - sliderMin) / (sliderMax - sliderMin)) * 100;
-		const slider = document.getElementById('priceSlider');
-		if (slider) {
-			// Добавляем плавный переход для градиента
-			slider.style.transition = 'background 0.1s ease';
-			slider.style.setProperty('--min-percentage', minPercentage + '%');
-			slider.style.setProperty('--max-percentage', maxPercentage + '%');
-		}
-
-		const minThumb = document.getElementById('minThumb');
-		const maxThumb = document.getElementById('maxThumb');
-		if (minThumb && maxThumb) {
-			// УБРАЛИ transition для ползунков - теперь двигаются мгновенно
-			minThumb.style.transition = 'none';
-			maxThumb.style.transition = 'none';
-			minThumb.style.left = minPercentage + '%';
-			maxThumb.style.right = (100 - maxPercentage) + '%';
-		}
-	}
-
-	// Функция для перетаскивания ползунков - УБРАНА ЗАДЕРЖКА
-	function startDrag(e, type) {
-		e.preventDefault();
-
-		// Определяем, это тач-событие или мышиное
-		const isTouch = e.type === 'touchstart';
-
-		// Получаем координаты в зависимости от типа события
-		const startX = isTouch ? e.touches[0].clientX : e.clientX;
-		const startValue = type === 'min' ? minPriceValue : maxPriceValue;
-		const thumb = e.target.closest('.slider-thumb');
-
-		if (thumb) {
-			thumb.classList.add('active');
-		}
-
-		// Отключаем плавность в начале перетаскивания
-		const slider = document.getElementById('priceSlider');
-		if (slider) {
-			slider.style.transition = 'none';
-		}
-
-		// Функция для обработки движения
-		function handleMove(e) {
-			// Предотвращаем прокрутку страницы при перетаскивании на мобильных
-			e.preventDefault();
-
-			// Получаем текущую координату X
-			const currentX = isTouch ? e.touches[0].clientX : e.clientX;
-			const deltaX = currentX - startX;
-			const sliderWidth = document.getElementById('priceSlider').offsetWidth;
-			const pixelsPerStep = (sliderWidth / (sliderMax - sliderMin)) * step;
-
-			// Вычисляем новое значение
-			let newValue = startValue + Math.round(deltaX / pixelsPerStep) * step;
-
-			// Обновляем значение в зависимости от типа ползунка
-			if (type === 'min') {
-				newValue = Math.max(sliderMin, Math.min(newValue, maxPriceValue - step));
-				minPriceValue = newValue;
-				document.getElementById('minPriceInput').value = newValue;
-				document.getElementById('minPriceHidden').value = newValue;
-			} else {
-				newValue = Math.min(sliderMax, Math.max(newValue, minPriceValue + step));
-				maxPriceValue = newValue;
-				document.getElementById('maxPriceInput').value = newValue;
-				document.getElementById('maxPriceHidden').value = newValue;
-			}
-
-			// Обновляем стиль слайдера
-			updateSliderStyle();
-		}
-
-		// Функция для обработки окончания перетаскивания
-		function handleEnd() {
-			// Удаляем все обработчики событий
-			document.removeEventListener('mousemove', handleMove);
-			document.removeEventListener('mouseup', handleEnd);
-			document.removeEventListener('touchmove', handleMove, { passive: false });
-			document.removeEventListener('touchend', handleEnd);
-			document.removeEventListener('touchcancel', handleEnd);
-
-			// Убираем активный класс с ползунка
-			if (thumb) {
-				thumb.classList.remove('active');
-			}
-
-			// Включаем плавность обратно после отпускания
-			const slider = document.getElementById('priceSlider');
-			if (slider) {
-				slider.style.transition = 'background 0.1s ease';
-			}
-		}
-
-		// Добавляем обработчики для мыши
-		document.addEventListener('mousemove', handleMove);
-		document.addEventListener('mouseup', handleEnd);
-
-		// Добавляем обработчики для тач-устройств
-		document.addEventListener('touchmove', handleMove, { passive: false });
-		document.addEventListener('touchend', handleEnd);
-		document.addEventListener('touchcancel', handleEnd);
-	}
-
-	// Функция для обновления фильтров категорий - БЕЗ автоматического применения
-	function initCategoryFilters() {
-		const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
-		updateCategoriesCount(checkboxes.length);
-
-		// Добавляем обработчик клика на лейблы
-		document.querySelectorAll('.category-item').forEach(item => {
-			item.addEventListener('click', function(e) {
-				if (e.target.classList.contains('form-check-input') ||
-					e.target.classList.contains('form-check-label')) {
-					return;
-				}
-				const checkbox = this.querySelector('.form-check-input');
-				if (checkbox) {
-					checkbox.checked = !checkbox.checked;
-					const event = new Event('change', { bubbles: true });
-					checkbox.dispatchEvent(event);
-				}
-			});
-		});
-	}
-
-	// Функция для формы поиска - обновленная версия
-	function initSearchForm() {
-		const centralSearchInput = document.getElementById('centralSearchInput');
-		const suggestionsContainer = document.getElementById('centralSearchSuggestions');
-
-		if (!centralSearchInput || !suggestionsContainer) {
-			console.warn('Search elements not found');
-			return;
-		}
-
-		let debounceTimer;
-		let isMouseOverSuggestions = false;
-
-		// Показ подсказок при фокусе
-		centralSearchInput.addEventListener('focus', function(e) {
-			const query = this.value.trim();
-			if (query.length === 0) {
-				fetchPopularSuggestions();
-			} else if (query.length >= 2) {
-				fetchSuggestions(query);
-			}
-		});
-
-		// Обработчик ввода
-		centralSearchInput.addEventListener('input', function(e) {
-			clearTimeout(debounceTimer);
-			const query = this.value.trim();
-
-			if (query.length < 2) {
-				if (query.length === 0) {
-					fetchPopularSuggestions();
-				} else {
-					hideSuggestions();
-				}
-				return;
-			}
-
-			debounceTimer = setTimeout(() => {
-				fetchSuggestions(query);
-			}, 300);
-		});
-
-		// Скрыть подсказки при потере фокуса
-		centralSearchInput.addEventListener('blur', function() {
-			setTimeout(() => {
-				if (!isMouseOverSuggestions) {
-					hideSuggestions();
-				}
-			}, 200);
-		});
-
-		// Обработчик клика по подсказке
-		suggestionsContainer.addEventListener('click', function(e) {
-			const item = e.target.closest('.search-suggestion-item');
-			if (item) {
-				const productId = item.dataset.productId;
-				window.location.href = `/product/${productId}`;
-			}
-		});
-
-		// Отслеживание наведения на подсказки
-		suggestionsContainer.addEventListener('mouseenter', () => {
-			isMouseOverSuggestions = true;
-		});
-		suggestionsContainer.addEventListener('mouseleave', () => {
-			isMouseOverSuggestions = false;
-			setTimeout(() => {
-				if (document.activeElement !== centralSearchInput) {
-					hideSuggestions();
-				}
-			}, 200);
-		});
-
-		// Обработчик клавиш
-		centralSearchInput.addEventListener('keydown', function(e) {
-			if (e.key === 'Enter') {
-				e.preventDefault();
-				const form = document.getElementById('centralSearchForm');
-				if (form) {
-					form.submit();
-				}
-			}
-			if (e.key === 'Escape') {
-				hideSuggestions();
-			}
-		});
-	}
-
-	function displaySuggestions(suggestions) {
-		const suggestionsContainer = document.getElementById('centralSearchSuggestions');
-		if (!suggestionsContainer) return;
-
-		if (!Array.isArray(suggestions) || suggestions.length === 0) {
-			suggestionsContainer.innerHTML = `
-			<div class="search-suggestions-empty">
-				<i class="fas fa-search"></i>
-				<p>Ничего не найдено</p>
-			</div>
-			`;
-			suggestionsContainer.classList.add('show');
-			return;
-		}
-
-		let html = '';
-		suggestions.forEach(suggestion => {
-			const discountBadge = suggestion.isDiscounted ? `
-			<div class="search-suggestion-discount-badge">
-				<i class="fas fa-tag"></i>-${suggestion.discountPercentage}%
-			</div>
-			` : '';
-
-			html += `
-			<div class="search-suggestion-item" data-product-id="${suggestion.id}">
-				<div style="position: relative;">
-					<img src="/images/products/${suggestion.thumbnail}" alt="${suggestion.title}">
-					${discountBadge}
-				</div>
-				<div class="search-suggestion-info">
-					<div class="search-suggestion-title">${suggestion.title}</div>
-					<div class="search-suggestion-price-container">
-						<span class="search-suggestion-price">${suggestion.price.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
-						${suggestion.isDiscounted ? `
-						<span class="search-suggestion-original-price">${suggestion.originalPrice.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}₽</span>
-						` : ''}
-					</div>
-				</div>
-			</div>
-			`;
-		});
-
-		suggestionsContainer.innerHTML = html;
-		suggestionsContainer.classList.add('show');
-	}
-
-	function hideSuggestions() {
-		const suggestionsContainer = document.getElementById('centralSearchSuggestions');
-		if (suggestionsContainer) {
-			suggestionsContainer.classList.remove('show');
-		}
-	}
-
-	function fetchSuggestions(query) {
-		fetch(`/api/search-suggestions?query=${encodeURIComponent(query)}`)
-			.then(response => response.json())
-			.then(suggestions => {
-				displaySuggestions(suggestions);
-			})
-			.catch(error => {
-				console.error('Error fetching suggestions:', error);
-				hideSuggestions();
-			});
-	}
-
-	function fetchPopularSuggestions() {
-		fetch('/api/search-suggestions?popular=true')
-			.then(response => response.json())
-			.then(suggestions => {
-				displaySuggestions(suggestions);
-			})
-			.catch(error => {
-				console.error('Error fetching popular suggestions:', error);
-				hideSuggestions();
-			});
-	}
-
-	// Функция для применения фильтров - ВЫЗЫВАЕТСЯ ТОЛЬКО ПРИ НАЖАТИИ КНОПКИ
-	function applyFilters() {
-		const search = document.querySelector('#centralSearchInput')?.value || '';
-		const category = document.getElementById('categoriesHidden').value;
-		const minPrice = document.getElementById('minPriceHidden').value;
-		const maxPrice = document.getElementById('maxPriceHidden').value;
-		const onSale = document.getElementById('onSale').checked ? 'true' : '';
-		const inStock = document.getElementById('inStock').checked ? 'true' : '';
-		const sort = document.getElementById('sortHidden').value;
-
-		const params = new URLSearchParams();
-
-		if (search) params.set('search', search);
-		if (category) params.set('category', category);
-		if (minPrice !== sliderMin.toString()) params.set('minPrice', minPrice);
-		if (maxPrice !== sliderMax.toString()) params.set('maxPrice', maxPrice);
-		if (onSale) params.set('onSale', onSale);
-		if (inStock) params.set('inStock', inStock);
-		if (sort) params.set('sort', sort);
-
-		window.location.href = `/products?${params.toString()}`;
-	}
-
-	// Обновление фильтра категорий - БЕЗ автоматического применения
-	function updateCategoryFilter() {
-		const checkboxes = document.querySelectorAll('#categoriesList .form-check-input:checked');
-		const selectedIds = Array.from(checkboxes).map(cb => cb.value);
-		const hiddenInput = document.getElementById('categoriesHidden');
-		hiddenInput.value = selectedIds.join(',');
-		updateCategoriesCount(selectedIds.length);
-
-		// НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
-	}
-
-	// Очистка выбранных категорий
-	function clearCategories() {
-		const checkboxes = document.querySelectorAll('#categoriesList .form-check-input');
-		checkboxes.forEach(cb => {
-			cb.checked = false;
-		});
-		const hiddenInput = document.getElementById('categoriesHidden');
-		hiddenInput.value = '';
-		updateCategoriesCount(0);
-
-		// НЕ ВЫЗЫВАЕМ applyFilters() здесь - только при нажатии кнопки
-	}
-
-	// Обновление счётчика категорий
-	function updateCategoriesCount(count) {
-		const countEl = document.querySelector('#selectedCategoriesCount .fw-bold');
-		if (countEl) {
-			countEl.textContent = count;
-		}
-	}
-
-	// Функция для сворачивания/разворачивания категорий
-	function toggleCategories() {
-		const container = document.getElementById('categoriesFilterContainer');
-		const icon = document.getElementById('categoriesToggleIcon');
-		const btn = document.getElementById('toggleCategoriesBtn');
-
-		if (container && icon && btn) {
-			container.classList.toggle('d-none');
-			if (container.classList.contains('d-none')) {
-				icon.classList.remove('fa-chevron-up');
-				icon.classList.add('fa-chevron-down');
-				btn.setAttribute('aria-expanded', 'false');
-			} else {
-				icon.classList.remove('fa-chevron-down');
-				icon.classList.add('fa-chevron-up');
-				btn.setAttribute('aria-expanded', 'true');
-			}
-		}
-	}
-
-	// Функции для мобильного меню
-	function toggleFilters() {
-		document.querySelector('.filters-sidebar').classList.toggle('active');
-		document.querySelector('.mobile-overlay').classList.toggle('active');
-	}
-
-	function closeFilters() {
-		document.querySelector('.filters-sidebar').classList.remove('active');
-		document.querySelector('.mobile-overlay').classList.remove('active');
-	}
-
-	// Функция добавления в корзину с проверкой наличия
-	function addToCart(productID) {
-		// Получаем количество товара из атрибута
-		const productElement = document.querySelector(`.horizontal-product-card[data-product-id="${productID}"]`);
-		const stockQuantity = parseInt(productElement?.dataset.stockQuantity || 0);
-
-		if (stockQuantity <= 0) {
-			showToast('Товара нет в наличии', 'error');
-			return;
-		}
-
-		// Проверяем, есть ли товар уже в корзине
-		const cart = <%= JSON.stringify(session.cart || {}) %>;
-		const currentCount = cart[productID] ? cart[productID].sc_count : 0;
-
-		if (currentCount >= stockQuantity) {
-			showToast(`Нельзя добавить больше ${stockQuantity} шт.`, 'warning');
-			return;
-		}
-
-		// Отправляем запрос на сервер
-		fetch('/cart/add', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ productID: productID })
-		})
-		.then(response => response.json())
-		.then(data => {
-			if (data.success) {
-				showToast('Товар добавлен в корзину', 'success');
-
-				// Обновляем счетчик корзины
-				if (data.cartCount !== undefined) {
-					const cartBadge = document.querySelector('.nav-badge');
-					if (cartBadge) {
-						cartBadge.textContent = data.cartCount;
-					}
-				}
-			} else {
-				showToast(data.message || 'Ошибка добавления в корзину', 'error');
-			}
-		})
-		.catch(error => {
-			console.error('Error:', error);
-			showToast('Ошибка добавления в корзину', 'error');
-		});
-	}
-
-	// Функция показа уведомлений
-	function showToast(message, type = 'info') {
-		const toast = document.createElement('div');
-		toast.className = `toast align-items-center text-white bg-${type} border-0`;
-		toast.setAttribute('role', 'alert');
-		toast.setAttribute('aria-live', 'assertive');
-		toast.setAttribute('aria-atomic', 'true');
-		toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1100; min-width: 250px;';
-
-		toast.innerHTML = `
-		<div class="d-flex">
-			<div class="toast-body">${message}</div>
-			<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-		</div>
-		`;
-
-		document.body.appendChild(toast);
-
-		const bsToast = new bootstrap.Toast(toast);
-		bsToast.show();
-
-		// Удаляем тост через 3 секунды
-		setTimeout(() => {
-			toast.remove();
-		}, 3000);
-	}
+    // ========== ЛОКАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    var localMinPrice = <%= minPrice %>;
+    var localMaxPrice = <%= maxPrice %>;
+    var localSliderMin = <%= sliderMin %>;
+    var localSliderMax = <%= sliderMax %>;
+    var localStep = 100;                     // <-- переименовано, чтобы не конфликтовать с script.js
+
+    // ========== ЛОКАЛЬНАЯ ФУНКЦИЯ ПРИМЕНЕНИЯ ФИЛЬТРОВ ==========
+    function applyFiltersLocal() {
+        var search = document.querySelector('#centralSearchInput')?.value || '';
+        var category = document.getElementById('categoriesHidden')?.value || '';
+        var minPrice = document.getElementById('minPriceHidden')?.value || localSliderMin.toString();
+        var maxPrice = document.getElementById('maxPriceHidden')?.value || localSliderMax.toString();
+        var onSale = document.getElementById('onSale')?.checked ? 'true' : '';
+        var inStock = document.getElementById('inStock')?.checked ? 'true' : '';
+        var sort = document.getElementById('sortHidden')?.value || '';
+
+        var params = new URLSearchParams();
+        if (search) params.set('search', search);
+        if (category) params.set('category', category);
+        if (minPrice !== localSliderMin.toString()) params.set('minPrice', minPrice);
+        if (maxPrice !== localSliderMax.toString()) params.set('maxPrice', maxPrice);
+        if (onSale) params.set('onSale', onSale);
+        if (inStock) params.set('inStock', inStock);
+        if (sort) params.set('sort', sort);
+
+        window.location.href = '/products?' + params.toString();
+    }
+
+    // ========== ЛОКАЛЬНЫЙ СЛАЙДЕР (полная копия, но на локальных переменных) ==========
+    function initPriceSliderLocal() {
+        var container = document.querySelector('.price-range-container');
+        if (!container) return;
+
+        // Генерируем HTML слайдера
+        var html = `<div class="price-range-values">
+            <span id="minValueDisplay">${localMinPrice.toLocaleString()}₽</span>
+            <span id="maxValueDisplay">${localMaxPrice.toLocaleString()}₽</span>
+        </div>
+        <div class="price-slider" id="priceSlider">
+            <div class="slider-thumb min" id="minThumb"></div>
+            <div class="slider-thumb max" id="maxThumb"></div>
+        </div>
+        <div class="price-inputs">
+            <div class="price-input-wrapper">
+                <span class="price-input-badge">От</span>
+                <input type="number" class="price-input" id="minPriceInput" value="${localMinPrice}" min="${localSliderMin}" max="${localSliderMax}" step="${localStep}">
+            </div>
+            <div class="price-input-wrapper">
+                <span class="price-input-badge">До</span>
+                <input type="number" class="price-input" id="maxPriceInput" value="${localMaxPrice}" min="${localSliderMin}" max="${localSliderMax}" step="${localStep}">
+            </div>
+        </div>
+        <input type="hidden" id="minPriceHidden" value="${localMinPrice}">
+        <input type="hidden" id="maxPriceHidden" value="${localMaxPrice}">`;
+
+        container.innerHTML = html;
+
+        var minThumb = document.getElementById('minThumb');
+        var maxThumb = document.getElementById('maxThumb');
+        var minInput = document.getElementById('minPriceInput');
+        var maxInput = document.getElementById('maxPriceInput');
+        var slider = document.getElementById('priceSlider');
+        var minHidden = document.getElementById('minPriceHidden');
+        var maxHidden = document.getElementById('maxPriceHidden');
+
+        function updateSlider() {
+            // Расчёт процентов с защитой от выхода за границы
+            var minPerc = ((localMinPrice - localSliderMin) / (localSliderMax - localSliderMin)) * 100;
+            var maxPerc = ((localMaxPrice - localSliderMin) / (localSliderMax - localSliderMin)) * 100;
+            // Обрезаем от 0 до 100
+            minPerc = Math.min(100, Math.max(0, minPerc));
+            maxPerc = Math.min(100, Math.max(0, maxPerc));
+
+            if (slider) {
+                slider.style.setProperty('--min-percentage', minPerc + '%');
+                slider.style.setProperty('--max-percentage', maxPerc + '%');
+            }
+            // Позиционируем ползунки с центрированием (transform для точного попадания)
+            if (minThumb) {
+                minThumb.style.left = minPerc + '%';
+                minThumb.style.transform = 'translate(-50%, -50%)';  // центрируем
+            }
+            if (maxThumb) {
+                maxThumb.style.right = (100 - maxPerc) + '%';
+                maxThumb.style.transform = 'translate(50%, -50%)';   // центрируем для right
+            }
+        }
+        updateSlider();
+
+        function startDrag(e, type) {
+            e.preventDefault();
+            var isTouch = e.type === 'touchstart';
+            var startX = isTouch ? e.touches[0].clientX : e.clientX;
+            var startValue = type === 'min' ? localMinPrice : localMaxPrice;
+            var thumb = e.target.closest('.slider-thumb');
+            if (thumb) thumb.classList.add('active');
+            if (slider) slider.style.transition = 'none';
+
+            function handleMove(e) {
+                e.preventDefault();
+                var currentX = isTouch ? e.touches[0].clientX : e.clientX;
+                var deltaX = currentX - startX;
+                var sliderWidth = slider.offsetWidth;
+                var pixelsPerStep = (sliderWidth / (localSliderMax - localSliderMin)) * localStep;
+                var newValue = startValue + Math.round(deltaX / pixelsPerStep) * localStep;
+
+                if (type === 'min') {
+                    newValue = Math.max(localSliderMin, Math.min(newValue, localMaxPrice - localStep));
+                    localMinPrice = newValue;
+                    if (minInput) minInput.value = newValue;
+                    if (minHidden) minHidden.value = newValue;
+                } else {
+                    newValue = Math.min(localSliderMax, Math.max(newValue, localMinPrice + localStep));
+                    localMaxPrice = newValue;
+                    if (maxInput) maxInput.value = newValue;
+                    if (maxHidden) maxHidden.value = newValue;
+                }
+                updateSlider();
+            }
+
+            function handleEnd() {
+                document.removeEventListener('mousemove', handleMove);
+                document.removeEventListener('mouseup', handleEnd);
+                document.removeEventListener('touchmove', handleMove, { passive: false });
+                document.removeEventListener('touchend', handleEnd);
+                document.removeEventListener('touchcancel', handleEnd);
+                if (thumb) thumb.classList.remove('active');
+                if (slider) slider.style.transition = 'background 0.1s ease';
+            }
+
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('touchend', handleEnd);
+            document.addEventListener('touchcancel', handleEnd);
+        }
+
+        minThumb.addEventListener('mousedown', function(e) { startDrag(e, 'min'); });
+        minThumb.addEventListener('touchstart', function(e) { startDrag(e, 'min'); });
+        maxThumb.addEventListener('mousedown', function(e) { startDrag(e, 'max'); });
+        maxThumb.addEventListener('touchstart', function(e) { startDrag(e, 'max'); });
+
+        minInput.addEventListener('input', function(e) {
+            var val = Math.floor(parseInt(e.target.value) / localStep) * localStep;
+            val = Math.max(localSliderMin, Math.min(val, localMaxPrice - localStep));
+            localMinPrice = val;
+            e.target.value = val;
+            if (minHidden) minHidden.value = val;
+            updateSlider();
+        });
+        maxInput.addEventListener('input', function(e) {
+            var val = Math.ceil(parseInt(e.target.value) / localStep) * localStep;
+            val = Math.min(localSliderMax, Math.max(val, localMinPrice + localStep));
+            localMaxPrice = val;
+            e.target.value = val;
+            if (maxHidden) maxHidden.value = val;
+            updateSlider();
+        });
+
+        minInput.addEventListener('focus', function() {
+            document.querySelector('.price-input-wrapper:nth-child(1)')?.classList.add('active');
+        });
+        minInput.addEventListener('blur', function() {
+            document.querySelector('.price-input-wrapper:nth-child(1)')?.classList.remove('active');
+        });
+        maxInput.addEventListener('focus', function() {
+            document.querySelector('.price-input-wrapper:nth-child(2)')?.classList.add('active');
+        });
+        maxInput.addEventListener('blur', function() {
+            document.querySelector('.price-input-wrapper:nth-child(2)')?.classList.remove('active');
+        });
+    }
+
+    // ========== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        // ----- Кастомная сортировка -----
+        var sortDropdown = document.getElementById('sortDropdown');
+        var sortSelected = document.getElementById('sortSelected');
+        var sortHidden = document.getElementById('sortHidden');
+
+        if (sortDropdown) {
+            sortDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.classList.toggle('open');
+            });
+
+            document.querySelectorAll('.custom-select-option').forEach(function(option) {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var value = this.getAttribute('data-value');
+                    var text = this.textContent.trim();
+                    sortSelected.textContent = text;
+                    sortHidden.value = value;
+                    document.querySelectorAll('.custom-select-option').forEach(function(opt) {
+                        opt.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    sortDropdown.classList.remove('open');
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!sortDropdown.contains(e.target)) {
+                    sortDropdown.classList.remove('open');
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    sortDropdown.classList.remove('open');
+                }
+            });
+        }
+
+        // ----- Запуск локального слайдера -----
+        initPriceSliderLocal();
+
+        // ----- Общие функции из script.js (без конфликтов) -----
+        if (typeof initCategoryFilters === 'function') initCategoryFilters();
+        if (typeof initSearchForm === 'function') initSearchForm();
+    });
 </script>
