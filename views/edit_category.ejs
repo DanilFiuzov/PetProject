@@ -1,0 +1,110 @@
+<div class="container def-bg-settings long-form-page py-4" style="min-height: 66vh;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg rounded-3">
+                <div class="card-header CanvaHeader py-3 border-0">
+                    <h3 class="mb-0 text-white"><i class="fas fa-edit me-2"></i>Редактирование категории</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form id="categoryForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Название категории *</label>
+                            <input type="text" class="form-control" name="categorieName" required value="<%= category.categorieName %>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Описание</label>
+                            <textarea class="form-control" name="categorieDescription" rows="3"><%= category.categorieDescription || '' %></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Текущая миниатюра</label>
+                            <div>
+                                <% if (category.categorieThumbnail) { %>
+                                    <div class="category-thumb-box d-inline-block">
+                                        <img src="/images/categories/<%= category.categorieThumbnail %>" alt="<%= category.categorieName %>" style="width: 100%; max-width: 250px; border-radius: 8px; background: transparent !important;">
+                                    </div>
+                                <% } else { %>
+                                    <span class="text-muted">Нет изображения</span>
+                                <% } %>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="keepCurrentThumbnail" id="keepCurrentThumbnail" checked onchange="toggleNewImage()">
+                                <label class="form-check-label" for="keepCurrentThumbnail">Оставить текущее изображение</label>
+                            </div>
+                        </div>
+                        <div class="mb-3" id="newImageField" style="display: none;">
+                            <label class="form-label fw-semibold">Новое изображение</label>
+                            <input type="file" class="form-control" name="categorieThumbnail" accept="image/jpeg,image/png,image/webp" onchange="previewImage(this)">
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Рекомендуемый размер: <strong>200x200 пикселей</strong>. Форматы: JPG, PNG, WebP.
+                            </div>
+                            <div id="imagePreview" class="mt-2" style="display: none;">
+                                <div class="category-thumb-box d-inline-block">
+                                    <img id="previewImg" src="#" alt="Предпросмотр" class="img-thumbnail" style="width: 100%; max-width: 300px; background: transparent !important;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="/admin/products" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Назад</a>
+                            <button type="submit" class="btn btn-custom px-4" id="submitBtn"><i class="fas fa-save me-2"></i>Сохранить</button>
+                        </div>
+                    </form>
+                    <div id="notificationContainer" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleNewImage() {
+    document.getElementById('newImageField').style.display = document.getElementById('keepCurrentThumbnail').checked ? 'none' : 'block';
+}
+function previewImage(input) {
+    const preview = document.getElementById('previewImg');
+    const container = document.getElementById('imagePreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            container.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+document.getElementById('categoryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
+
+    fetch('/admin/categories/edit/<%= category.categorieID %>', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Категория обновлена!', 'success');
+            setTimeout(() => { window.location.href = '/admin/products'; }, 1500);
+        } else {
+            showNotification(data.message || 'Ошибка', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>Сохранить';
+        }
+    })
+    .catch(() => {
+        showNotification('Ошибка сети', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Сохранить';
+    });
+});
+
+function showNotification(message, type) {
+    const container = document.getElementById('notificationContainer');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    container.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+    setTimeout(() => { container.innerHTML = ''; }, 5000);
+}
+</script>

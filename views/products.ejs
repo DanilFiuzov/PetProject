@@ -302,20 +302,23 @@
 						</h5>
 
 						<!-- Категории - НОВАЯ СТРОКА -->
-						<% if (product.categories && product.categories.length > 0) { %>
 						<div class="categories-container">
-							<% product.categories.slice(0, 3).forEach((cat) => { %>
-							<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
-								<%= cat %>
-							</span>
-							<% }) %>
-							<% if (product.categories.length > 3) { %>
-							<span class="badge bg-light text-muted border">
-								+<%= product.categories.length - 3 %>
-							</span>
+							<% if (product.categories && product.categories.length > 0) { %>
+								<% product.categories.slice(0, 3).forEach((cat) => { %>
+									<span class="cat-badge">
+										<% if (cat.icon) { %>
+											<img src="<%= cat.icon %>" alt="" class="cat-badge-icon">
+										<% } %>
+										<span class="cat-badge-text"><%= cat.name %></span>
+									</span>
+								<% }) %>
+								<% if (product.categories.length > 3) { %>
+									<span class="cat-badge">
+										<span class="cat-badge-text">+<%= product.categories.length - 3 %></span>
+									</span>
+								<% } %>
 							<% } %>
 						</div>
-						<% } %>
 
 						<!-- Производитель -->
 						<div class="manufacturer">
@@ -422,7 +425,9 @@
 				<% }) %>
 			</div>
 
-			<!-- Пагинация -->
+			
+		</div>
+		<!-- Пагинация -->
 			<% if (totalPages > 1) { %>
 			<nav aria-label="Навигация по страницам" class="mt-4">
 				<ul class="pagination justify-content-center">
@@ -488,7 +493,6 @@
 			</nav>
 			<% } %>
 			<% } %>
-		</div>
 	</div>
 </div>
 

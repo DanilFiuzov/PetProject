@@ -6,35 +6,36 @@
     <section class="categories-section mb-5">
         <h2 class="text-center mb-4" style="color: var(--primary-color); font-weight: 700;">Категории товаров</h2>
         <div class="row g-4">
-            <% mainCategories.forEach((category, index) => { %>
-                <div class="col-md-3">
-                    <a href="/products?category=<%= category.categorieID %>" 
-                    class="text-decoration-none">
-                        <div class="card category-card h-100 border-0 shadow-sm hover-lift">
-                            <div class="card-body text-center p-4">
-                                <div class="category-icon mb-3">
-                                    <i class="fas fa-<%= index === 0 ? 'dumbbell' : index === 1 ? 'weight' : 'weight-hanging' %> fa-2x text-white"></i>
+            <% if (mainCategories.length > 0) {
+                mainCategories.forEach(category => { %>
+                    <div class="col-md-3">
+                        <a href="/products?category=<%= category.categorieID %>" class="text-decoration-none">
+                            <div class="card category-card h-100 border-0 shadow-sm hover-lift">
+                                <div class="card-body text-center p-4">
+                                    <div class="category-icon mb-3">
+                                        <% if (category.categorieThumbnail) { %>
+                                            <img src="/images/categories/<%= category.categorieThumbnail %>"
+                                                alt="<%= category.categorieName %>"
+                                                style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%;">
+                                        <% } else { %>
+                                            <i class="fas fa-folder-open fa-2x text-white"></i>
+                                        <% } %>
+                                    </div>
+                                    <h4 class="card-title mb-2" style="color: var(--text-dark);">
+                                        <%= category.categorieName %>
+                                    </h4>
+                                    <p class="category-description">
+                                        <%= category.categorieDescription || 'Спортивные товары в категории ' + category.categorieName %>
+                                    </p>
                                 </div>
-                                <h4 class="card-title mb-2" style="color: var(--text-dark);">
-                                    <%= category.categorieName %>
-                                </h4>
-                                <p class="category-description">
-                                    <% const descriptions = [
-                                        'Диски и блины для штанг всех типов и весов',
-                                        'Качественные гири для силовых тренировок',
-                                        'Профессиональные гантели и аксессуары'
-                                    ]; %>
-                                    <%= descriptions[index] || 'Спортивные товары для профессиональных тренировок' %>
-                                </p>
                             </div>
-                        </div>
-                    </a>
-                </div>
-            <% }) %>
-            
+                        </a>
+                    </div>
+                <% });
+            } %>
             <!-- Карточка "Другие категории" -->
             <div class="col-md-3">
-                <a href="/products" class="text-decoration-none">
+                <a href="/categories" class="text-decoration-none">
                     <div class="card other-categories-card h-100">
                         <div class="card-body text-center p-4 d-flex flex-column justify-content-center">
                             <div class="category-icon mb-3">
@@ -61,9 +62,6 @@
                     <h2 class="mb-0" style="color: var(--danger-color); font-weight: 700; cursor: pointer;">
                         <i class="fas fa-fire me-2"></i>
                         Горящие скидки
-                        <span class="text-muted" style="font-size: 0.9rem; margin-left: 0.5rem;">
-                            <i class="fas fa-arrow-right"></i>
-                        </span>
                     </h2>
                 </div>
             </a>
@@ -92,19 +90,22 @@
                                     <% if (product.categories && product.categories.length > 0) { %>
                                         <% product.categories.forEach((cat, index) => { %>
                                             <% if (index < 3) { %>
-                                                <span class="category-badge">
-                                                    <%= cat %>
+                                                <span class="cat-badge">
+                                                    <% if (cat.icon) { %>
+                                                        <img src="<%= cat.icon %>" alt="" class="cat-badge-icon">
+                                                    <% } %>
+                                                    <span class="cat-badge-text"><%= cat.name %></span>
                                                 </span>
                                             <% } %>
                                         <% }) %>
                                         <% if (product.categories.length > 3) { %>
-                                            <span class="category-badge category-badge-more">
-                                                +<%= product.categories.length - 3 %>
+                                            <span class="cat-badge">
+                                                <span class="cat-badge-text">+<%= product.categories.length - 3 %></span>
                                             </span>
                                         <% } %>
                                     <% } else { %>
-                                        <span class="category-badge category-badge-empty">
-                                            Без категории
+                                        <span class="cat-badge">
+                                            <span class="cat-badge-text">Без категории</span>
                                         </span>
                                     <% } %>
                                 </div>
@@ -184,9 +185,6 @@
                     <h2 class="mb-0" style="color: #333; font-weight: 700; cursor: pointer;">
                         <i class="fas fa-star text-warning me-2"></i>
                         Товары с лучшими отзывами
-                        <span class="text-muted" style="font-size: 0.9rem; margin-left: 0.5rem;">
-                            <i class="fas fa-arrow-right"></i>
-                        </span>
                     </h2>
                 </div>
             </a>

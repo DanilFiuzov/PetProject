@@ -72,7 +72,7 @@
                     <!-- Кнопки действий -->
                     <div class="position-absolute top-0 end-0 m-4 d-flex flex-column gap-2" style="z-index:2;">
                         <% if (session && session.userId) { %>
-                            <button class="btn btn-light rounded-circle shadow-lg" 
+                            <button class="btn btn-light rounded-circle shadow-lg" style="height: 48px;"
                                     onclick="toggleFavorite(event, '<%= product.productID %>')"
                                     title="<%= session.favorites && session.favorites.includes(product.productID) ? 'Убрать из избранного' : 'Добавить в избранное' %>">
                                 <i class="<%= session.favorites && session.favorites.includes(product.productID) ? 'fas fa-heart text-danger' : 'far fa-heart' %> fa-lg"></i>
@@ -103,8 +103,11 @@
                         <div class="categories-container mb-4">
                             <% if (product.categories && product.categories.length > 0) { %>
                                 <% product.categories.forEach((cat) => { %>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 me-2 mb-2 px-3 py-2">
-                                        <%= cat %>
+                                    <span class="cat-badge me-2 mb-2">
+                                        <% if (cat.icon) { %>
+                                            <img src="<%= cat.icon %>" alt="" class="cat-badge-icon">
+                                        <% } %>
+                                        <span class="cat-badge-text"><%= cat.name %></span>
                                     </span>
                                 <% }) %>
                             <% } %>

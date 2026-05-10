@@ -1,7 +1,7 @@
 /* ========================================
 СТИЛЕВОЙ ФАЙЛ ПРОЕКТА
 Версия: 2.2
-Оптимизирован: 2 февраля 2026
+Оптимизирован: 5 мая 2026
 ======================================== */
 
 /* =============== 1. ПЕРЕМЕННЫЕ =============== */
@@ -44,6 +44,43 @@ body {
   color: var(--text-dark);
   overflow-x: hidden;
   line-height: 1.5;
+}
+
+/* Кнопка "Наверх" */
+.scroll-to-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(96, 96, 255, 0.45); 
+    backdrop-filter: blur(4px);          
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    outline: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: opacity 0.3s, visibility 0.3s, transform 0.3s, background 0.3s, box-shadow 0.3s;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(96, 96, 255, 0.25);
+}
+.scroll-to-top-btn:hover {
+    background: var(--primary-color);   
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(96, 96, 255, 0.4);
+    transform: translateY(0) scale(1.08);
+}
+.scroll-to-top-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 /* =============== 3. КОНТЕЙНЕРЫ И УТИЛИТЫ =============== */
@@ -433,42 +470,19 @@ body {
 }
 
 /* =============== 7. КАТЕГОРИИ =============== */
-.categories-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+/* Обёртка для миниатюр категорий */
+.category-thumb-box {
+    background-color: var(--bg-light);  
+    border-radius: 8px;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
-
-.category-badge {
-  font-size: 0.75rem !important;
-  padding: 0.25rem 0.5rem !important;
-  background-color: var(--category-bg) !important;
-  color: var(--category-text) !important;
-  border: 1px solid var(--category-border) !important;
-  border-radius: 4px !important;
-  font-weight: 500 !important;
-  text-decoration: none !important;
-  transition: all 0.2s ease !important;
-}
-
-.category-badge:hover {
-  background-color: rgba(96, 96, 255, 0.1) !important;
-  border-color: var(--primary-color) !important;
-  color: var(--primary-color) !important;
-  transform: translateY(-1px);
-}
-
-.category-badge-more {
-  background-color: white !important;
-  border-color: var(--gray-medium) !important;
-  color: var(--gray-medium) !important;
-}
-
-.category-badge-empty {
-  background-color: white !important;
-  border-color: var(--category-border) !important;
-  color: var(--category-text) !important;
+.category-thumb-box img {
+    max-width: 40px;
+    max-height: 40px;
+    object-fit: contain;
 }
 
 /* =============== 8. КАТАЛОГ ТОВАРОВ =============== */
@@ -1391,6 +1405,59 @@ transition: padding 0.3s ease;
 }
 
 /* =============== 13. КНОПКИ =============== */
+/* Кнопка "Найти" для админ-панели */
+.btn-search-admin {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 0 12px 12px 0;   /* гармонично скругляет правый край */
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-search-admin:hover {
+    background: var(--primary-color);
+    color: #fff;
+    /* без transform – остаётся на месте */
+}
+.btn-search-admin:active {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: #fff;
+}
+
+/* Кнопки действий в админ-таблицах */
+.admin-action-btn {
+    background: transparent;
+    border: none;
+    padding: 5px;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.admin-action-btn:hover {
+    transform: scale(1.25);
+}
+.admin-action-btn:active {
+    transform: scale(1.1);
+}
+
+/* Цвета для каждого типа действия */
+.admin-action-btn-eye {
+    color: var(--primary-color); 
+}
+.admin-action-btn-edit {
+    color: #ffc107;               
+}
+.admin-action-btn-delete {
+    color: var(--danger-color);   
+}
+
 .btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
@@ -5112,3 +5179,237 @@ font-size: 0.95rem;
     }
 }
 
+/* ===== Карточки категорий с градиентом основного цвета ===== */
+.categories-white-block {
+    background: white;
+    border-radius: 24px;
+    padding: 40px 30px 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.category-card-link .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.category-card-gradient {
+    background: linear-gradient(135deg, rgba(96, 96, 255, 0.05), rgba(96, 96, 255, 0.15));
+    box-shadow: 0 2px 8px rgba(96, 96, 255, 0.1);
+}
+
+.category-card-link:hover .card {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(96, 96, 255, 0.25);
+}
+
+/* Область с миниатюрой – более насыщенный фиолетовый для контраста с белыми предметами */
+.card-img-gradient {
+    background: linear-gradient(135deg, rgba(96, 96, 255, 0.15), rgba(96, 96, 255, 0.25));
+    padding: 30px 30px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+}
+
+.card-img-gradient img {
+    max-width: 150px;
+    max-height: 150px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
+    transition: transform 0.3s;
+}
+
+.category-card-link:hover .card-img-gradient img {
+    transform: scale(1.05) rotate(3deg);
+}
+
+/* Заголовок и описание */
+.card-body {
+    padding: 16px 12px 20px;
+}
+
+.card-title-category {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-dark); /* тёмно-фиолетовый */
+    margin-bottom: 6px;
+}
+
+.card-text-category {
+    font-size: 0.9rem;
+    color: var(--gray-medium);
+    margin-bottom: 0;
+}
+
+/* =============== УНИФИЦИРОВАННЫЙ БЕЙДЖ КАТЕГОРИИ =============== */
+.cat-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  border-radius: 50px;          
+  padding: 4px 12px 4px 4px;   /* слева меньше для иконки */
+  max-width: 180px;            /* ограничение ширины */
+  min-width: 0;                /* нужно для сжатия внутри флексов */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: none;
+  text-decoration: none;
+  transition: none !important;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 1;
+}
+
+.cat-badge-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.cat-badge-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Полное отключение hover-эффектов */
+.cat-badge:hover,
+.cat-badge:focus,
+.cat-badge:active {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+  transform: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* Если бейдж – ссылка (обёрнут в <a>), то курсор укажем, но цвет не меняем */
+a.cat-badge {
+  cursor: pointer;
+}
+a.cat-badge:hover {
+  background-color: var(--primary-color) !important;
+}
+
+/* Иконка категории */
+.cat-badge-icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Дополнительная страховка: все img внутри бейджа */
+.cat-badge img {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px;
+  max-height: 20px;
+  object-fit: contain;
+}
+
+/* Стили для отсутствия товара в корзине */
+.cart-item.out-of-stock {
+    opacity: 0.6;
+    position: relative;
+}
+
+.cart-item.out-of-stock::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+    border-radius: 8px;
+}
+
+.cart-item-sold-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+.cart-item-sold-badge {
+    background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 800;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: pulse 2s infinite;
+    white-space: nowrap;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.cart-item-sold-badge::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 15px;
+    animation: shine 3s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+@keyframes shine {
+    0%, 100% { transform: translateX(-100%); opacity: 0; }
+    50% { transform: translateX(100%); opacity: 0.5; }
+}
+
+.order-summary-checkout-disabled {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

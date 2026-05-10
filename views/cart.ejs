@@ -32,7 +32,7 @@
     <% if (products.length === 0) { %>
         <!-- Пустая корзина -->
         <div class="card empty-cart-card">
-            <div class="card-body text-center py-5 px-4">
+            <div class="card-body text-center py-5 px-4" style="min-height: 50vh;">
                 <div class="empty-cart-icon mb-4">
                     <i class="fas fa-shopping-cart fa-4x"></i>
                 </div>
@@ -90,7 +90,7 @@
         <div class="row g-4">
             <!-- Список товаров -->
             <div class="col-lg-8">
-                <div class="card cart-products-card no-hover">
+                <div class="card cart-products-card no-hover" style="min-height: 50vh;">
                     <div class="cart-products-header">
                         <h3>
                             <i class="fas fa-boxes"></i>Товары в корзине
@@ -347,95 +347,3 @@
     </script>
     <% } %>
 </div>
-
-<style>
-/* Стили для отсутствия товара в корзине */
-.cart-item.out-of-stock {
-    opacity: 0.6;
-    position: relative;
-}
-
-.cart-item.out-of-stock::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 1;
-    border-radius: 8px;
-}
-
-.cart-item-sold-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 8px;
-}
-
-.cart-item-sold-badge {
-    background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
-    color: white;
-    font-size: 1.8rem;
-    font-weight: 800;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    animation: pulse 2s infinite;
-    white-space: nowrap;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.cart-item-sold-badge::before {
-    content: '';
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    border-radius: 15px;
-    animation: shine 3s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
-}
-
-@keyframes shine {
-    0%, 100% { transform: translateX(-100%); opacity: 0; }
-    50% { transform: translateX(100%); opacity: 0.5; }
-}
-
-.order-summary-checkout-disabled {
-    width: 100%;
-    padding: 1rem 2rem;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: not-allowed;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.quantity-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-</style>

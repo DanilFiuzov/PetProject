@@ -465,6 +465,86 @@ function getUserRank(customerID, callback) {
     connection.query('SELECT customerRank FROM customers WHERE customerID = ?', [customerID], callback);
 }
 
+// ========== Категории (расширенные) ==========
+
+// Получить все категории с полными данными (для главной страницы, админки)
+function getAllCategoriesFull(callback) {
+    const query = 'SELECT * FROM categories ORDER BY categorieName';
+    connection.query(query, callback);
+}
+
+// Получить одну категорию по ID
+function getCategoryById(categoryID, callback) {
+    const query = 'SELECT * FROM categories WHERE categorieID = ?';
+    connection.query(query, [categoryID], (err, results) => {
+        if (err) return callback(err);
+        callback(null, results[0] || null);
+    });
+}
+
+// Добавить новую категорию
+function addCategory(name, description, thumbnail, callback) {
+    const query = 'INSERT INTO categories (categorieName, categorieDescription, categorieThumbnail) VALUES (?, ?, ?)';
+    connection.query(query, [name, description, thumbnail || null], (err, results) => {
+        if (err) return callback(err);
+        callback(null, results.insertId);
+    });
+}
+
+// Обновить категорию
+function updateCategory(categoryID, name, description, thumbnail, callback) {
+    let query = 'UPDATE categories SET categorieName = ?, categorieDescription = ?';
+    const params = [name, description];
+    if (thumbnail !== undefined) {
+        query += ', categorieThumbnail = ?';
+        params.push(thumbnail);
+    }
+    query += ' WHERE categorieID = ?';
+    params.push(categoryID);
+    connection.query(query, params, callback);
+}
+
+function deleteCategory(categoryID, callback) {
+    connection.beginTransaction(err => {
+        if (err) return callback(err);
+        // Удалить связи товар-категория
+        connection.query('DELETE FROM categoriesandproducts WHERE categorieID = ?', [categoryID], (err) => {
+            if (err) return connection.rollback(() => callback(err));
+            // Удалить саму категорию
+            connection.query('DELETE FROM categories WHERE categorieID = ?', [categoryID], (err) => {
+                if (err) return connection.rollback(() => callback(err));
+                connection.commit(err => callback(err));
+            });
+        });
+    });
+}
+
+// Получить категории с миниатюрами для списка товаров
+function getCategoryIconsForProducts(productIDs, callback) {
+    if (!productIDs || productIDs.length === 0) return callback(null, {});
+    const query = `
+        SELECT cp.productID, c.categorieName, c.categorieThumbnail
+        FROM categoriesandproducts cp
+        JOIN categories c ON cp.categorieID = c.categorieID
+        WHERE cp.productID IN (?)
+        ORDER BY c.categorieName
+    `;
+    connection.query(query, [productIDs], (err, results) => {
+        if (err) return callback(err);
+        const map = {};
+        results.forEach(row => {
+            if (!map[row.productID]) map[row.productID] = [];
+            map[row.productID].push({
+                name: row.categorieName,
+                icon: row.categorieThumbnail 
+                    ? `/images/categories/${row.categorieThumbnail}` 
+                    : null
+            });
+        });
+        callback(null, map);
+    });
+}
+
 // ========== Добавление/редактирование товара ==========
 function addProductWithFeatures(productData, categories, features, callback) {
     connection.beginTransaction(err => {
@@ -739,5 +819,6 @@ module.exports = {
     getProductsByCategory, deleteProduct, getCartWithProducts, getFavoritesWithProducts, getDeliveryPoints,
     getDeliveryPointById, createOrder, getOrderById, getOrderItems, getOrdersByCustomer, updatePaymentStatus,
     updateOrderStatus, generateSBPQRCode, generatePaymentData, getCatalogProducts, checkProductAvailability,
-    getProductImages, saveProductImages, deleteProductImages
+    getProductImages, saveProductImages, deleteProductImages, getAllCategoriesFull, getCategoryById, addCategory, updateCategory,
+    deleteCategory, getCategoryIconsForProducts
 };
