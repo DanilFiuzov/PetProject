@@ -99,16 +99,23 @@
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush">
                             <% let totalPrice = 0; %>
+                            <% let originalTotal = 0; %>
                             <% products.forEach(product => { %>
-                                <% 
-                                    const itemPrice = product.isDiscounted ? parseFloat(product.discountedPrice) : parseFloat(product.productPrice);
-                                    const itemTotal = itemPrice * product.sc_count; 
+                                <%
+                                    // Вычисление цен
+                                    const productPriceFull = parseFloat(product.productPrice) || 0;
+                                    const discountedPrice = parseFloat(product.discountedPrice) || 0;
+                                    const itemPrice = product.isDiscounted && discountedPrice > 0 ? discountedPrice : productPriceFull;
+                                    const itemTotal = itemPrice * product.sc_count;
+                                    const itemOriginal = productPriceFull * product.sc_count;
+
+                                    // Состояния наличия
                                     const isOutOfStock = product.stock_quantity <= 0;
                                     const isLowStock = product.sc_count > product.stock_quantity;
                                     const canIncrease = product.sc_count < product.stock_quantity;
                                 %>
                                 <% totalPrice += itemTotal; %>
-                                
+                                <% originalTotal += itemOriginal; %>
                                 <div class="cart-item <%= isOutOfStock ? 'out-of-stock' : '' %>">
                                     <div class="cart-item-row">
                                         <!-- Изображение -->
@@ -223,6 +230,7 @@
                                     </div>
                                 </div>
                             <% }) %>
+                            <% const discountAmount = originalTotal - totalPrice; %>  <!-- считаем после цикла -->
                         </div>
                     </div>
                 </div>
@@ -264,7 +272,13 @@
                         
                         <div class="order-summary-item">
                             <span>Скидка</span>
-                            <span class="text-danger">0₽</span>
+                            <span class="text-danger">
+                                <% if (discountAmount > 0) { %>
+                                    -<%= discountAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                                <% } else { %>
+                                    0₽
+                                <% } %>
+                            </span>
                         </div>
                         
                         <div class="order-summary-total">
@@ -296,7 +310,7 @@
         </div>
     <% } %>
     <% if (products.length > 0) { %>
-    <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         // Проверка корзины при клике на кнопку оформления
         const checkoutBtn = document.querySelector('.order-summary-checkout');

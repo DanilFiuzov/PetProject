@@ -229,26 +229,29 @@
                                 
                                 <div class="card-body">
                                     <!-- Категории -->
-                                    <div class="categories-container mb-2">
-                                        <% if (product.categories && product.categories.length > 0) { %>
-                                            <% product.categories.forEach((cat, index) => { %>
-                                                <% if (index < 3) { %>
-                                                    <span class="category-badge">
-                                                        <%= cat %>
-                                                    </span>
-                                                <% } %>
-                                            <% }) %>
-                                            <% if (product.categories.length > 3) { %>
-                                                <span class="category-badge category-badge-more">
-                                                    +<%= product.categories.length - 3 %>
+<div class="categories-container mb-2">
+                                    <% if (product.categories && product.categories.length > 0) { %>
+                                        <% product.categories.forEach((cat, index) => { %>
+                                            <% if (index < 3) { %>
+                                                <span class="cat-badge">
+                                                    <% if (cat.icon) { %>
+                                                        <img src="<%= cat.icon %>" alt="" class="cat-badge-icon">
+                                                    <% } %>
+                                                    <span class="cat-badge-text"><%= cat.name %></span>
                                                 </span>
                                             <% } %>
-                                        <% } else { %>
-                                            <span class="category-badge category-badge-empty">
-                                                Без категории
+                                        <% }) %>
+                                        <% if (product.categories.length > 3) { %>
+                                            <span class="cat-badge">
+                                                <span class="cat-badge-text">+<%= product.categories.length - 3 %></span>
                                             </span>
                                         <% } %>
-                                    </div>
+                                    <% } else { %>
+                                        <span class="cat-badge">
+                                            <span class="cat-badge-text">Без категории</span>
+                                        </span>
+                                    <% } %>
+                                </div>
                                     
                                     <!-- Название товара -->
                                     <h5 class="card-title" style="font-size: 1rem; line-height: 1.4; color: var(--text-dark);">

@@ -276,6 +276,8 @@
                 
             <!-- Детали товаров -->
             <div class="mb-3">
+                <% let totalPrice = 0; %>
+                <% let originalTotal = 0; %>
                 <% products.forEach((product, index) => { %>
                 <%
                     // Безопасное преобразование цен и количества в числа
@@ -287,7 +289,10 @@
                     const itemTotal = price * quantity;
                     const isOutOfStock = stockQuantity <= 0;
                     const isLowStock = quantity > stockQuantity;
+                    const itemOriginal = productPriceNum * quantity;
                 %>
+                <% totalPrice += itemTotal; %>
+                <% originalTotal += itemOriginal; %>
                 <div class="order-summary-item <%= isOutOfStock || isLowStock ? 'text-danger' : '' %>">
                     <div>
                         <span class="fw-bold"><%= product.productTitle %></span>
@@ -305,12 +310,13 @@
                     <span><%= itemTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
                 </div>
                 <% }) %>
+                <% const discountAmount = originalTotal - totalPrice; %>
             </div>
                 
                 <!-- Итоги -->
                 <div>
                     <div class="order-summary-item">
-                        <span>Товары (<%= products.length %>)</span>
+                        <span>Сумма</span>
                         <span><%= totalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽</span>
                     </div>
                     
@@ -321,7 +327,13 @@
                     
                     <div class="order-summary-item">
                         <span>Скидка</span>
-                        <span class="text-danger">0₽</span>
+                        <span class="text-danger">
+                            <% if (discountAmount > 0) { %>
+                                -<%= discountAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+                            <% } else { %>
+                                0₽
+                            <% } %>
+                        </span>
                     </div>
                     
                     <div class="order-summary-total">

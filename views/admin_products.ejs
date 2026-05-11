@@ -14,6 +14,7 @@
                 <div class="card-header CanvaHeader py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 text-white">
                         <i class="fas fa-tags me-2"></i>Категории
+                        <small class="text-white text-opacity-75 ms-2" style="font-weight: 600;"><%= categories.length %></small>
                     </h5>
                     <a href="/admin/categories/add" class="btn btn-light btn-sm">
                         <i class="fas fa-plus me-1"></i> Добавить категорию
@@ -60,7 +61,8 @@
                                             <td class="text-center align-middle">
                                                 <button type="button" 
                                                         class="admin-action-btn admin-action-btn-delete" 
-                                                        onclick="deleteCategory(...)" title="Удалить">
+                                                        onclick="deleteCategory(<%= cat.categorieID %>, '<%= cat.categorieName.replace(/'/g, "\\'") %>')" 
+                                                        title="Удалить">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -83,7 +85,7 @@
                 <div class="card-header CanvaHeader py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 text-white">
                         <i class="fas fa-boxes me-2"></i>Товары
-                        <small class="text-white text-opacity-75 ms-2">(<%= pagination.totalProducts %>)</small>
+                        <small class="text-white text-opacity-75 ms-2" style="font-weight: 600;"><%= pagination.totalProducts %></small>
                     </h5>
                     <a href="/admin/add-product" class="btn btn-light btn-sm">
                         <i class="fas fa-plus me-1"></i> Добавить товар
@@ -182,7 +184,7 @@
                                                 <% } %>
                                             <% } else { %>
                                                 <span class="cat-badge me-1 mb-1">
-                                                    <span class="cat-badge-text">Нет</span>
+                                                    <span class="cat-badge-text" style="margin-left: 8px;">Нет</span>
                                                 </span>
                                             <% } %>
                                         </td>
@@ -213,7 +215,8 @@
                                         <td class="text-center align-middle">
                                             <button type="button" 
                                                     class="admin-action-btn admin-action-btn-delete" 
-                                                    onclick="confirmDelete(...)" title="Удалить">
+                                                    onclick="confirmDelete(<%= product.productID %>, '<%= product.productTitle.replace(/'/g, "\\'") %>')" 
+                                                    title="Удалить">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>

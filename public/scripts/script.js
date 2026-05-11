@@ -349,7 +349,7 @@ function showNotification(message, type = 'info') {
     notification.className = `alert alert-${alertType} alert-dismissible fade show alert-notification`;
     notification.style.cssText = `
         position: fixed;
-        top: 20px;
+        top: 70px;
         right: 20px;
         z-index: 9999;
         min-width: 280px;
@@ -357,9 +357,9 @@ function showNotification(message, type = 'info') {
     `;
     
     notification.innerHTML = `
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center" style='margin-right: 20px;'>
             <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} me-2"></i>
-            <div>${message}</div>
+            <div >${message}</div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
