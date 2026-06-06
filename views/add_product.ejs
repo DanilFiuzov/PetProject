@@ -14,7 +14,7 @@
                     <h3 class="mb-0 text-white"><i class="fas fa-plus-circle me-2"></i>Добавление товара</h3>
                 </div>
                 <div class="card-body p-4">
-                    <form id="addProductForm" enctype="multipart/form-data">
+                    <form id="addProductForm" enctype="multipart/form-data" novalidate>
                         <h5 class="text-primary mb-3 pb-2 border-bottom"><i class="fas fa-info-circle me-2"></i>Основная информация</h5>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -49,8 +49,10 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" name="is_on_sale" id="is_on_sale" value="1" onchange="toggleDiscountFields()">
-                                    <label class="form-check-label fw-semibold" for="is_on_sale">Включить скидку на товар</label>
+                                    <!-- Скрытое поле всегда отправляется. UI-чекбокс управляет видимостью и синхронизирует значение -->
+                                    <input type="hidden" name="is_on_sale" id="is_on_sale_hidden" value="0">
+                                    <input class="form-check-input" type="checkbox" id="is_on_sale_ui" onchange="toggleDiscountFields(); syncIsOnSale()">
+                                    <label class="form-check-label fw-semibold" for="is_on_sale_ui">Включить скидку на товар</label>
                                 </div>
                             </div>
                         </div>
@@ -78,8 +80,8 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Выберите изображения (можно несколько)</label>
                             <input type="file" class="form-control" name="productImage" accept="image/jpeg,image/png,image/webp" multiple onchange="previewMultipleImages(this)">
-                            <div class="form-text">Первое изображение будет основным</div>
-                            <div id="imagePreviews" class="d-flex flex-wrap gap-2 mt-2"></div>
+                            <div class="form-text">Выберите главное изображение с помощью переключателя под превью</div>
+                            <div id="imagePreviews" class="d-flex flex-wrap gap-3 mt-2"></div>
                         </div>
 
                         <h5 class="text-primary mb-3 pb-2 border-bottom"><i class="fas fa-tags me-2"></i>Категории товара</h5>
@@ -130,47 +132,51 @@
 </div>
 
 <script>
-    function toggleDiscountFields() {
-        const discountFields = document.getElementById('discountFields');
-        const isOnSale = document.getElementById('is_on_sale').checked;
-        discountFields.style.display = isOnSale ? 'block' : 'none';
-        const percentInput = document.querySelector('[name="discount_percentage"]');
-        const startDate = document.querySelector('[name="discount_start_date"]');
-        const endDate = document.querySelector('[name="discount_end_date"]');
-        if (isOnSale) {
-            if (percentInput) percentInput.disabled = false;
-            if (startDate) startDate.disabled = false;
-            if (endDate) endDate.disabled = false;
-            if (startDate && !startDate.value) {
-                const now = new Date();
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                startDate.value = now.toISOString().slice(0, 16);
-            }
-        } else {
-            if (percentInput) percentInput.disabled = true;
-            if (startDate) startDate.disabled = true;
-            if (endDate) endDate.disabled = true;
+    // Синхронизация скрытого поля с чекбоксом (важно для правильной отправки)
+    function syncIsOnSale() {
+        const uiCheckbox = document.getElementById('is_on_sale_ui');
+        const hidden = document.getElementById('is_on_sale_hidden');
+        if (uiCheckbox && hidden) {
+            hidden.value = uiCheckbox.checked ? '1' : '0';
         }
     }
 
+    // Переключение видимости полей скидки
+    function toggleDiscountFields() {
+        const discountFields = document.getElementById('discountFields');
+        const uiCheckbox = document.getElementById('is_on_sale_ui');
+        if (discountFields && uiCheckbox) {
+            discountFields.style.display = uiCheckbox.checked ? 'block' : 'none';
+        }
+    }
+
+    // Предпросмотр изображений
     function previewMultipleImages(input) {
         const container = document.getElementById('imagePreviews');
         container.innerHTML = '';
-        if (input.files) {
-            Array.from(input.files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'img-thumbnail';
-                    img.style.maxHeight = '150px';
-                    container.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+        if (!input.files) return;
+        Array.from(input.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'position-relative d-inline-block';
+                wrapper.style.maxWidth = '150px';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'img-thumbnail w-100';
+                img.style.maxHeight = '150px';
+                wrapper.appendChild(img);
+                const radioDiv = document.createElement('div');
+                radioDiv.className = 'form-check mt-1 text-center';
+                radioDiv.innerHTML = '<input class="form-check-input" type="radio" name="primaryImage" value="'+index+'" id="primary'+index+'" '+ (index===0?'checked':'') +'> <label class="form-check-label small" for="primary'+index+'">★ Главное</label>';
+                wrapper.appendChild(radioDiv);
+                container.appendChild(wrapper);
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
+    // Добавление характеристики
     document.getElementById('addFeatureBtn').addEventListener('click', function() {
         const container = document.getElementById('featuresContainer');
         const newItem = document.createElement('div');
@@ -185,6 +191,7 @@
         updateRemoveButtons();
     });
 
+    // Удаление характеристики
     document.addEventListener('click', function(e) {
         if (e.target.closest('.remove-feature-btn') || e.target.classList.contains('fa-times')) {
             const item = e.target.closest('.feature-item');
@@ -196,26 +203,45 @@
         const items = document.querySelectorAll('.feature-item');
         items.forEach(item => {
             const btn = item.querySelector('.remove-feature-btn');
-            if (items.length === 1) { btn.disabled = true; btn.classList.add('disabled'); }
-            else { btn.disabled = false; btn.classList.remove('disabled'); }
+            btn.disabled = (items.length === 1);
         });
     }
 
+    // Отправка формы
     document.getElementById('addProductForm').addEventListener('submit', function(e) {
         e.preventDefault();
+        
         const stock = parseInt(document.querySelector('[name="stock_quantity"]').value);
-        if (isNaN(stock) || stock < 0) { showNotification('Количество должно быть неотрицательным', 'error'); return; }
+        if (isNaN(stock) || stock < 0) { 
+            showNotification('Количество должно быть неотрицательным', 'error'); 
+            return; 
+        }
+        
         const categories = document.querySelectorAll('[name="categories[]"]:checked');
-        if (categories.length === 0) { showNotification('Выберите хотя бы одну категорию', 'error'); return; }
+        if (categories.length === 0) { 
+            showNotification('Выберите хотя бы одну категорию', 'error'); 
+            return; 
+        }
+        
         const keys = document.querySelectorAll('[name="feature_keys[]"]');
         const values = document.querySelectorAll('[name="feature_values[]"]');
         for (let i = 0; i < keys.length; i++) {
-            if (!keys[i].value.trim() || !values[i].value.trim()) { showNotification('Заполните все характеристики', 'error'); return; }
+            if (!keys[i].value.trim() || !values[i].value.trim()) {
+                showNotification('Заполните все характеристики', 'error'); 
+                return;
+            }
         }
+        
+        // Гарантированная синхронизация перед сбором данных
+        syncIsOnSale();
+        
         const formData = new FormData(this);
-        if (!document.getElementById('is_on_sale').checked) formData.set('is_on_sale', '0');
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Добавление...';
+        // is_on_sale уже включён в formData через скрытое поле
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Добавление...';
+        
         fetch('/admin/add-product', { method: 'POST', body: formData })
             .then(response => response.json())
             .then(data => {
@@ -224,14 +250,14 @@
                     setTimeout(() => { window.location.href = '/admin/products'; }, 1500);
                 } else {
                     showNotification(data.message || 'Ошибка', 'error');
-                    document.getElementById('submitBtn').disabled = false;
-                    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-2"></i>Добавить товар';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Добавить товар';
                 }
             })
             .catch(() => {
                 showNotification('Ошибка сети', 'error');
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-2"></i>Добавить товар';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Добавить товар';
             });
     });
 
@@ -239,11 +265,12 @@
         const container = document.getElementById('notificationContainer');
         const cls = type === 'success' ? 'alert-success' : 'alert-danger';
         const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        container.innerHTML = `<div class="alert ${cls} alert-dismissible fade show"><i class="fas ${icon} me-2"></i>${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
-        setTimeout(() => { container.innerHTML = ''; }, 5000);
+        container.innerHTML = '<div class="alert '+cls+' alert-dismissible fade show"><i class="fas '+icon+' me-2"></i>'+message+'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+        setTimeout(() => container.innerHTML = '', 5000);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
         const endDate = document.querySelector('[name="discount_end_date"]');
         if (endDate) {
             const now = new Date();
@@ -251,5 +278,7 @@
             endDate.min = now.toISOString().slice(0, 16);
         }
         updateRemoveButtons();
+        syncIsOnSale();
+        toggleDiscountFields();
     });
 </script>

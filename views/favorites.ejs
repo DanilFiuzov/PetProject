@@ -105,26 +105,24 @@
                                      alt="<%= product.productTitle %>">
                             </a>
                             
-                            <!-- Бейджи на изображении -->
-                            <div class="image-badges">
-                                <% if (product.isDiscounted) { %>
-                                    <div class="badge badge-discount">
-                                        -<%= product.discountPercentage %>% 
-                                    </div>
-                                <% } %>
-                                <% if (product.productRating >= 4.5) { %>
-                                    <div class="badge badge-review">
-                                        <i class="fas fa-star me-1"></i><%= product.productRating.toFixed(1) %>
-                                    </div>
-                                <% } %>
-                                <% if (product.stock_quantity <= 0) { %>
-                                    <div class="out-of-stock-overlay">
-                                        <div class="out-of-stock-badge">
-                                            SOLD
-                                        </div>
-                                    </div>
-                                <% } %>
-                            </div>
+						<!-- Бейджи на изображении -->
+						<div class="image-badges">
+							<% if (product.isDiscounted) { %>
+							<div class="badge-discount-horizontal">
+								<i class="fas fa-percentage me-1"></i>
+								-<%= product.discountPercentage %>%
+							</div>
+							<% } %>
+
+							<!-- Бейдж "Нет в наличии" -->
+							<% if (product.stock_quantity <= 0) { %>
+							<div class="out-of-stock-overlay">
+								<div class="out-of-stock-badge">
+									SOLD
+								</div>
+							</div>
+							<% } %>
+						</div>
                             
                             <!-- Кнопка избранного -->
                             <% if (session.userId) { %>
@@ -225,18 +223,18 @@
                                     const displayPrice = parseFloat(product.displayPrice || product.productPrice) || 0;
                                     const discountedPrice = parseFloat(product.discountedPrice) || displayPrice;
                                 %>
-                                <% if (product.isDiscounted) { %>
-                                    <div class="current-price">
-                                        <%= discountedPrice.toFixed(2) %>₽
-                                    </div>
-                                    <div class="original-price">
-                                        <%= originalPrice.toFixed(2) %>₽
-                                    </div>
-                                <% } else { %>
-                                    <div class="current-price">
-                                        <%= originalPrice.toFixed(2) %>₽
-                                    </div>
-                                <% } %>
+							<% if (product.isDiscounted) { %>
+							<div class="current-price discount-price-new">
+								<%= parseFloat(product.discountedPrice || product.displayPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+							</div>
+							<div class="original-price">
+								<%= parseFloat(product.originalPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+							</div>
+							<% } else { %>
+							<div class="current-price">
+								<%= parseFloat(product.displayPrice || product.productPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') %>₽
+							</div>
+							<% } %>
                                 
                                 <!-- Индикатор наличия -->
                                 <% if (product.stock_quantity <= 0) { %>

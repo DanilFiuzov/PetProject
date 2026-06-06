@@ -1,18 +1,21 @@
 const mysql = require('mysql2');
 
+// // Подключение к БД
+// const connection = mysql.createConnection({
+//   host: process.env.MYSQLHOST || 'localhost',
+//   port: process.env.MYSQLPORT || 3306,
+//   user: process.env.MYSQLUSER || 'root',
+//   password: process.env.MYSQLPASSWORD || 'root',
+//   database: process.env.MYSQLDATABASE || 'Sport',
+//   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
+// });
+
 // Подключение к БД
 const connection = mysql.createConnection({
-  host: process.env.MYSQLHOST || 'localhost',
-  port: process.env.MYSQLPORT || 3306,
-  user: process.env.MYSQLUSER || 'root',
-  password: process.env.MYSQLPASSWORD || 'root',
-  database: process.env.MYSQLDATABASE || 'Sport',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
-});
-
-connection.query("SET time_zone = '+08:00'", (err) => {
-    if (err) console.error('Ошибка установки часового пояса:', err);
-    else console.log('Часовой пояс БД установлен: +08:00');
+  host: 'localhost',
+  user: 'root',
+  password: 'root',
+  database: 'sport'
 });
 
 connection.connect((err) => {
@@ -469,7 +472,13 @@ function getUserRank(customerID, callback) {
 
 // Получить все категории с полными данными (для главной страницы, админки)
 function getAllCategoriesFull(callback) {
-    const query = 'SELECT * FROM categories ORDER BY categorieName';
+    const query = `
+        SELECT c.*, COUNT(cp.productID) AS productCount
+        FROM categories c
+        LEFT JOIN categoriesandproducts cp ON c.categorieID = cp.categorieID
+        GROUP BY c.categorieID
+        ORDER BY c.categorieName
+    `;
     connection.query(query, callback);
 }
 
@@ -724,29 +733,100 @@ function getDeliveryPointById(pointID, callback) {
 function createOrder(orderData, items, callback) {
     connection.beginTransaction(err => {
         if (err) return callback(err);
-        const checks = items.map(item => new Promise((resolve, reject) => {
-            checkProductAvailability(item.productID, item.quantity, (err, result) => {
-                if (err) return reject(err);
-                if (!result.available) return reject(new Error(result.message));
-                resolve();
-            });
-        }));
-        Promise.all(checks).then(() => {
-            const orderQuery = `INSERT INTO orders (customerID, totalAmount, deliveryType, deliveryAddress, deliveryPointID, deliveryCost, paymentType, paymentStatus, orderStatusID, customerName, customerPhone, customerEmail, comment, qrCodeData, paymentLink) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            connection.query(orderQuery, [orderData.customerID, orderData.totalAmount, orderData.deliveryType, orderData.deliveryAddress || null, orderData.deliveryPointID || null, orderData.deliveryCost || 0, orderData.paymentType, orderData.paymentStatus || 'pending', orderData.orderStatusID || 1, orderData.customerName, orderData.customerPhone, orderData.customerEmail, orderData.comment || null, orderData.qrCodeData || null, orderData.paymentLink || null], (err, result) => {
+
+        // Последовательно проверяем наличие товаров (без Promise.all, через async.waterfall)
+        let index = 0;
+        function checkNext() {
+            if (index >= items.length) {
+                // Все проверки пройдены – создаём заказ
+                const orderQuery = `
+                    INSERT INTO orders (
+                        customerID, totalAmount, deliveryType, deliveryAddress,
+                        deliveryPointID, deliveryCost, paymentType, paymentStatus,
+                        orderStatusID, customerName, customerPhone, customerEmail,
+                        comment, qrCodeData, paymentLink
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `;
+                connection.query(
+                    orderQuery,
+                    [
+                        orderData.customerID,
+                        orderData.totalAmount,
+                        orderData.deliveryType,
+                        orderData.deliveryAddress || null,
+                        orderData.deliveryPointID || null,
+                        orderData.deliveryCost || 0,
+                        orderData.paymentType,
+                        orderData.paymentStatus || 'pending',
+                        orderData.orderStatusID || 1,
+                        orderData.customerName,
+                        orderData.customerPhone,
+                        orderData.customerEmail,
+                        orderData.comment || null,
+                        orderData.qrCodeData || null,
+                        orderData.paymentLink || null
+                    ],
+                    (err, result) => {
+                        if (err) return connection.rollback(() => callback(err));
+                        const orderID = result.insertId;
+
+                        // Вставляем товары заказа
+                        let itemIndex = 0;
+                        function insertNextItem() {
+                            if (itemIndex >= items.length) {
+                                // Обновляем остатки товаров
+                                let stockIndex = 0;
+                                function updateNextStock() {
+                                    if (stockIndex >= items.length) {
+                                        connection.commit(err => {
+                                            if (err) return connection.rollback(() => callback(err));
+                                            callback(null, orderID);
+                                        });
+                                        return;
+                                    }
+                                    const item = items[stockIndex];
+                                    connection.query(
+                                        'UPDATE products SET stock_quantity = stock_quantity - ? WHERE productID = ?',
+                                        [item.quantity, item.productID],
+                                        err => {
+                                            if (err) return connection.rollback(() => callback(err));
+                                            stockIndex++;
+                                            updateNextStock();
+                                        }
+                                    );
+                                }
+                                updateNextStock();
+                                return;
+                            }
+                            const item = items[itemIndex];
+                            connection.query(
+                                `INSERT INTO order_items (orderID, productID, quantity, price, discountedPrice)
+                                 VALUES (?, ?, ?, ?, ?)`,
+                                [orderID, item.productID, item.quantity, item.price, item.discountedPrice || null],
+                                err => {
+                                    if (err) return connection.rollback(() => callback(err));
+                                    itemIndex++;
+                                    insertNextItem();
+                                }
+                            );
+                        }
+                        insertNextItem();
+                    }
+                );
+                return;
+            }
+
+            const item = items[index];
+            checkProductAvailability(item.productID, item.quantity, (err, availability) => {
                 if (err) return connection.rollback(() => callback(err));
-                const orderID = result.insertId;
-                const itemInserts = items.map(item => new Promise((resolve, reject) => {
-                    connection.query(`INSERT INTO order_items (orderID, productID, quantity, price, discountedPrice) VALUES (?, ?, ?, ?, ?)`, [orderID, item.productID, item.quantity, item.price, item.discountedPrice || null], err => err ? reject(err) : resolve());
-                }));
-                Promise.all(itemInserts).then(() => {
-                    const stockUpdates = items.map(item => new Promise((resolve, reject) => {
-                        connection.query(`UPDATE products SET stock_quantity = stock_quantity - ? WHERE productID = ?`, [item.quantity, item.productID], err => err ? reject(err) : resolve());
-                    }));
-                    return Promise.all(stockUpdates);
-                }).then(() => connection.commit(err => err ? connection.rollback(() => callback(err)) : callback(null, orderID))).catch(err => connection.rollback(() => callback(err)));
+                if (!availability.available) {
+                    return connection.rollback(() => callback(new Error(availability.message)));
+                }
+                index++;
+                checkNext();
             });
-        }).catch(err => connection.rollback(() => callback(err)));
+        }
+        checkNext();
     });
 }
 
@@ -799,13 +879,34 @@ function getCatalogProducts(customerID, filters, callback) {
 }
 
 function checkProductAvailability(productID, quantity, callback) {
-    connection.query('SELECT stock_quantity FROM products WHERE productID = ?', [productID], (err, results) => {
-        if (err) return callback(err);
-        if (results.length === 0) return callback(null, { available: false, message: 'Товар не найден' });
-        const stock = results[0].stock_quantity;
-        callback(null, { available: stock >= quantity, currentStock: stock, requested: quantity, message: stock >= quantity ? 'Товар в наличии' : `Недостаточно товара на складе. Доступно: ${stock}` });
-    });
+    connection.query(
+        'SELECT stock_quantity FROM products WHERE productID = ?',
+        [productID],
+        (err, results) => {
+            if (err) return callback(err);
+            if (results.length === 0) {
+                return callback(null, { available: false, message: 'Товар не найден' });
+            }
+            const stock = results[0].stock_quantity;
+            const available = stock >= quantity;
+            callback(null, {
+                available: available,
+                currentStock: stock,
+                requested: quantity,
+                message: available
+                    ? 'Товар в наличии'
+                    : `Недостаточно товара на складе. Доступно: ${stock}`
+            });
+        }
+    );
 }
+
+
+//все вместе
+// ========== ОПТИМИЗАЦИЯ: получение избранного и корзины одним вызовом (два параллельных запроса) ==========
+// Функция не нужна, мы делаем два вызова, но можно объединить – оставим как есть
+// Просто убедимся, что getFavoritesByCustomerID и getCartByCustomerID работают быстро
+
 
 // Экспорт
 module.exports = {

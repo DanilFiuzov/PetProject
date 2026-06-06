@@ -18,6 +18,30 @@
     });
 })();
 
+const categoriesDropdown = document.getElementById('categoriesDropdown');
+    if (categoriesDropdown) {
+        const dropdownMenu = categoriesDropdown.nextElementSibling;
+        let hoverTimeout;
+        // открыть при наведении на кнопку
+        categoriesDropdown.addEventListener('mouseenter', () => {
+            clearTimeout(hoverTimeout);
+            new bootstrap.Dropdown(categoriesDropdown).show();
+        });
+        // закрыть с задержкой при уходе мыши с кнопки и с меню
+        const closeMenu = () => {
+            hoverTimeout = setTimeout(() => {
+                new bootstrap.Dropdown(categoriesDropdown).hide();
+            }, 200);
+        };
+        categoriesDropdown.addEventListener('mouseleave', closeMenu);
+        if (dropdownMenu) {
+            dropdownMenu.addEventListener('mouseenter', () => {
+                clearTimeout(hoverTimeout);
+            });
+            dropdownMenu.addEventListener('mouseleave', closeMenu);
+        }
+    }
+
 // ========================================
 // ФУНКЦИИ ДЛЯ СТРАНИЦЫ КАТАЛОГА ТОВАРОВ
 // ========================================
@@ -402,6 +426,9 @@ function showToast(message, type = 'info') {
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function() {
+    window.userFavorites = window.userFavorites || JSON.parse(document.getElementById('userFavoritesData')?.textContent || '[]');
+    window.userCartCount = window.userCartCount || parseInt(document.getElementById('userCartCountData')?.textContent || '0');
+
     // Инициализация всплывающих подсказок (Tooltips)
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {

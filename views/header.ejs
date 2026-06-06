@@ -23,11 +23,32 @@
                     </a>
                 </li>
                 <!-- Категории -->
-                <li class="nav-item">
-                    <a class="nav-link" style="font-size: 20px;" href="/categories">
-                        <i class="fas fa-th-large me-2"></i>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" style="font-size: 20px;" href="#" id="categoriesDropdown" 
+                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-list me-2"></i>
                         Категории
                     </a>
+                    <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="categoriesDropdown">
+                        <% if (categoriesMenu && categoriesMenu.length) { %>
+                            <% categoriesMenu.forEach(cat => { %>
+                                <li>
+                                    <a class="dropdown-item" href="/products?category=<%= cat.categorieID %>">
+                                        <% if (cat.categorieThumbnail) { %>
+                                            <img src="/images/categories/<%= cat.categorieThumbnail %>" 
+                                                alt="<%= cat.categorieName %>" class="cat-dropdown-icon">
+                                        <% } else { %>
+                                            <i class="fas fa-folder-open me-2"></i>
+                                        <% } %>
+                                        <%= cat.categorieName %>
+                                        <span class="badge bg-secondary float-end"><%= cat.productCount || 0 %></span>
+                                    </a>
+                                </li>
+                            <% }) %>
+                        <% } else { %>
+                            <li><span class="dropdown-item disabled">Нет категорий</span></li>
+                        <% } %>
+                    </ul>
                 </li>
             </ul>
             
