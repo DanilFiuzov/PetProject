@@ -1,6 +1,42 @@
 
 <!-- Основной контент -->
 <div class="container def-bg-settings">
+    <!-- Карусель / Слайдер -->
+    <div class="hero-carousel mb-5">
+        <div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-inner rounded-4 shadow-lg">
+                <div class="carousel-item active">
+                    <a href="/products">
+                        <img src="/images/slider/slider1.jpg" class="d-block w-100 carousel-image" alt="Спортивные товары">
+                    </a>
+                    <div class="carousel-caption d-flex flex-column justify-content-center align-items-start">
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <a href="/products?onSale=true">
+                        <img src="/images/slider/slider2.jpg" class="d-block w-100 carousel-image" alt="Акции и скидки">
+                    </a>
+                    <div class="carousel-caption d-flex flex-column justify-content-center align-items-start">
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <a href="/products">
+                        <img src="/images/slider/slider3.jpg" class="d-block w-100 carousel-image" alt="Бесплатная доставка">
+                    </a>
+                    <div class="carousel-caption d-flex flex-column justify-content-center align-items-start">
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Предыдущий</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Следующий</span>
+            </button>
+        </div>
+    </div>
 
     <!-- Раздел "Категории" -->
     <section class="categories-section mb-5">

@@ -635,12 +635,6 @@ router.get('/admin/products', checkAdmin, (req, res) => {
 });
 
 // ========== АДМИНКА: КАТЕГОРИИ ==========
-router.get('/admin/categories', checkAdmin, (req, res) => {
-    connection.getAllCategoriesFull((err, categories) => {
-        res.render('layout', { body: 'admin_categories', categories: err ? [] : categories });
-    });
-});
-
 router.get('/admin/categories/add', checkAdmin, (req, res) => {
     res.render('layout', { body: 'add_category' });
 });

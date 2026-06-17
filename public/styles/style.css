@@ -5527,3 +5527,64 @@ a.cat-badge:hover {
     outline: none;
     box-shadow: none;
 }
+
+/* =============== КАРУСЕЛЬ НА ГЛАВНОЙ =============== */
+.hero-carousel {
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.carousel-image {
+    height: 500px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.carousel-item a {
+    display: block;
+    line-height: 0;
+}
+
+/* Стрелки управления — исправляем, если тоже расплющились */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: rgba(96, 96, 255, 0.7);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    background-size: 50% 50%;
+    transition: background-color 0.3s, transform 0.2s;
+}
+.carousel-control-prev-icon:hover,
+.carousel-control-next-icon:hover {
+    background-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .carousel-image {
+        height: 400px;
+    }
+}
+@media (max-width: 768px) {
+    .carousel-image {
+        height: 300px;
+    }
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        width: 36px;
+        height: 36px;
+    }
+}
+@media (max-width: 576px) {
+    .carousel-image {
+        height: 250px;
+    }
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        width: 32px;
+        height: 32px;
+    }
+}

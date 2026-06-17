@@ -199,30 +199,6 @@
                         </div>
                     </div>
                     
-                    <!-- Инструкции по оплате -->
-                    <% if (order.paymentType === 'online') { %>
-                    <div class="alert alert-info rounded-3 mb-4">
-                        <h6 class="mb-2 fw-bold">
-                            <i class="fas fa-info-circle me-2"></i>Инструкция по оплате
-                        </h6>
-                        <p class="mb-0 small">
-                            <i class="fas fa-mobile-alt me-1"></i>
-                            Для оплаты заказа отсканируйте QR-код в приложении вашего банка 
-                            или перейдите по ссылке для оплаты через СБП.
-                        </p>
-                    </div>
-                    <% } else { %>
-                    <div class="alert alert-warning rounded-3 mb-4">
-                        <h6 class="mb-2 fw-bold">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Важная информация
-                        </h6>
-                        <p class="mb-0 small">
-                            <i class="fas fa-money-bill-wave me-1"></i>
-                            Оплата производится при получении заказа в пункте выдачи или курьеру.
-                        </p>
-                    </div>
-                    <% } %>
-                    
                     <!-- Кнопки действий -->
                     <div class="d-flex justify-content-center gap-3 flex-wrap">
                         <a href="/my-orders" class="btn btn-custom px-4 py-3">
@@ -234,18 +210,6 @@
                         <a href="/" class="btn btn-outline-custom px-4 py-3">
                             <i class="fas fa-home me-2"></i>На главную
                         </a>
-                    </div>
-                    
-                    <!-- Дополнительная информация -->
-                    <div class="mt-4 pt-3 border-top text-muted small">
-                        <p class="mb-2">
-                            <i class="fas fa-envelope me-1"></i>
-                            На вашу почту <strong><%= order.customerEmail %></strong> отправлена информация о заказе.
-                        </p>
-                        <p class="mb-0">
-                            <i class="fas fa-headset me-1"></i>
-                            Если у вас есть вопросы, свяжитесь с нами по телефону поддержки.
-                        </p>
                     </div>
                 </div>
             </div>

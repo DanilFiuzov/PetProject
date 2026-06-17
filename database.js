@@ -1,14 +1,13 @@
 const mysql = require('mysql2');
 
-// // Подключение к БД
-// const connection = mysql.createConnection({
-//   host: process.env.MYSQLHOST || 'localhost',
-//   port: process.env.MYSQLPORT || 3306,
-//   user: process.env.MYSQLUSER || 'root',
-//   password: process.env.MYSQLPASSWORD || 'root',
-//   database: process.env.MYSQLDATABASE || 'Sport',
-//   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
-// });
+// Подключение к БД
+const connection = mysql.createConnection({
+  host: process.env.MYSQLHOST,
+  port: process.env.MYSQLPORT,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE
+});
 
 // Подключение к БД
 const connection = mysql.createConnection({
