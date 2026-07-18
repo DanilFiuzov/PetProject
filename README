@@ -52,7 +52,7 @@
 ### 2. Клонирование и установка
 ```bash
 git clone https://github.com/DanilFiuzov/PetProject
-cd CursWork_ISIP_42213
+cd PetProject
 npm install
 
 📄 Лицензия
