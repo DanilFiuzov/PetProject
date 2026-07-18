@@ -36,9 +36,9 @@
 |:---:|:---:|:---:|
 | ![Каталог](screenshots/catalog.png) | ![Товар](screenshots/product.png) | ![Корзина](screenshots/cart.png) |
 
-| Админ-панель (товары) | Админ-панель (заказы) |
-|:---:|:---:|
-| ![Админка товары](screenshots/admin-products.png) | ![Админка заказы](screenshots/admin-orders.png) |
+## Админ-панель
+
+![Админка](screenshots/admin.png)
 
 ## 🚀 Быстрый старт
 
