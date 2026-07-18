@@ -594,43 +594,131 @@ router.get('/admin/products', checkAdmin, (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    connection.connection.query('SELECT COUNT(*) as total FROM products', (err, countResult) => {
-        if (err) return res.status(500).send('Ошибка подсчёта');
-        const totalProducts = countResult[0].total;
+
+    // Получаем все данные параллельно
+    Promise.all([
+        // Подсчёт товаров
+        new Promise((resolve) => {
+            let countQuery = 'SELECT COUNT(*) as total FROM products';
+            if (searchQuery) {
+                countQuery += ` WHERE productTitle LIKE ? OR productManufacturer LIKE ? OR productDescription LIKE ?`;
+            }
+            const params = searchQuery ? [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`] : [];
+            connection.connection.query(countQuery, params, (err, result) => resolve(err ? { total: 0 } : result[0]));
+        }),
+        // Список товаров
+        new Promise((resolve) => {
+            let productsQuery = 'SELECT * FROM products ORDER BY productID';
+            if (searchQuery) {
+                productsQuery = `SELECT * FROM products WHERE productTitle LIKE ? OR productManufacturer LIKE ? OR productDescription LIKE ? ORDER BY productID`;
+            }
+            productsQuery += ' LIMIT ? OFFSET ?';
+            const params = searchQuery ? [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`, limit, offset] : [limit, offset];
+            connection.connection.query(productsQuery, params, (err, results) => resolve(err ? [] : results));
+        }),
+        // Категории
+        new Promise((resolve) => connection.getAllCategoriesFull((err, data) => resolve(err ? [] : data))),
+        // Заказы
+        new Promise((resolve) => {
+            connection.connection.query(`
+                SELECT o.*, os.statusName 
+                FROM orders o 
+                LEFT JOIN order_status os ON o.orderStatusID = os.statusID 
+                ORDER BY o.orderDate DESC
+            `, (err, results) => resolve(err ? [] : results));
+        }),
+        // Пользователи
+        new Promise((resolve) => {
+            connection.connection.query('SELECT * FROM customers ORDER BY customerID', (err, results) => resolve(err ? [] : results));
+        })
+    ]).then(([countResult, products, categories, orders, users]) => {
+        const totalProducts = countResult.total || 0;
         const totalPages = Math.ceil(totalProducts / limit);
-        let productsQuery = 'SELECT * FROM products ORDER BY productID LIMIT ? OFFSET ?';
-        let queryParams = [limit, offset];
-        if (searchQuery) {
-            productsQuery = `SELECT * FROM products WHERE productTitle LIKE ? OR productManufacturer LIKE ? OR productDescription LIKE ? ORDER BY productID LIMIT ? OFFSET ?`;
-            const searchPattern = `%${searchQuery}%`;
-            queryParams = [searchPattern, searchPattern, searchPattern, limit, offset];
-        }
-        connection.connection.query(productsQuery, queryParams, (err, products) => {
-            if (err) return res.status(500).send('Ошибка получения товаров');
-            connection.getAllCategoriesFull((catErr, categories) => {
-                if (products.length === 0) {
-                    return res.render('layout', { body: 'admin_products', products: [], categories: catErr ? [] : categories, pagination: { currentPage: page, totalPages, totalProducts, hasPrev: page > 1, hasNext: page < totalPages, searchQuery } });
-                }
-                const productsWithDetails = [];
-                let processed = 0;
-                products.forEach((product, index) => {
-                    connection.connection.query(`SELECT c.categorieName FROM categories c JOIN categoriesandproducts cp ON c.categorieID = cp.categorieID WHERE cp.productID = ?`, [product.productID], (catErr, productCats) => {
-                        const categoryNames = productCats.map(cat => cat.categorieName);
-                        connection.connection.query('SELECT COUNT(*) as count FROM product_features WHERE productID = ?', [product.productID], (featErr, featuresResult) => {
-                            productsWithDetails[index] = { ...product, categories: categoryNames, featuresCount: featuresResult[0].count || 0 };
-                            processed++;
-                            if (processed === products.length) {
-                                const productIds = productsWithDetails.map(p => p.productID);
-                                connection.getCategoryIconsForProducts(productIds, (iconErr, iconsMap) => {
-                                    const enriched = productsWithDetails.map(p => ({ ...p, categories: iconsMap[p.productID] || [] }));
-                                    res.render('layout', { body: 'admin_products', products: enriched, categories: catErr ? [] : categories, pagination: { currentPage: page, totalPages, totalProducts, hasPrev: page > 1, hasNext: page < totalPages, searchQuery } });
-                                });
-                            }
-                        });
-                    });
-                });
+
+        // Обогащаем товары категориями
+        const productsWithDetails = products.map(product => ({
+            ...product,
+            categories: [],
+            featuresCount: 0
+        }));
+
+        // Получаем категории для товаров
+        if (productsWithDetails.length > 0) {
+            const productIds = productsWithDetails.map(p => p.productID);
+            connection.getCategoryIconsForProducts(productIds, (iconErr, iconsMap) => {
+                const enriched = productsWithDetails.map(p => ({
+                    ...p,
+                    categories: iconsMap[p.productID] || []
+                }));
+                renderAdminPage(enriched);
             });
-        });
+        } else {
+            renderAdminPage(productsWithDetails);
+        }
+
+        function renderAdminPage(enrichedProducts) {
+            res.render('layout', {
+                body: 'admin_products',
+                products: enrichedProducts,
+                categories: categories,
+                orders: orders,
+                users: users,
+                pagination: {
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalProducts: totalProducts,
+                    hasPrev: page > 1,
+                    hasNext: page < totalPages,
+                    searchQuery: searchQuery,
+                    limit: limit
+                }
+            });
+        }
+    }).catch(err => {
+        console.error(err);
+        res.status(500).send('Ошибка загрузки админ-панели');
+    });
+});
+
+// ========== АДМИНКА: ЗАКАЗЫ ==========
+router.get('/admin/order/:orderID', checkAdmin, (req, res) => {
+    const orderID = req.params.orderID;
+    Promise.all([
+        new Promise(resolve => connection.getOrderById(orderID, (err, order) => resolve(err ? null : order))),
+        new Promise(resolve => connection.getOrderItems(orderID, (err, items) => resolve(err ? [] : items)))
+    ]).then(([order, items]) => {
+        if (!order) return res.status(404).json({ error: 'Заказ не найден' });
+        res.json({ order, items });
+    }).catch(() => res.status(500).json({ error: 'Ошибка' }));
+});
+
+router.put('/admin/order/:orderID/status', checkAdmin, (req, res) => {
+    const orderID = req.params.orderID;
+    const { statusID } = req.body;
+    if (!statusID) return res.status(400).json({ success: false, message: 'Не указан статус' });
+    connection.updateOrderStatus(orderID, statusID, (err) => {
+        if (err) return res.status(500).json({ success: false, message: 'Ошибка обновления' });
+        res.json({ success: true, message: 'Статус обновлён' });
+    });
+});
+
+// ========== АДМИНКА: ПОЛЬЗОВАТЕЛИ ==========
+router.get('/admin/users', checkAdmin, (req, res) => {
+    connection.connection.query('SELECT * FROM customers ORDER BY customerID', (err, users) => {
+        if (err) return res.status(500).json({ error: 'Ошибка' });
+        res.json(users);
+    });
+});
+
+router.put('/admin/user/:userID/rank', checkAdmin, (req, res) => {
+    const userID = req.params.userID;
+    const { rank } = req.body;
+    if (!['admin', 'user'].includes(rank)) {
+        return res.status(400).json({ success: false, message: 'Неверная роль' });
+    }
+    connection.connection.query('UPDATE customers SET customerRank = ? WHERE customerID = ?', [rank, userID], (err) => {
+        if (err) return res.status(500).json({ success: false, message: 'Ошибка обновления' });
+        res.json({ success: true, message: 'Роль обновлена' });
     });
 });
 
